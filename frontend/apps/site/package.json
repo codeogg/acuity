@@ -1,0 +1,30 @@
+{
+  "name": "@acuity/site",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Acuity site surface.",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "start": "next start --port 3001",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@acuity/i18n": "workspace:*",
+    "@acuity/ui": "workspace:*",
+    "next": "^15.2.0",
+    "next-intl": "^4.13.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@acuity/config": "workspace:*",
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "~5.9.2"
+  }
+}

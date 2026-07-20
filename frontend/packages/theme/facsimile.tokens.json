@@ -1,0 +1,14 @@
+{
+  "$description": "Insurer-form facsimile palette. The doctor-app review/produce facsimile faithfully reproduces the insurer's printed PAPER form, so these are the paper's own colours (white sheet, print ink, pen ink) — NOT Acuity brand identity. They are deliberately kept OUTSIDE the Caliber brand scale, but defined here as first-class reusable tokens (emitted as --facsimile-* by build-tokens.mjs) rather than ad-hoc hex in an app's CSS. A separate non-brand token layer: the theme reads it alongside the caliber preset; it is not part of the brand snapshot.",
+  "facsimile": {
+    "$type": "color",
+    "paper": { "$value": "#ffffff", "$description": "The form's paper sheet (pure white, distinct from brand cream)." },
+    "value": { "$value": "#15306a", "$description": "Filled-in field values — the pen's blue ink." },
+    "ink": { "$value": "#1a1a1a", "$description": "The form's printed body text." },
+    "muted": { "$value": "#555555", "$description": "Secondary printed text on the form." },
+    "line": { "$value": "#888888", "$description": "Printed rule / underlines on the form." },
+    "faint": { "$value": "#999999", "$description": "Faint printed hints / fine print." },
+    "blank": { "$value": "#bbbbbb", "$description": "Empty-field placeholder marks." },
+    "section": { "$value": "#f0f0ec", "$description": "Section-header band fill on the form." }
+  }
+}

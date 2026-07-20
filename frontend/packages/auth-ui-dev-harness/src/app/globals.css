@@ -1,0 +1,5 @@
+@import "@acuity/ui/styles.css";
+@import "@acuity/auth-ui/styles.css";
+
+@source "./**/*.{ts,tsx}";
+@source "../../node_modules/@acuity/auth-ui/src/**/*.{ts,tsx}";

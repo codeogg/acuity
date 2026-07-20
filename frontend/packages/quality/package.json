@@ -1,0 +1,33 @@
+{
+  "name": "@acuity/quality",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cross-package quality harness for the Acuity frontend: unit/contract tests (Vitest + Testing Library) over the shared packages, and Playwright smoke + accessibility (axe) suites over the four app surfaces.",
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "audit:ui": "playwright test --config playwright.audit.config.ts"
+  },
+  "devDependencies": {
+    "@acuity/api-client": "workspace:*",
+    "@acuity/config": "workspace:*",
+    "@acuity/i18n": "workspace:*",
+    "@acuity/types": "workspace:*",
+    "@acuity/ui": "workspace:*",
+    "@axe-core/playwright": "^4.10.1",
+    "@playwright/test": "^1.50.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/react": "^16.2.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "jsdom": "^26.0.0",
+    "msw": "^2.7.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "~5.9.2",
+    "vitest": "^3.2.0"
+  }
+}

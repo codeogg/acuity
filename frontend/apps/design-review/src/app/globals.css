@@ -1,0 +1,43 @@
+/* The one @acuity/ui entry: Tailwind engine + design-kit base tokens + the
+   caliber-light overlay. The review pages read the LIVE variables from this
+   import, so token edits show up on the next reload — no duplication. */
+@import "@acuity/ui/styles.css";
+
+@source "./**/*.{ts,tsx}";
+
+/* The harness loads the brand faces from the Google Fonts CDN (layout <head>)
+   instead of next/font, so the @acuity/ui --font-* stacks — whose --font-title
+   leads with an unset var(--font-fraunces) — resolve to an INVALID value and
+   headings fall back to body sans. Point the face variables at the loaded
+   family names so var(--font-title) / var(--font-mono) resolve correctly. */
+:root {
+  --font-fraunces: "Fraunces";
+  --font-plex-mono: "IBM Plex Mono";
+  --font-noto-serif-tc: "Noto Serif TC";
+  --font-noto-sans-tc: "Noto Sans TC";
+}
+
+/* Print (brand-kit PDF). Editing chrome (nav, toolbars, edit/reset buttons,
+   sort headers, open panels) carries .no-print and is dropped; the page prints
+   as a clean roster. The Export "PDF" action opens the print dialog. */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  html,
+  body {
+    background: #ffffff !important;
+  }
+  main {
+    max-width: none !important;
+    padding: 1.5rem !important;
+  }
+  /* Keep swatches/demos ink-accurate on paper. */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  section {
+    break-inside: avoid;
+  }
+}

@@ -1,0 +1,4797 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "香港诊所保险保单智能填报 API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
+        "operationId": "login_api_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Logout",
+        "operationId": "logout_api_auth_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Logout Api Auth Logout Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Me",
+        "operationId": "me_api_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/clinics": {
+      "post": {
+        "tags": [
+          "admin:clinics"
+        ],
+        "summary": "Create Clinic",
+        "operationId": "create_clinic_api_admin_clinics_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClinicCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "admin:clinics"
+        ],
+        "summary": "List Clinics",
+        "operationId": "list_clinics_api_admin_clinics_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Keyword"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ClinicOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/clinics/{clinic_id}": {
+      "get": {
+        "tags": [
+          "admin:clinics"
+        ],
+        "summary": "Get Clinic",
+        "operationId": "get_clinic_api_admin_clinics__clinic_id__get",
+        "parameters": [
+          {
+            "name": "clinic_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Clinic Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "admin:clinics"
+        ],
+        "summary": "Update Clinic",
+        "operationId": "update_clinic_api_admin_clinics__clinic_id__put",
+        "parameters": [
+          {
+            "name": "clinic_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Clinic Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClinicUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/clinics/{clinic_id}/status": {
+      "patch": {
+        "tags": [
+          "admin:clinics"
+        ],
+        "summary": "Update Status",
+        "operationId": "update_status_api_admin_clinics__clinic_id__status_patch",
+        "parameters": [
+          {
+            "name": "clinic_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Clinic Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClinicStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/clinics/{clinic_id}/insurance-companies": {
+      "get": {
+        "tags": [
+          "admin:clinics"
+        ],
+        "summary": "Get Clinic Insurers",
+        "operationId": "get_clinic_insurers_api_admin_clinics__clinic_id__insurance_companies_get",
+        "parameters": [
+          {
+            "name": "clinic_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Clinic Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "title": "Response Get Clinic Insurers Api Admin Clinics  Clinic Id  Insurance Companies Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "admin:clinics"
+        ],
+        "summary": "Set Clinic Insurers",
+        "operationId": "set_clinic_insurers_api_admin_clinics__clinic_id__insurance_companies_put",
+        "parameters": [
+          {
+            "name": "clinic_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Clinic Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClinicInsuranceUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "title": "Response Set Clinic Insurers Api Admin Clinics  Clinic Id  Insurance Companies Put"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/doctors": {
+      "post": {
+        "tags": [
+          "admin:doctors"
+        ],
+        "summary": "Create Doctor",
+        "operationId": "create_doctor_api_admin_doctors_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DoctorCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DoctorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "admin:doctors"
+        ],
+        "summary": "List Doctors",
+        "operationId": "list_doctors_api_admin_doctors_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          },
+          {
+            "name": "clinic_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Clinic Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_DoctorOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/doctors/{doctor_id}": {
+      "get": {
+        "tags": [
+          "admin:doctors"
+        ],
+        "summary": "Get Doctor",
+        "operationId": "get_doctor_api_admin_doctors__doctor_id__get",
+        "parameters": [
+          {
+            "name": "doctor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Doctor Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DoctorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "admin:doctors"
+        ],
+        "summary": "Update Doctor",
+        "operationId": "update_doctor_api_admin_doctors__doctor_id__put",
+        "parameters": [
+          {
+            "name": "doctor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Doctor Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DoctorUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DoctorOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/doctors/{doctor_id}/reset-password": {
+      "post": {
+        "tags": [
+          "admin:doctors"
+        ],
+        "summary": "Reset Password",
+        "operationId": "reset_password_api_admin_doctors__doctor_id__reset_password_post",
+        "parameters": [
+          {
+            "name": "doctor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Doctor Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResetPasswordResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/insurance-companies": {
+      "post": {
+        "tags": [
+          "admin:insurance"
+        ],
+        "summary": "Create Company",
+        "operationId": "create_company_api_admin_insurance_companies_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanyCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "admin:insurance"
+        ],
+        "summary": "List Companies",
+        "operationId": "list_companies_api_admin_insurance_companies_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_CompanyOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/insurance-companies/{company_id}": {
+      "get": {
+        "tags": [
+          "admin:insurance"
+        ],
+        "summary": "Get Company",
+        "operationId": "get_company_api_admin_insurance_companies__company_id__get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Company Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "admin:insurance"
+        ],
+        "summary": "Update Company",
+        "operationId": "update_company_api_admin_insurance_companies__company_id__put",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Company Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompanyUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/field-domains": {
+      "get": {
+        "tags": [
+          "admin:standard-fields"
+        ],
+        "summary": "List Domains",
+        "operationId": "list_domains_api_admin_field_domains_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DomainOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Domains Api Admin Field Domains Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin:standard-fields"
+        ],
+        "summary": "Create Domain",
+        "operationId": "create_domain_api_admin_field_domains_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DomainCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DomainOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/standard-fields": {
+      "post": {
+        "tags": [
+          "admin:standard-fields"
+        ],
+        "summary": "Create Field",
+        "operationId": "create_field_api_admin_standard_fields_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StandardFieldCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardFieldOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "admin:standard-fields"
+        ],
+        "summary": "List Fields",
+        "operationId": "list_fields_api_admin_standard_fields_get",
+        "parameters": [
+          {
+            "name": "domain_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Domain Id"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Keyword"
+            }
+          },
+          {
+            "name": "active_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Active Only"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StandardFieldOut"
+                  },
+                  "title": "Response List Fields Api Admin Standard Fields Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/standard-fields/{field_id}": {
+      "put": {
+        "tags": [
+          "admin:standard-fields"
+        ],
+        "summary": "Update Field",
+        "operationId": "update_field_api_admin_standard_fields__field_id__put",
+        "parameters": [
+          {
+            "name": "field_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Field Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StandardFieldUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StandardFieldOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/transform-rules": {
+      "get": {
+        "tags": [
+          "admin:standard-fields"
+        ],
+        "summary": "List Rules",
+        "operationId": "list_rules_api_admin_transform_rules_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TransformRuleOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Rules Api Admin Transform Rules Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin:standard-fields"
+        ],
+        "summary": "Create Rule",
+        "operationId": "create_rule_api_admin_transform_rules_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransformRuleCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransformRuleOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/templates": {
+      "post": {
+        "tags": [
+          "admin:templates"
+        ],
+        "summary": "Upload Template",
+        "operationId": "upload_template_api_admin_templates_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_template_api_admin_templates_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateUploadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "admin:templates"
+        ],
+        "summary": "List Templates",
+        "operationId": "list_templates_api_admin_templates_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Company Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TemplateOut"
+                  },
+                  "title": "Response List Templates Api Admin Templates Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/templates/{template_id}": {
+      "get": {
+        "tags": [
+          "admin:templates"
+        ],
+        "summary": "Get Template",
+        "operationId": "get_template_api_admin_templates__template_id__get",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/templates/{template_id}/fields": {
+      "get": {
+        "tags": [
+          "admin:templates"
+        ],
+        "summary": "List Fields",
+        "operationId": "list_fields_api_admin_templates__template_id__fields_get",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TemplateFieldOut"
+                  },
+                  "title": "Response List Fields Api Admin Templates  Template Id  Fields Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin:templates"
+        ],
+        "summary": "Create Field",
+        "operationId": "create_field_api_admin_templates__template_id__fields_post",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateFieldCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateFieldOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/templates/{template_id}/fields/{field_id}": {
+      "put": {
+        "tags": [
+          "admin:templates"
+        ],
+        "summary": "Update Field",
+        "operationId": "update_field_api_admin_templates__template_id__fields__field_id__put",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "field_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Field Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TemplateFieldUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateFieldOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "admin:templates"
+        ],
+        "summary": "Delete Field",
+        "operationId": "delete_field_api_admin_templates__template_id__fields__field_id__delete",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "field_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Field Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Delete Field Api Admin Templates  Template Id  Fields  Field Id  Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/templates/{template_id}/fields/{field_id}/mapping": {
+      "post": {
+        "tags": [
+          "admin:templates"
+        ],
+        "summary": "Save Mapping",
+        "operationId": "save_mapping_api_admin_templates__template_id__fields__field_id__mapping_post",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Template Id"
+            }
+          },
+          {
+            "name": "field_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Field Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldMappingSave"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Save Mapping Api Admin Templates  Template Id  Fields  Field Id  Mapping Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/templates/{template_id}/preview-fill": {
+      "post": {
+        "tags": [
+          "admin:templates"
+        ],
+        "summary": "Preview Fill",
+        "operationId": "preview_fill_api_admin_templates__template_id__preview_fill_post",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PreviewFillRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreviewFillResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/templates/{template_id}/publish": {
+      "post": {
+        "tags": [
+          "admin:templates"
+        ],
+        "summary": "Publish Template",
+        "operationId": "publish_template_api_admin_templates__template_id__publish_post",
+        "parameters": [
+          {
+            "name": "template_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Template Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctor/ai/extract": {
+      "post": {
+        "tags": [
+          "doctor:ai"
+        ],
+        "summary": "Extract",
+        "operationId": "extract_api_doctor_ai_extract_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtractRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctor/insurance-companies": {
+      "get": {
+        "tags": [
+          "doctor:claims"
+        ],
+        "summary": "List Companies",
+        "operationId": "list_companies_api_doctor_insurance_companies_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CompanyBrief"
+                  },
+                  "type": "array",
+                  "title": "Response List Companies Api Doctor Insurance Companies Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctor/insurance-companies/{company_id}/templates": {
+      "get": {
+        "tags": [
+          "doctor:claims"
+        ],
+        "summary": "List Templates",
+        "operationId": "list_templates_api_doctor_insurance_companies__company_id__templates_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Company Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TemplateBrief"
+                  },
+                  "title": "Response List Templates Api Doctor Insurance Companies  Company Id  Templates Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctor/claims": {
+      "post": {
+        "tags": [
+          "doctor:claims"
+        ],
+        "summary": "Create Claim",
+        "operationId": "create_claim_api_doctor_claims_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClaimCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "doctor:claims"
+        ],
+        "summary": "List Claims",
+        "operationId": "list_claims_api_doctor_claims_get",
+        "parameters": [
+          {
+            "name": "patient_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Patient Name"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "date_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date From"
+            }
+          },
+          {
+            "name": "date_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Date To"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_ClaimListItem_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctor/claims/{claim_id}/medical-record": {
+      "put": {
+        "tags": [
+          "doctor:claims"
+        ],
+        "summary": "Submit Medical Record",
+        "operationId": "submit_medical_record_api_doctor_claims__claim_id__medical_record_put",
+        "parameters": [
+          {
+            "name": "claim_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Claim Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MedicalRecordSubmit"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctor/claims/{claim_id}/fields": {
+      "put": {
+        "tags": [
+          "doctor:claims"
+        ],
+        "summary": "Update Fields",
+        "operationId": "update_fields_api_doctor_claims__claim_id__fields_put",
+        "parameters": [
+          {
+            "name": "claim_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Claim Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FieldsUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctor/claims/{claim_id}/confirm": {
+      "post": {
+        "tags": [
+          "doctor:claims"
+        ],
+        "summary": "Confirm",
+        "operationId": "confirm_api_doctor_claims__claim_id__confirm_post",
+        "parameters": [
+          {
+            "name": "claim_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Claim Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctor/claims/{claim_id}/generate-pdf": {
+      "post": {
+        "tags": [
+          "doctor:claims"
+        ],
+        "summary": "Generate Pdf",
+        "operationId": "generate_pdf_api_doctor_claims__claim_id__generate_pdf_post",
+        "parameters": [
+          {
+            "name": "claim_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Claim Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratePdfResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctor/claims/{claim_id}/mark-printed": {
+      "post": {
+        "tags": [
+          "doctor:claims"
+        ],
+        "summary": "Mark Printed",
+        "operationId": "mark_printed_api_doctor_claims__claim_id__mark_printed_post",
+        "parameters": [
+          {
+            "name": "claim_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Claim Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctor/claims/{claim_id}/cancel": {
+      "post": {
+        "tags": [
+          "doctor:claims"
+        ],
+        "summary": "Cancel",
+        "operationId": "cancel_api_doctor_claims__claim_id__cancel_post",
+        "parameters": [
+          {
+            "name": "claim_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Claim Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctor/claims/{claim_id}/reuse-for-template": {
+      "post": {
+        "tags": [
+          "doctor:claims"
+        ],
+        "summary": "Reuse For Template",
+        "operationId": "reuse_for_template_api_doctor_claims__claim_id__reuse_for_template_post",
+        "parameters": [
+          {
+            "name": "claim_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Claim Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReuseRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReuseResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/doctor/claims/{claim_id}": {
+      "get": {
+        "tags": [
+          "doctor:claims"
+        ],
+        "summary": "Get Claim",
+        "operationId": "get_claim_api_doctor_claims__claim_id__get",
+        "parameters": [
+          {
+            "name": "claim_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Claim Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_upload_template_api_admin_templates_post": {
+        "properties": {
+          "company_id": {
+            "type": "integer",
+            "title": "Company Id"
+          },
+          "template_name": {
+            "type": "string",
+            "title": "Template Name"
+          },
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_id",
+          "template_name",
+          "file"
+        ],
+        "title": "Body_upload_template_api_admin_templates_post"
+      },
+      "ClaimCreate": {
+        "properties": {
+          "company_id": {
+            "type": "integer",
+            "title": "Company Id"
+          },
+          "template_id": {
+            "type": "integer",
+            "title": "Template Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_id",
+          "template_id"
+        ],
+        "title": "ClaimCreate"
+      },
+      "ClaimListItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "submission_no": {
+            "type": "string",
+            "title": "Submission No"
+          },
+          "patient_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Name"
+          },
+          "company_id": {
+            "type": "integer",
+            "title": "Company Id"
+          },
+          "template_id": {
+            "type": "integer",
+            "title": "Template Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "submission_no",
+          "patient_name",
+          "company_id",
+          "template_id",
+          "status",
+          "created_at"
+        ],
+        "title": "ClaimListItem"
+      },
+      "ClaimOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "submission_no": {
+            "type": "string",
+            "title": "Submission No"
+          },
+          "clinic_id": {
+            "type": "integer",
+            "title": "Clinic Id"
+          },
+          "doctor_id": {
+            "type": "integer",
+            "title": "Doctor Id"
+          },
+          "company_id": {
+            "type": "integer",
+            "title": "Company Id"
+          },
+          "template_id": {
+            "type": "integer",
+            "title": "Template Id"
+          },
+          "template_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Version"
+          },
+          "patient_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Name"
+          },
+          "ai_raw_result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Raw Result"
+          },
+          "final_field_values": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Field Values"
+          },
+          "ai_token_usage": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Token Usage"
+          },
+          "ai_process_time_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Process Time Ms"
+          },
+          "generated_pdf_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated Pdf Url"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "submission_no",
+          "clinic_id",
+          "doctor_id",
+          "company_id",
+          "template_id",
+          "template_version",
+          "patient_name",
+          "ai_raw_result",
+          "final_field_values",
+          "ai_token_usage",
+          "ai_process_time_ms",
+          "generated_pdf_url",
+          "status",
+          "created_at"
+        ],
+        "title": "ClaimOut"
+      },
+      "ClinicCreate": {
+        "properties": {
+          "clinic_name": {
+            "type": "string",
+            "title": "Clinic Name"
+          },
+          "clinic_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinic Name En"
+          },
+          "clinic_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinic Code"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "chop_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chop Image Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "clinic_name"
+        ],
+        "title": "ClinicCreate"
+      },
+      "ClinicInsuranceUpdate": {
+        "properties": {
+          "company_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Company Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_ids"
+        ],
+        "title": "ClinicInsuranceUpdate"
+      },
+      "ClinicOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "clinic_code": {
+            "type": "string",
+            "title": "Clinic Code"
+          },
+          "clinic_name": {
+            "type": "string",
+            "title": "Clinic Name"
+          },
+          "clinic_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinic Name En"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "chop_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chop Image Url"
+          },
+          "status": {
+            "type": "integer",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "clinic_code",
+          "clinic_name",
+          "clinic_name_en",
+          "address",
+          "phone",
+          "chop_image_url",
+          "status",
+          "created_at"
+        ],
+        "title": "ClinicOut"
+      },
+      "ClinicStatusUpdate": {
+        "properties": {
+          "status": {
+            "type": "integer",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "ClinicStatusUpdate"
+      },
+      "ClinicUpdate": {
+        "properties": {
+          "clinic_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinic Name"
+          },
+          "clinic_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinic Name En"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "chop_image_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chop Image Url"
+          }
+        },
+        "type": "object",
+        "title": "ClinicUpdate"
+      },
+      "CompanyBrief": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "company_name": {
+            "type": "string",
+            "title": "Company Name"
+          },
+          "company_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name En"
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "company_name",
+          "company_name_en",
+          "logo_url"
+        ],
+        "title": "CompanyBrief"
+      },
+      "CompanyCreate": {
+        "properties": {
+          "company_name": {
+            "type": "string",
+            "title": "Company Name"
+          },
+          "company_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name En"
+          },
+          "company_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Code"
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url"
+          },
+          "contact_info": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Info"
+          }
+        },
+        "type": "object",
+        "required": [
+          "company_name"
+        ],
+        "title": "CompanyCreate"
+      },
+      "CompanyOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "company_code": {
+            "type": "string",
+            "title": "Company Code"
+          },
+          "company_name": {
+            "type": "string",
+            "title": "Company Name"
+          },
+          "company_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name En"
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url"
+          },
+          "contact_info": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Info"
+          },
+          "status": {
+            "type": "integer",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "company_code",
+          "company_name",
+          "company_name_en",
+          "logo_url",
+          "contact_info",
+          "status",
+          "created_at"
+        ],
+        "title": "CompanyOut"
+      },
+      "CompanyUpdate": {
+        "properties": {
+          "company_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name"
+          },
+          "company_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name En"
+          },
+          "logo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Logo Url"
+          },
+          "contact_info": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Info"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "title": "CompanyUpdate"
+      },
+      "DoctorCreate": {
+        "properties": {
+          "clinic_id": {
+            "type": "integer",
+            "title": "Clinic Id"
+          },
+          "doctor_name": {
+            "type": "string",
+            "title": "Doctor Name"
+          },
+          "doctor_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doctor Name En"
+          },
+          "reg_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reg No"
+          },
+          "login_account": {
+            "type": "string",
+            "title": "Login Account"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "signature_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signature Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "clinic_id",
+          "doctor_name",
+          "login_account",
+          "password"
+        ],
+        "title": "DoctorCreate"
+      },
+      "DoctorOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "clinic_id": {
+            "type": "integer",
+            "title": "Clinic Id"
+          },
+          "doctor_name": {
+            "type": "string",
+            "title": "Doctor Name"
+          },
+          "doctor_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doctor Name En"
+          },
+          "reg_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reg No"
+          },
+          "signature_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signature Url"
+          },
+          "login_account": {
+            "type": "string",
+            "title": "Login Account"
+          },
+          "status": {
+            "type": "integer",
+            "title": "Status"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "clinic_id",
+          "doctor_name",
+          "doctor_name_en",
+          "reg_no",
+          "signature_url",
+          "login_account",
+          "status",
+          "created_at"
+        ],
+        "title": "DoctorOut"
+      },
+      "DoctorUpdate": {
+        "properties": {
+          "doctor_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doctor Name"
+          },
+          "doctor_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Doctor Name En"
+          },
+          "reg_no": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reg No"
+          },
+          "signature_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signature Url"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "title": "DoctorUpdate"
+      },
+      "DomainCreate": {
+        "properties": {
+          "domain_code": {
+            "type": "string",
+            "title": "Domain Code"
+          },
+          "domain_name": {
+            "type": "string",
+            "title": "Domain Name"
+          },
+          "sort_order": {
+            "type": "integer",
+            "title": "Sort Order",
+            "default": 0
+          },
+          "remark": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remark"
+          }
+        },
+        "type": "object",
+        "required": [
+          "domain_code",
+          "domain_name"
+        ],
+        "title": "DomainCreate"
+      },
+      "DomainOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "domain_code": {
+            "type": "string",
+            "title": "Domain Code"
+          },
+          "domain_name": {
+            "type": "string",
+            "title": "Domain Name"
+          },
+          "sort_order": {
+            "type": "integer",
+            "title": "Sort Order"
+          },
+          "remark": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remark"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "domain_code",
+          "domain_name",
+          "sort_order",
+          "remark"
+        ],
+        "title": "DomainOut"
+      },
+      "ExtractRequest": {
+        "properties": {
+          "medical_record_text": {
+            "type": "string",
+            "title": "Medical Record Text"
+          },
+          "template_id": {
+            "type": "integer",
+            "title": "Template Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "medical_record_text",
+          "template_id"
+        ],
+        "title": "ExtractRequest"
+      },
+      "ExtractResponse": {
+        "properties": {
+          "extracted_fields": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ExtractedField"
+            },
+            "type": "object",
+            "title": "Extracted Fields"
+          },
+          "process_time_ms": {
+            "type": "integer",
+            "title": "Process Time Ms"
+          },
+          "token_usage": {
+            "type": "integer",
+            "title": "Token Usage"
+          }
+        },
+        "type": "object",
+        "required": [
+          "extracted_fields",
+          "process_time_ms",
+          "token_usage"
+        ],
+        "title": "ExtractResponse"
+      },
+      "ExtractedField": {
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "confidence"
+        ],
+        "title": "ExtractedField"
+      },
+      "FieldMappingOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "standard_field_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Standard Field Id"
+          },
+          "transform_rule_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transform Rule Id"
+          },
+          "fixed_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fixed Value"
+          },
+          "checkbox_map_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checkbox Map Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "standard_field_id",
+          "transform_rule_id",
+          "fixed_value",
+          "checkbox_map_value"
+        ],
+        "title": "FieldMappingOut"
+      },
+      "FieldMappingSave": {
+        "properties": {
+          "standard_field_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Standard Field Id"
+          },
+          "fixed_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fixed Value"
+          },
+          "checkbox_map_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checkbox Map Value"
+          },
+          "transform_rule_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transform Rule Id"
+          }
+        },
+        "type": "object",
+        "title": "FieldMappingSave"
+      },
+      "FieldsUpdate": {
+        "properties": {
+          "final_field_values": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Final Field Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "final_field_values"
+        ],
+        "title": "FieldsUpdate"
+      },
+      "GeneratePdfResponse": {
+        "properties": {
+          "pdf_url": {
+            "type": "string",
+            "title": "Pdf Url"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "pdf_url",
+          "generated_at"
+        ],
+        "title": "GeneratePdfResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "LoginRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "LoginResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "clinic_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinic Id"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "role",
+          "user_id"
+        ],
+        "title": "LoginResponse"
+      },
+      "MeResponse": {
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "clinic_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clinic Id"
+          },
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "role"
+        ],
+        "title": "MeResponse"
+      },
+      "MedicalRecordSubmit": {
+        "properties": {
+          "medical_record_text": {
+            "type": "string",
+            "title": "Medical Record Text"
+          },
+          "patient_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "medical_record_text"
+        ],
+        "title": "MedicalRecordSubmit"
+      },
+      "Page_ClaimListItem_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimListItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[ClaimListItem]"
+      },
+      "Page_ClinicOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ClinicOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[ClinicOut]"
+      },
+      "Page_CompanyOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CompanyOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[CompanyOut]"
+      },
+      "Page_DoctorOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DoctorOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "Page[DoctorOut]"
+      },
+      "PreviewFillRequest": {
+        "properties": {
+          "sample_values": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Sample Values"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sample_values"
+        ],
+        "title": "PreviewFillRequest"
+      },
+      "PreviewFillResponse": {
+        "properties": {
+          "preview_pdf_url": {
+            "type": "string",
+            "title": "Preview Pdf Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "preview_pdf_url"
+        ],
+        "title": "PreviewFillResponse"
+      },
+      "ResetPasswordResponse": {
+        "properties": {
+          "temp_password": {
+            "type": "string",
+            "title": "Temp Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "temp_password"
+        ],
+        "title": "ResetPasswordResponse"
+      },
+      "ReuseRequest": {
+        "properties": {
+          "new_template_id": {
+            "type": "integer",
+            "title": "New Template Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "new_template_id"
+        ],
+        "title": "ReuseRequest"
+      },
+      "ReuseResponse": {
+        "properties": {
+          "submission_id": {
+            "type": "integer",
+            "title": "Submission Id"
+          },
+          "prefilled_fields": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Prefilled Fields"
+          },
+          "missing_fields": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Missing Fields"
+          }
+        },
+        "type": "object",
+        "required": [
+          "submission_id",
+          "prefilled_fields",
+          "missing_fields"
+        ],
+        "title": "ReuseResponse"
+      },
+      "StandardFieldCreate": {
+        "properties": {
+          "field_code": {
+            "type": "string",
+            "title": "Field Code"
+          },
+          "field_name": {
+            "type": "string",
+            "title": "Field Name"
+          },
+          "field_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Name En"
+          },
+          "domain_id": {
+            "type": "integer",
+            "title": "Domain Id"
+          },
+          "data_type": {
+            "type": "string",
+            "title": "Data Type"
+          },
+          "enum_options": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enum Options"
+          },
+          "is_required": {
+            "type": "boolean",
+            "title": "Is Required",
+            "default": false
+          },
+          "source_type": {
+            "type": "string",
+            "title": "Source Type",
+            "default": "AI"
+          },
+          "ai_extraction_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Extraction Hint"
+          },
+          "validation_rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validation Rule"
+          },
+          "example_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Example Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "field_code",
+          "field_name",
+          "domain_id",
+          "data_type"
+        ],
+        "title": "StandardFieldCreate"
+      },
+      "StandardFieldOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "field_code": {
+            "type": "string",
+            "title": "Field Code"
+          },
+          "field_name": {
+            "type": "string",
+            "title": "Field Name"
+          },
+          "field_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Name En"
+          },
+          "domain_id": {
+            "type": "integer",
+            "title": "Domain Id"
+          },
+          "data_type": {
+            "type": "string",
+            "title": "Data Type"
+          },
+          "enum_options": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enum Options"
+          },
+          "is_required": {
+            "type": "boolean",
+            "title": "Is Required"
+          },
+          "source_type": {
+            "type": "string",
+            "title": "Source Type"
+          },
+          "ai_extraction_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Extraction Hint"
+          },
+          "validation_rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validation Rule"
+          },
+          "example_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Example Value"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "field_code",
+          "field_name",
+          "field_name_en",
+          "domain_id",
+          "data_type",
+          "enum_options",
+          "is_required",
+          "source_type",
+          "ai_extraction_hint",
+          "validation_rule",
+          "example_value",
+          "is_active",
+          "created_at"
+        ],
+        "title": "StandardFieldOut"
+      },
+      "StandardFieldUpdate": {
+        "properties": {
+          "field_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Name"
+          },
+          "field_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Name En"
+          },
+          "domain_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain Id"
+          },
+          "data_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Type"
+          },
+          "enum_options": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enum Options"
+          },
+          "is_required": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Required"
+          },
+          "source_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Type"
+          },
+          "ai_extraction_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Extraction Hint"
+          },
+          "validation_rule": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validation Rule"
+          },
+          "example_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Example Value"
+          },
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "title": "StandardFieldUpdate"
+      },
+      "TemplateBrief": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "template_name": {
+            "type": "string",
+            "title": "Template Name"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "page_count": {
+            "type": "integer",
+            "title": "Page Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "template_name",
+          "version",
+          "page_count"
+        ],
+        "title": "TemplateBrief"
+      },
+      "TemplateFieldCreate": {
+        "properties": {
+          "page_no": {
+            "type": "integer",
+            "title": "Page No",
+            "default": 1
+          },
+          "field_label_raw": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Label Raw"
+          },
+          "field_type": {
+            "type": "string",
+            "title": "Field Type",
+            "default": "text"
+          },
+          "pos_x": {
+            "type": "number",
+            "title": "Pos X"
+          },
+          "pos_y": {
+            "type": "number",
+            "title": "Pos Y"
+          },
+          "width": {
+            "type": "number",
+            "title": "Width"
+          },
+          "height": {
+            "type": "number",
+            "title": "Height"
+          },
+          "font_size": {
+            "type": "number",
+            "title": "Font Size",
+            "default": 10
+          }
+        },
+        "type": "object",
+        "required": [
+          "pos_x",
+          "pos_y",
+          "width",
+          "height"
+        ],
+        "title": "TemplateFieldCreate"
+      },
+      "TemplateFieldOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "template_id": {
+            "type": "integer",
+            "title": "Template Id"
+          },
+          "page_no": {
+            "type": "integer",
+            "title": "Page No"
+          },
+          "field_label_raw": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Label Raw"
+          },
+          "pdf_field_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf Field Name"
+          },
+          "field_type": {
+            "type": "string",
+            "title": "Field Type"
+          },
+          "pos_x": {
+            "type": "number",
+            "title": "Pos X"
+          },
+          "pos_y": {
+            "type": "number",
+            "title": "Pos Y"
+          },
+          "width": {
+            "type": "number",
+            "title": "Width"
+          },
+          "height": {
+            "type": "number",
+            "title": "Height"
+          },
+          "font_size": {
+            "type": "number",
+            "title": "Font Size"
+          },
+          "recognize_source": {
+            "type": "string",
+            "title": "Recognize Source"
+          },
+          "confidence_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Score"
+          },
+          "is_confirmed": {
+            "type": "boolean",
+            "title": "Is Confirmed"
+          },
+          "row_version": {
+            "type": "integer",
+            "title": "Row Version"
+          },
+          "mapping": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FieldMappingOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "template_id",
+          "page_no",
+          "field_label_raw",
+          "pdf_field_name",
+          "field_type",
+          "pos_x",
+          "pos_y",
+          "width",
+          "height",
+          "font_size",
+          "recognize_source",
+          "confidence_score",
+          "is_confirmed",
+          "row_version"
+        ],
+        "title": "TemplateFieldOut"
+      },
+      "TemplateFieldUpdate": {
+        "properties": {
+          "row_version": {
+            "type": "integer",
+            "title": "Row Version"
+          },
+          "page_no": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page No"
+          },
+          "field_label_raw": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Label Raw"
+          },
+          "field_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field Type"
+          },
+          "pos_x": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pos X"
+          },
+          "pos_y": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pos Y"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width"
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height"
+          },
+          "font_size": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Font Size"
+          },
+          "is_confirmed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Confirmed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "row_version"
+        ],
+        "title": "TemplateFieldUpdate"
+      },
+      "TemplateOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "company_id": {
+            "type": "integer",
+            "title": "Company Id"
+          },
+          "template_name": {
+            "type": "string",
+            "title": "Template Name"
+          },
+          "template_code": {
+            "type": "string",
+            "title": "Template Code"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "original_pdf_url": {
+            "type": "string",
+            "title": "Original Pdf Url"
+          },
+          "page_count": {
+            "type": "integer",
+            "title": "Page Count"
+          },
+          "page_width": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Width"
+          },
+          "page_height": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page Height"
+          },
+          "parse_status": {
+            "type": "string",
+            "title": "Parse Status"
+          },
+          "parse_error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parse Error"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "company_id",
+          "template_name",
+          "template_code",
+          "version",
+          "original_pdf_url",
+          "page_count",
+          "page_width",
+          "page_height",
+          "parse_status",
+          "parse_error",
+          "is_active",
+          "created_at"
+        ],
+        "title": "TemplateOut"
+      },
+      "TemplateUploadResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "parse_status": {
+            "type": "string",
+            "title": "Parse Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "parse_status"
+        ],
+        "title": "TemplateUploadResponse"
+      },
+      "TransformRuleCreate": {
+        "properties": {
+          "rule_code": {
+            "type": "string",
+            "title": "Rule Code"
+          },
+          "rule_name": {
+            "type": "string",
+            "title": "Rule Name"
+          },
+          "rule_type": {
+            "type": "string",
+            "title": "Rule Type"
+          },
+          "rule_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Config"
+          },
+          "remark": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remark"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rule_code",
+          "rule_name",
+          "rule_type"
+        ],
+        "title": "TransformRuleCreate"
+      },
+      "TransformRuleOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "rule_code": {
+            "type": "string",
+            "title": "Rule Code"
+          },
+          "rule_name": {
+            "type": "string",
+            "title": "Rule Name"
+          },
+          "rule_type": {
+            "type": "string",
+            "title": "Rule Type"
+          },
+          "rule_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Config"
+          },
+          "remark": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remark"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "rule_code",
+          "rule_name",
+          "rule_type",
+          "rule_config",
+          "remark"
+        ],
+        "title": "TransformRuleOut"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

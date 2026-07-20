@@ -1,0 +1,123 @@
+/*
+ * Auth journey shell deltas — imported once by the consuming app AFTER
+ * "@acuity/ui/styles.css" (which layers the design-kit base tokens + the
+ * caliber-light overlay). Every colour / radius / motion / elevation value
+ * references a theme CSS variable (packages/theme/tokens.css); the few
+ * geometry literals are the FINAL.md auth-shell fills (card max-width 400px,
+ * type registers, optical lift), cited inline.
+ */
+
+.auth-ground {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--caliber-cream);
+  /* Responsive FINAL page padding: 16px mobile / 32px tablet (768px) /
+     48px desktop (1024px). Vertical 48px, plus 64px extra bottom so the card
+     centre rests above the geometric midline (shell optical lift). */
+  padding: 3rem 1rem 7rem;
+}
+@media (min-width: 768px) {
+  .auth-ground {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+@media (min-width: 1024px) {
+  .auth-ground {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+/* Card: the single elevated element on the page (FINAL selective list) —
+   the canonical RAISED tier (--elevation-base), never a bespoke shadow.
+   400px max width per the shell fill; hairline from the theme. */
+.auth-card {
+  width: 100%;
+  max-width: 400px; /* shell fill: conventional single-column sign-in width */
+  box-shadow: var(--elevation-base);
+  border-color: var(--border);
+}
+
+/* Wordmark — sizing + colour only: the title face, semibold weight and
+   canonical tracking (with the CJK reset) come from the shared font-title
+   base in @acuity/ui/styles.css; the markup carries the font-title class. */
+.auth-wordmark {
+  font-size: 1.5rem; /* ~24px, between body-lg and h3 per FINAL */
+  line-height: 1.1;
+  color: var(--caliber-navy);
+}
+
+/* Heading — the true --type-h3 register (31px / 1.20, per FINAL type scale).
+   Face + weight come from the shared heading base in @acuity/ui/styles.css
+   (h3 tracking is 0, the heading-tag default). */
+.auth-heading {
+  font-size: 1.9375rem; /* 31px = --type-h3 */
+  line-height: 1.2;
+  color: var(--caliber-ink);
+}
+
+/* Secondary text links — venice blue, the only secondary hue that clears AAA
+   on cream. Colour-only hover, never position (FINAL motion). */
+.auth-link {
+  color: var(--caliber-venice-blue);
+  transition: color var(--motion-fast) cubic-bezier(0.4, 0, 0.2, 1);
+}
+.auth-link:hover {
+  color: var(--caliber-venice-blue-deep);
+  text-decoration: underline;
+}
+
+/* Mono host eyebrow — uppercase, letter-spaced (mono is only for eyebrows /
+   tags / section numbers). Venice blue for AAA legibility. */
+.auth-host-eyebrow {
+  font-family: var(--font-family-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--caliber-venice-blue);
+}
+
+/* Focus rings ride the shared product-wide :focus-visible rule in
+   @acuity/ui/styles.css (FINAL focus grammar) — no auth-local restatement. */
+
+/* Footer strip — anchored to the viewport bottom on the ground, outside the
+   card, subordinate and non-interactive-context (shell §Footer). */
+.auth-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  /* Quiet via the muted ink step, not a blanket opacity: 0.55 washed the
+     venice links to 2.7:1 on cream (AA fail for the 12px labels). */
+  color: var(--caliber-ink-muted);
+  pointer-events: none;
+}
+.auth-footer a {
+  pointer-events: auto;
+}
+
+/* In-place form-region swap: content fades in over 200ms --ease-move while the
+   card frame stays put (shell §Interaction). */
+.auth-region {
+  animation: auth-region-in var(--motion-base) cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes auth-region-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Reduced motion collapses via the shared @acuity/ui block (the LD5 posture:
+   instant colour swaps, no load-bearing motion). */

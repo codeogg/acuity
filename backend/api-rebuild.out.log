@@ -1,0 +1,68 @@
+#1 [internal] load local bake definitions
+#1 reading from stdin 529B 0.1s done
+#1 DONE 0.1s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 542B 0.0s done
+#2 DONE 0.1s
+
+#3 [internal] load metadata for docker.io/library/python:3.12-slim
+#3 DONE 2.9s
+
+#4 [1/6] FROM docker.io/library/python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
+#4 resolve docker.io/library/python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de 0.2s done
+#4 DONE 0.3s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 2B 0.0s done
+#5 DONE 0.1s
+
+#6 [internal] load build context
+#6 transferring context: 19.09MB 5.0s
+#6 transferring context: 37.24MB 10.1s
+#6 transferring context: 42.06MB 15.3s
+#6 transferring context: 47.07MB 20.3s
+#6 transferring context: 62.63MB 25.5s
+#6 transferring context: 74.78MB 30.7s
+#6 transferring context: 101.61MB 35.8s
+#6 transferring context: 121.10MB 40.8s
+#6 transferring context: 137.11MB 45.8s
+#6 transferring context: 151.39MB 50.8s
+#6 transferring context: 166.86MB 55.8s
+#6 transferring context: 186.86MB 60.9s
+#6 transferring context: 211.99MB 66.0s
+#6 transferring context: 239.57MB 71.1s
+#6 transferring context: 267.16MB 76.1s
+#6 transferring context: 296.68MB 81.2s
+#6 transferring context: 327.43MB 86.3s
+#6 transferring context: 331.63MB 87.1s done
+#6 DONE 87.2s
+
+#7 [5/6] RUN pip install --upgrade pip && pip install -e .
+#7 CACHED
+
+#8 [2/6] WORKDIR /app
+#8 CACHED
+
+#9 [3/6] RUN apt-get update && apt-get install -y --no-install-recommends         build-essential libpq-dev     && rm -rf /var/lib/apt/lists/*
+#9 CACHED
+
+#10 [4/6] COPY pyproject.toml ./
+#10 CACHED
+
+#11 [6/6] COPY . .
+#11 CACHED
+
+#12 exporting to image
+#12 exporting layers 0.0s done
+#12 exporting manifest sha256:3d3dfe1e067361105a6a8ea657a5e6b59091b0a598b2cd731f094562353ebc1b 0.0s done
+#12 exporting config sha256:cf23004d45f6271b6a581bb7c259390b524bf4bc08815c1d95d84f9042422262 0.0s done
+#12 exporting attestation manifest sha256:018a7ad3cefdb061c54cfbcb0712c24fab700e46ae67035ea325d581081ddbe8
+#12 exporting attestation manifest sha256:018a7ad3cefdb061c54cfbcb0712c24fab700e46ae67035ea325d581081ddbe8 0.1s done
+#12 exporting manifest list sha256:38923194048ce6a650644129b1ba8a1218be30f94f8222787bf08f7de5506b7f 0.0s done
+#12 naming to docker.io/library/backend-api:latest done
+#12 unpacking to docker.io/library/backend-api:latest 0.0s done
+#12 DONE 0.3s
+
+#13 resolving provenance for metadata file
+#13 DONE 0.1s

@@ -1,0 +1,182 @@
+/*
+ * Site global stylesheet.
+ *
+ * The single @acuity/ui entry (Tailwind v4 engine + design-kit base tokens + the
+ * caliber-light overlay + the shared Caliber @theme layer that registers the
+ * font-* utilities and the accent palette). The webfonts come from the shared
+ * @acuity/ui/fonts module applied in the locale layout (injecting
+ * --font-fraunces / --font-noto-serif-tc / --font-noto-sans-tc /
+ * --font-plex-mono), which the shared --font-* utilities resolve first.
+ */
+@import "@acuity/ui/styles.css";
+
+@source "./**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+
+/*
+ * Marketing-surface tokens (site-scoped @theme extension).
+ *
+ * The Caliber marketing type ramp, structural breakpoints, and container
+ * widths, verbatim from the ratified spec (FINAL.md / the reference
+ * tokens.css + site.css type-scale utilities). Registering them here gives
+ * token-backed utilities (text-h1, hero:, max-w-content, ...) so page code
+ * never restates the scale as arbitrary values.
+ */
+@theme {
+  /* type ramp — fluid title steps + fixed supporting steps */
+  --text-display: clamp(40px, 6.4vw, 61px);
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.015em;
+  --text-h1: clamp(34px, 5vw, 49px);
+  --text-h1--line-height: 1.1;
+  --text-h1--letter-spacing: -0.01em;
+  --text-h2: clamp(28px, 4vw, 39px);
+  --text-h2--line-height: 1.15;
+  --text-h2--letter-spacing: -0.005em;
+  --text-h3: clamp(24px, 3vw, 31px);
+  --text-h3--line-height: 1.2;
+  --text-h3--letter-spacing: 0em;
+  --text-title-sm: 22px; /* dense title step (5-col workflow steps, lockups) */
+  --text-title-sm--line-height: 1.2;
+  --text-body-lg: 20px;
+  --text-body-lg--line-height: 1.55;
+  --text-chip: 11px; /* mock chip / category labels */
+  --text-chip--line-height: 1.2;
+  --text-tag: 10px; /* mono micro-tags (synthetic-data marker) */
+  --text-tag--line-height: 1.2;
+
+  /* letter-spacing steps (eyebrow tracking comes from the shared theme) */
+  --tracking-chip: 0.06em;
+  --tracking-tag: 0.1em;
+  --tracking-title: -0.005em;
+
+  /* structural breakpoints (reference site.css / product-ui.css) */
+  --breakpoint-mock: 560px; /* review-mock fields/source split */
+  --breakpoint-cards: 600px; /* 2-col info-card grids */
+  --breakpoint-hero: 900px; /* hero copy/figure split */
+
+  /* containers */
+  --container-content: 1200px; /* band content width */
+  --container-shell: 1320px; /* header/footer inner width */
+  --container-hero-wide: 44rem; /* wide hero copy measure */
+
+  /* boxed-canvas geometry (Fluence scale: 16 boxes/cards, 12 mid, pills) */
+  --radius-box: 1rem; /* full-bleed boxed bands (hero, footer, closing CTA) */
+  --radius-card: 0.75rem; /* cards, wells, figure panels */
+
+  /* boxed-band frame inset (the page-colour gap around boxed bands) */
+  --spacing-frame: 0.75rem;
+
+  /* uniform vertical rhythm between boxed sections (and before the footer) */
+  --spacing-band: 3.5rem;
+}
+
+/* Wider frame gap on desktop (Aeline's box inset). Plain :root override —
+   the spacing utilities reference the var, so this cascades responsively. */
+@media (min-width: 768px) {
+  :root {
+    --spacing-frame: 1.25rem;
+  }
+}
+
+/* Focus ring on coloured grounds reads cream (reference shared focus rule):
+   containers that paint a dark ground retarget the shared ring var. */
+.ground-dark {
+  --ring: var(--color-on-navy);
+}
+
+/* Review-mock fine detail with no utility equivalent (reference
+   product-ui.css): the linked-evidence input ring and the marked source
+   passage. Values derive from tokens via color-mix — no raw palette hex. */
+.mock-linked-input {
+  border-color: var(--color-glaucous);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-glaucous) 18%, transparent);
+}
+.mock-source mark {
+  background: color-mix(in srgb, var(--color-glaucous) 22%, transparent);
+  color: var(--color-ink);
+  border-bottom: 2px solid var(--color-glaucous);
+  padding: 1px 2px;
+  border-radius: 3px;
+}
+
+/*
+ * Boxed-hero ground: navy → deep-venice wash with a soft glaucous glow, all
+ * from Caliber tokens via color-mix — no raw palette hex. The glow layer is
+ * decorative (aria-hidden) and paints inside the box only.
+ */
+.hero-ground {
+  background:
+    radial-gradient(
+      80% 60% at 50% 0%,
+      color-mix(in srgb, var(--caliber-glaucous) 38%, transparent),
+      transparent 70%
+    ),
+    linear-gradient(
+      180deg,
+      var(--caliber-navy) 0%,
+      var(--caliber-venice-blue-deep) 130%
+    );
+}
+
+/*
+ * Entrance motion (allowed animation class: reveals + hero rise animate
+ * opacity/translate on mount or first view only — steady-state interaction
+ * still never moves geometry). Reduced-motion collapses everything via the
+ * global override below.
+ */
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    translate: 0 18px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+.hero-rise {
+  animation: hero-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* Button-label shrink-bounce is now the product-wide rule in
+   @acuity/ui/styles.css (slower, subtler, includes inline glyphs). */
+
+/* Kicker dot: optically-scaled bullet ahead of the mono uppercase label. */
+.kicker-dot {
+  font-size: 0.55em;
+}
+
+/* Arrow-chip hover motion (the allowed button animation): the diagonal arrow
+   slides out top-right while its twin slides in from bottom-left. Motion is
+   confined to the icon inside a fixed, overflow-clipped chip — the chip and
+   button never change geometry. Distances are icon-relative (percentage
+   translate), not layout dimensions, so no token applies. */
+.chip-arrow,
+.chip-arrow-in {
+  transition: translate var(--duration-slow, 320ms) cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.chip-arrow-in {
+  translate: -150% 150%;
+}
+.group\/btn:hover .chip-arrow {
+  translate: 150% -150%;
+}
+.group\/btn:hover .chip-arrow-in {
+  translate: 0 0;
+}
+
+/* Scroll reveal: hidden state is applied by JS only when the element starts
+   below the fold, so a no-JS render stays fully visible. */
+.reveal {
+  transition:
+    opacity 0.6s cubic-bezier(0.2, 0.7, 0.2, 1),
+    translate 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.reveal-hidden {
+  opacity: 0;
+  translate: 0 20px;
+}
+
+/* Reduced motion collapses via the shared @acuity/ui block (FINAL.md motion
+   section, default-on posture). */

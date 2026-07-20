@@ -1,0 +1,17 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Allow these dependencies' install scripts to run (msw copies its service
+# worker; sharp compiles the Next.js image optimizer; @swc/core and
+# @parcel/watcher are Next.js native-build accelerators; esbuild installs its
+# platform binary for the Vitest transform pipeline).
+allowBuilds:
+  "@parcel/watcher": true
+  "@swc/core": true
+  esbuild: true
+  msw: true
+  sharp: true
+
+minimumReleaseAgeExclude:
+  - '@component-core/ui'

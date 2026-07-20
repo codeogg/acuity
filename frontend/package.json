@@ -1,0 +1,28 @@
+{
+  "name": "acuity-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Acuity frontend monorepo: four Next.js surfaces on a shared design-kit-driven UI foundation.",
+  "type": "module",
+  "packageManager": "pnpm@11.5.3",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "eslint .",
+    "typecheck": "turbo run typecheck",
+    "generate": "turbo run generate",
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "check:tokens": "node scripts/check-tokens.mjs",
+    "gen:api-docs": "node scripts/gen-api-docs.mjs",
+    "test": "turbo run test",
+    "test:e2e": "pnpm --filter @acuity/quality run test:e2e"
+  },
+  "devDependencies": {
+    "eslint": "^9.17.0",
+    "turbo": "^2.5.0",
+    "typescript": "~5.9.2"
+  }
+}

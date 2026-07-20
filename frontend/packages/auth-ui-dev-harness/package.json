@@ -1,0 +1,26 @@
+{
+  "name": "@acuity/auth-ui-dev-harness",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Development and e2e harness for @acuity/auth-ui: a minimal consuming Next.js app mounting the doctor and operator journey presets. Start with `pnpm --filter @acuity/auth-ui dev` (port 3006). Kept as a sibling package so the workspace link to @acuity/auth-ui never nests inside the package it targets (a nested link forms a symlink cycle that hangs the dev server's source scanner).",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3006"
+  },
+  "dependencies": {
+    "@acuity/auth-ui": "workspace:*",
+    "next": "^15.2.0",
+    "next-intl": "^4.13.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@acuity/config": "workspace:*",
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "~5.9.2"
+  }
+}

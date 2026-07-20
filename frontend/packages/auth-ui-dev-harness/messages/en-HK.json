@@ -1,0 +1,16 @@
+{
+  "harness": {
+    "homeTitle": "Auth mount harness",
+    "homeLede": "Review surface for the shared authentication journeys. Every state is reachable from the links below.",
+    "doctorSignIn": "Doctor sign-in",
+    "operatorSignIn": "Operator sign-in",
+    "formsTitle": "Work home",
+    "formsLede": "A protected doctor destination. Arriving here proves the post-authentication handoff.",
+    "clinicsTitle": "Clinics portfolio",
+    "clinicsLede": "A protected operator destination. Arriving here proves the console handoff.",
+    "signOut": "Sign out",
+    "expireSession": "Simulate session expiry",
+    "checking": "Checking your session…",
+    "signedInAs": "Signed in as"
+  }
+}

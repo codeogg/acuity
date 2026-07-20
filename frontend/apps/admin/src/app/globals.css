@@ -1,0 +1,12 @@
+@import "@acuity/ui/styles.css";
+@import "@acuity/auth-ui/styles.css";
+
+@source "./**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+@source "../../node_modules/@acuity/auth-ui/src/**/*.{ts,tsx}";
+
+/*
+ * No console-local styles: status tones, fonts, the caliber palette, the
+ * eyebrow register, skeleton shimmer, slim scrollbars and the reduced-motion
+ * posture all come from the shared theme (@acuity/ui styles + tokens).
+ */

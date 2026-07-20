@@ -1,0 +1,62 @@
+# 复制为 app.conf 并替换 YOUR_DOMAIN
+# cp app.conf.template app.conf
+#
+# 首次无证书：先用纯 HTTP 块启动，certbot 签完证再启用 HTTPS 块
+
+upstream web_upstream {
+    server web:3000;
+}
+
+upstream api_upstream {
+    server api:8000;
+}
+
+# ---------- HTTP（Let's Encrypt 验证 + 强制跳转 HTTPS）----------
+server {
+    listen 80;
+    server_name YOUR_DOMAIN;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+# ---------- HTTPS ----------
+server {
+    listen 443 ssl http2;
+    server_name YOUR_DOMAIN;
+
+    ssl_certificate     /etc/letsencrypt/live/YOUR_DOMAIN/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/YOUR_DOMAIN/privkey.pem;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+
+    # 前端
+    location / {
+        proxy_pass http://web_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # API（浏览器同源 /api）
+    location /api/ {
+        proxy_pass http://api_upstream;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # 本地存储 PDF 直出
+    location /local-storage/ {
+        proxy_pass http://api_upstream;
+        proxy_set_header Host $host;
+    }
+}

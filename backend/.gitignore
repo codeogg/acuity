@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+apps/web/lib/api/generated/
+
+# Env & secrets
+.env
+.env.local
+.env.*.local
+secrets/
+*.pem
+service-account*.json
+
+# 对象存储本地挂载 / 生成文件
+storage/
+uploads/
+generated/
+
+# IDE / OS
+.idea/
+.vscode/*
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db

@@ -1,0 +1,63 @@
+{
+  "name": "@acuity/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "One typed fetch layer over the backend /api/* contract, with a swappable auth adapter and MSW mock handlers for mock-first development.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    },
+    "./mocks": {
+      "types": "./src/mocks/msw.ts",
+      "import": "./src/mocks/msw.ts"
+    },
+    "./mocks/browser-runtime": {
+      "types": "./src/mocks/browser-runtime.ts",
+      "import": "./src/mocks/browser-runtime.ts"
+    },
+    "./mocks/browser": {
+      "types": "./src/mocks/browser.ts",
+      "import": "./src/mocks/browser.ts"
+    },
+    "./mocks/server": {
+      "types": "./src/mocks/server.ts",
+      "import": "./src/mocks/server.ts"
+    },
+    "./mocks/handlers": {
+      "types": "./src/mocks/handlers.ts",
+      "import": "./src/mocks/handlers.ts"
+    },
+    "./mocks/fixtures": {
+      "types": "./src/mocks/fixtures/index.ts",
+      "import": "./src/mocks/fixtures/index.ts"
+    },
+    "./mocks/stores": {
+      "types": "./src/mocks/stores/index.ts",
+      "import": "./src/mocks/stores/index.ts"
+    },
+    "./mocks/scenario": {
+      "types": "./src/mocks/scenario.ts",
+      "import": "./src/mocks/scenario.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "gen:endpoint-checklist": "node scripts/gen-endpoint-checklist.mjs",
+    "verify": "node scripts/verify-data-layer.mjs",
+    "test": "node scripts/verify-data-layer.mjs"
+  },
+  "dependencies": {
+    "@acuity/types": "workspace:*",
+    "msw": "^2.7.0"
+  },
+  "devDependencies": {
+    "@acuity/config": "workspace:*",
+    "@types/node": "^22.10.0",
+    "typescript": "~5.9.2"
+  }
+}

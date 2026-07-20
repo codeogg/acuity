@@ -1,0 +1,38 @@
+# dependencies
+node_modules/
+
+# builds
+dist/
+.next/
+out/
+.turbo/
+coverage/
+
+# generated (regenerated from openapi.snapshot.json via `pnpm generate`)
+packages/types/src/generated/
+
+# env (values never committed; env var NAMES documented in README)
+.env
+.env*.local
+
+# os / editor
+.DS_Store
+*.log
+
+# TS incremental build cache
+*.tsbuildinfo
+
+# local working paths (never committed, at any depth)
+tasks/
+memory/
+.claude/
+.codex/
+.agents/
+CLAUDE.md
+AGENTS.md
+*.handoff.md
+
+# test artifacts
+test-results/
+playwright-report/
+audit-out/

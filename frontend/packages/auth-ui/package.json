@@ -1,0 +1,62 @@
+{
+  "name": "@acuity/auth-ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared authentication journey set + mount kit for the Acuity surfaces: the centered-card sign-in shell (doctor warm / operator hardened variants), the full journey machine over the swappable auth adapter, a session-guard middleware factory, sign-out wiring, and bilingual package-local catalogs.",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    },
+    "./middleware": {
+      "types": "./src/mount/middleware.ts",
+      "import": "./src/mount/middleware.ts"
+    },
+    "./messages": {
+      "types": "./src/messages.ts",
+      "import": "./src/messages.ts"
+    },
+    "./styles.css": "./src/styles.css"
+  },
+  "files": [
+    "src",
+    "messages"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "dev": "pnpm --filter @acuity/auth-ui-dev-harness dev",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@acuity/api-client": "workspace:*",
+    "@acuity/i18n": "workspace:*",
+    "@acuity/types": "workspace:*",
+    "@acuity/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "next": ">=15",
+    "next-intl": ">=4",
+    "react": ">=19",
+    "react-dom": ">=19"
+  },
+  "devDependencies": {
+    "@acuity/config": "workspace:*",
+    "@playwright/test": "^1.50.0",
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "next": "^15.2.0",
+    "next-intl": "^4.13.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "~5.9.2",
+    "vitest": "^3.2.0"
+  }
+}

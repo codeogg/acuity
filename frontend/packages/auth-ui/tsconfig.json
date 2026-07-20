@@ -1,0 +1,9 @@
+{
+  "extends": "@acuity/config/tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["src", "test", "messages"],
+  "exclude": ["node_modules"]
+}

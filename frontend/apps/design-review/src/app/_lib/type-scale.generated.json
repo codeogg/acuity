@@ -1,0 +1,87 @@
+{
+  "$generated": "by scripts/generate-type-scale.mjs from acuity-dev canonical tokens — do not hand-edit",
+  "$source": "docs/design/system/tokens/{primitive,semantic}.tokens.json",
+  "roles": [
+    {
+      "id": "display",
+      "family": "title",
+      "rem": "3.815rem",
+      "sizePx": 61,
+      "lineHeight": "1.05",
+      "weight": 600,
+      "letterSpacing": "-0.015em"
+    },
+    {
+      "id": "h1",
+      "family": "title",
+      "rem": "3.052rem",
+      "sizePx": 49,
+      "lineHeight": "1.1",
+      "weight": 600,
+      "letterSpacing": "-0.01em"
+    },
+    {
+      "id": "h2",
+      "family": "title",
+      "rem": "2.25rem",
+      "sizePx": 36,
+      "lineHeight": "1.15",
+      "weight": 600,
+      "letterSpacing": "-0.005em"
+    },
+    {
+      "id": "h3",
+      "family": "title",
+      "rem": "1.875rem",
+      "sizePx": 30,
+      "lineHeight": "1.2",
+      "weight": 600,
+      "letterSpacing": "0"
+    },
+    {
+      "id": "body-lg",
+      "family": "body",
+      "rem": "1.25rem",
+      "sizePx": 20,
+      "lineHeight": "1.55",
+      "weight": 400,
+      "letterSpacing": "0"
+    },
+    {
+      "id": "body",
+      "family": "body",
+      "rem": "1rem",
+      "sizePx": 16,
+      "lineHeight": "1.6",
+      "weight": 400,
+      "letterSpacing": "0"
+    },
+    {
+      "id": "small",
+      "family": "body",
+      "rem": "0.875rem",
+      "sizePx": 14,
+      "lineHeight": "1.5",
+      "weight": 400,
+      "letterSpacing": "0"
+    },
+    {
+      "id": "caption",
+      "family": "body",
+      "rem": "0.75rem",
+      "sizePx": 12,
+      "lineHeight": "1.4",
+      "weight": 400,
+      "letterSpacing": "0.01em"
+    },
+    {
+      "id": "eyebrow",
+      "family": "mono",
+      "rem": "0.75rem",
+      "sizePx": 12,
+      "lineHeight": "1.2",
+      "weight": 500,
+      "letterSpacing": "0.08em"
+    }
+  ]
+}

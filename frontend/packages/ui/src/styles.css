@@ -1,0 +1,410 @@
+/*
+ * Acuity UI stylesheet — the single CSS entry every app imports once.
+ *
+ * Layer order (load-bearing):
+ *   1. Tailwind v4 engine.
+ *   2. @component-core/ui base tokens (:root semantic vars + .dark) and the
+ *      @theme-inline mapping that binds Tailwind color/spacing/radius utilities
+ *      to those vars.
+ *   3. The caliber-light overlay, which REDEFINES the same semantic vars with
+ *      Acuity's values — imported AFTER the base so it wins the cascade. Every
+ *      design-kit component re-themes through this layer alone.
+ *
+ * @source globs tell Tailwind to scan the design-kit build output and the app
+ * for utility classes, so classes emitted inside the packaged components are
+ * present in the generated CSS.
+ */
+
+@import "tailwindcss";
+
+/* design-kit base: semantic tokens + the @theme-inline utility binding */
+@import "@component-core/ui/tokens.css";
+@import "@component-core/ui/tailwind.theme.css";
+
+/* Acuity caliber-light overlay (must come after the base tokens) */
+@import "@component-core/acuity/tokens.css";
+
+/* Scan the design-kit component build for utility classes. Resolves from this
+   file's location (packages/ui/src/styles.css) through the pnpm-created
+   package symlink at packages/ui/node_modules/@component-core/ui — a stable path
+   (unlike the hashed .pnpm store dir). The app adds its own @source glob for
+   its components. */
+@source "../node_modules/@component-core/ui/dist/index.js";
+
+/* Scan this package's own shared components (icons, status badge, shell,
+   ops-grid) for utility classes. */
+@source "./**/*.{ts,tsx}";
+
+/* Enable class-based dark mode (`.dark` on <html> or a parent). */
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Shared Caliber @theme layer — the utilities the design-kit @theme-inline
+ * binding (color/spacing/radius only) does NOT expose, registered once here so
+ * every app gets them from one place instead of re-declaring a local @theme
+ * block:
+ *   1. font-family utilities (font-title / font-sans / font-mono) bound to the
+ *      Caliber font stacks. Each resolves an optional per-app next/font variable
+ *      first, then falls back to the Caliber --font-family-* stack from the theme
+ *      overlay (which already leads with the real face, e.g. Fraunces). An app
+ *      that self-hosts the webfont via next/font (e.g. apps/site injecting
+ *      --font-fraunces) renders that face; an app that does not still gets the
+ *      Caliber fallback stack — never a dead utility.
+ *   2. the Caliber accent palette (navy / venice / glaucous / sky / cream / ink /
+ *      steel / sage / on-navy + the four field-state accents) as named color
+ *      utilities (bg-navy, text-venice, border-glaucous, …), each mapped to a
+ *      Caliber primitive var from the overlay — never an ad-hoc hex.
+ * Every value references a Caliber CSS variable defined by the overlay
+ * (@component-core/acuity/tokens.css) or an app's next/font wiring.
+ */
+@theme inline {
+  /* Font families. --font-fraunces / --font-plex-mono / --font-noto-serif-tc /
+     --font-noto-sans-tc are injected per-app by next/font when present; the
+     Caliber --font-family-* vars (from the overlay) are the resolved fallbacks. */
+  --font-sans: var(--font-body);
+  --font-title:
+    var(--font-fraunces), var(--font-noto-serif-tc), var(--font-family-title);
+  --font-mono: var(--font-plex-mono), var(--font-family-mono);
+
+  /* Caliber accent palette — named brand-color utilities. */
+  --color-navy: var(--caliber-navy);
+  --color-navy-deep: var(--caliber-navy-deep);
+  --color-navy-bright: var(--caliber-navy-bright);
+  --color-ink: var(--caliber-ink);
+  --color-ink-muted: var(--caliber-ink-muted);
+  --color-cream: var(--caliber-cream);
+  --color-cream-contrast: var(--caliber-cream-contrast);
+  --color-on-navy: var(--caliber-cream);
+  --color-glaucous: var(--caliber-glaucous);
+  --color-venice: var(--caliber-venice-blue);
+  --color-venice-deep: var(--caliber-venice-blue-deep);
+  --color-slate-blue: var(--caliber-slate-blue);
+  --color-sky-blue: var(--caliber-sky-blue);
+  --color-dust-blue: var(--caliber-dust-blue);
+  --color-muted-iris: var(--caliber-muted-iris);
+  --color-dusty-rose: var(--caliber-dusty-rose);
+  --color-lavender-grey: var(--caliber-lavender-grey);
+  --color-dusty-lilac: var(--caliber-dusty-lilac);
+  --color-soft-plum: var(--caliber-soft-plum);
+  --color-champagne: var(--caliber-champagne);
+  --color-mist-lavender: var(--caliber-mist-lavender);
+  --color-wisteria: var(--caliber-wisteria);
+  --color-blush-stone: var(--caliber-blush-stone);
+  --color-mauve-taupe: var(--caliber-mauve-taupe);
+  --color-rose-quartz: var(--caliber-rose-quartz);
+  --color-soft-coral: var(--caliber-soft-coral);
+  --color-pale-gold: var(--caliber-pale-gold);
+  --color-pale-gold-deep: var(--caliber-pale-gold-deep);
+  --color-champagne-ochre: var(--caliber-champagne-ochre);
+  --color-plum: var(--caliber-plum);
+  --color-sage: var(--caliber-sage);
+  --color-eucalyptus: var(--caliber-eucalyptus);
+  --color-cranberry: var(--caliber-cranberry);
+  --color-cranberry-deep: var(--caliber-cranberry-deep);
+  --color-steel: var(--caliber-steel-grey);
+
+  /* Surface + border utilities (surface / surface-contrast / border-strong). */
+  --color-surface: var(--caliber-cream);
+  --color-surface-contrast: var(--caliber-cream-contrast);
+  --color-border-strong: var(--caliber-border-strong);
+
+  /* Console status-tone utilities (bg-tone-info, text-tone-danger, ...). */
+  --color-tone-neutral: var(--tone-neutral);
+  --color-tone-info: var(--tone-info);
+  --color-tone-success: var(--tone-success);
+  --color-tone-warning: var(--tone-warning);
+  --color-tone-warning-glyph: var(--tone-warning-glyph);
+  --color-tone-danger: var(--tone-danger);
+  --color-tone-accent: var(--tone-accent);
+
+  /* Field-state accents (doctor-app + synthetic mock four-status model). */
+  --color-state-optional: var(--state-optional);
+  --color-state-needs: var(--state-needs-input);
+  --color-state-drafted: var(--state-drafted);
+  --color-state-confirmed: var(--state-confirmed);
+}
+
+/* Static shared tokens (emitted as CSS vars, not inlined): the Caliber
+   eyebrow tracking step, registered once so no surface restates it. */
+@theme {
+  --tracking-eyebrow: 0.08em;
+}
+
+/*
+ * Overlay z-scale — the one ladder every floating element consumes via
+ * z-(--z-*) utilities. Shell chrome (bottom tab bar, mobile top bars) sits
+ * below the ladder on the standard z-40 step; in-page sticky elements use
+ * z-30 or lower.
+ */
+:root {
+  --z-overlay: 60; /* blocking overlays: the idle lock */
+  --z-overlay-raised: 70; /* session/system overlays above the idle lock */
+  --z-dev-chrome: 75; /* dev-only floating controls (scenario switcher) */
+  --z-toast: 80; /* transient status: toasts, consent, locale suggestions */
+  --z-handoff: 90; /* the cross-channel hand-off panel, above consent */
+  --z-skip-link: 100; /* skip links above everything */
+}
+
+/*
+ * Overlay sizing must be anchored to the viewport. The underlying Radix
+ * portal can establish a narrow containing block, which makes percentage
+ * widths resolve to only a few pixels. That leaves the white surface behind
+ * while dialog content overflows and CJK messages wrap one character per line.
+ * Use vw here so every shared dialog remains a real card.
+ */
+[data-slot="dialog-content"],
+[data-slot="alert-dialog-content"] {
+  box-sizing: border-box;
+  width: min(calc(100vw - 2rem), var(--acuity-dialog-width, 24rem));
+  max-width: calc(100vw - 2rem);
+  min-width: 0;
+}
+
+/* Opt-in wider form dialog. Mobile width still respects the 1rem side inset. */
+.dialog-wide {
+  --acuity-dialog-width: 34rem;
+}
+
+/*
+ * Title elements default to the Caliber serif at semibold. Traditional-Chinese
+ * titles pick up Noto Serif TC via the --font-title stack. Body defaults to the
+ * Caliber system-sans; a lang="zh-Hant-HK" root leads with Noto Sans TC.
+ */
+:where(h1, h2, h3, h4) {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-optical-sizing: auto;
+  text-wrap: balance;
+}
+
+/* The title face carries one canonical weight AND the canonical Fraunces
+   title tracking wherever it is used — not only on heading tags. The font-title
+   utility sets only the family, so a title rendered on a non-heading element
+   (the wordmark, a card title, an on-navy label) would otherwise fall back to
+   weight 400 and untracked, and read as a lighter, wider, different face.
+   Default every font-title element to the same semibold + canonical -0.005em
+   tracking as the small title steps; this sits in the base layer, so an
+   explicit font-* / tracking-* utility (or the site's larger text-* type ramp)
+   still wins. Surfaces without their own type ramp (app, admin) get the skinny
+   title look from here. */
+@layer base {
+  .font-title {
+    font-weight: 600;
+    font-optical-sizing: auto;
+    letter-spacing: -0.005em;
+  }
+}
+
+/* CJK title runs do not take the Latin negative tracking (the Chinese title
+   face is optically squeezed by it). Reset the base font-title tracking to
+   normal for zh runs; the title-tracking rule below is already :lang(en)-only. */
+:lang(zh) .font-title,
+.font-title:lang(zh) {
+  letter-spacing: normal;
+}
+
+/* Latin titles take the Caliber negative tracking; reset for CJK runs so the
+   Chinese title face is not optically squeezed. */
+:lang(en) :where(.title-tracking) {
+  letter-spacing: -0.01em;
+}
+
+/* Body face per script: Latin body is the Caliber system-sans stack; a
+   zh-Hant root leads with Noto Sans TC (loaded via @acuity/ui/fonts). The
+   font-sans utility inlines var(--font-body), so this switch retargets every
+   body run without per-component overrides. */
+:root {
+  --font-body: var(--font-family-sans);
+}
+:root:lang(zh) {
+  --font-body: var(--font-noto-sans-tc), var(--font-family-body-tc);
+}
+
+/* The Caliber eyebrow register (12px mono uppercase, eyebrow tracking) as one
+   class so surfaces never restate its metrics. */
+.t-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-eyebrow);
+}
+
+/*
+ * Checkbox visibility: the hairline border token vanishes on the accent hover
+ * wash (row hover), so unchecked checkboxes take the steel border step —
+ * clearly visible on cream AND on hovered rows. Un-layered, so it wins over
+ * the utility-layer border classes on the base component.
+ */
+[data-slot="checkbox"]:not([data-state="checked"]) {
+  border-color: var(--caliber-steel-grey);
+}
+
+/*
+ * The one scrollbar (Notes-style overlay): a slim rounded ink-tinted thumb on
+ * a transparent track, hugging the container edge, stepping darker on hover.
+ * The transparent-border + padding-box clip keeps a 6px visual thumb with a
+ * 2px breathing gap; styled webkit scrollbars occupy layout space, so a
+ * horizontal bar sits BELOW the content row rather than over it.
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--caliber-ink) 24%, transparent)
+    transparent;
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--caliber-ink) 24%, transparent);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background-color: color-mix(in srgb, var(--caliber-ink) 42%, transparent);
+  background-clip: padding-box;
+  border: 2px solid transparent;
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/*
+ * The one slim-scrollbar utility: a narrower, lower-contrast variant of the
+ * global scrollbar for internally-scrolling panes (review panes, drawers,
+ * facet lists). Colour-only hover; layout unaffected.
+ */
+.slim-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-strong) transparent;
+}
+.slim-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.slim-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.slim-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 999px;
+}
+.slim-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--caliber-steel-grey);
+}
+
+/*
+ * The one button hover motion: label text and inline glyphs share a gentle
+ * shrink-bounce (scale dips to 0.96 and springs back) inside a FIXED button
+ * box — geometry never moves. The ArrowChip's sliding arrows are excluded
+ * (they carry their own motion); opt any element out with [data-no-bounce].
+ * Reduced motion collapses via the shared block at the end of this file.
+ */
+@keyframes acuity-label-bounce {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(0.96);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+[data-slot="button"]:not(:disabled):hover
+  :is(svg, .btn-label):not(.chip-arrow, .chip-arrow-in, [data-no-bounce]) {
+  animation: acuity-label-bounce 0.6s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+.btn-label {
+  display: inline-block;
+}
+
+/*
+ * The one spinner animation (loading.tsx Spinner): pure rotation, CONSTANT
+ * 2px stroke at every size, faint currentColor track + solid currentColor
+ * arc. No scale pulse anywhere. Reduced motion collapses via the shared
+ * block at the end of this file.
+ */
+.acuity-spinner {
+  display: inline-block;
+  flex-shrink: 0;
+  border: 2px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-top-color: currentColor;
+  border-radius: 9999px;
+  animation: acuity-spin 0.8s linear infinite;
+}
+@keyframes acuity-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/*
+ * The one skeleton shimmer (loading.tsx Shimmer, FINAL loading grammar): the
+ * placeholder is a LOW-OPACITY ACCENT TINT, never grey (a grey block reads as
+ * a load error), with a slow highlight sweep. Fill and sweep ride the theme's
+ * loading tokens. Shape compositions stay app-side; under reduced motion the
+ * sweep collapses to the static tint and the labelled cue
+ * (.acuity-reduced-only) becomes visible — never a motionless silent blank.
+ */
+@keyframes acuity-shimmer-sweep {
+  0% {
+    background-position: -150% 0;
+  }
+  100% {
+    background-position: 250% 0;
+  }
+}
+.acuity-shimmer {
+  background-color: var(--color-loading-placeholder);
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-loading-placeholder-shimmer) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  background-repeat: no-repeat;
+  animation: acuity-shimmer-sweep 1.6s ease-in-out infinite;
+}
+.acuity-reduced-only {
+  display: none;
+}
+
+/* Branded product-wide focus ring (FINAL.md focus grammar): one shared
+   :focus-visible rule at zero specificity, so components that draw their own
+   ring (outline-none + ring utilities) override it cleanly. */
+@layer base {
+  :where(:focus-visible) {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+/*
+ * The one reduced-motion posture (FINAL motion grammar, default-on): collapse
+ * every animation and transition to an instant swap — colour changes land,
+ * nothing moves. Skeletons keep a static accent tint (never a motionless
+ * grey block) and reveal the labelled cue.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  .acuity-shimmer {
+    animation: none;
+    background-image: none;
+  }
+  .acuity-reduced-only {
+    display: block;
+  }
+}

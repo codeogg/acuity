@@ -1,0 +1,37 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "stream",
+  "tasks": {
+    "generate": {
+      "inputs": ["openapi.json", "presets/**", "scripts/**"],
+      "outputs": ["src/generated/**", "tokens.css"]
+    },
+    // The harness generators read the theme's tokens.css plus (best-effort)
+    // the acuity-dev canonical tokens outside this repo, so the task orders
+    // after the theme build and stays uncached.
+    "@acuity/design-review#generate": {
+      "dependsOn": ["@component-core/acuity#generate"],
+      "cache": false
+    },
+    "build": {
+      "dependsOn": ["^build", "generate"],
+      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+    },
+    "typecheck": {
+      "dependsOn": ["^build", "generate"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "test": {
+      "dependsOn": ["^build", "generate"],
+      "outputs": []
+    },
+    "test:e2e": {
+      "dependsOn": ["^build"],
+      "cache": false,
+      "outputs": []
+    }
+  }
+}

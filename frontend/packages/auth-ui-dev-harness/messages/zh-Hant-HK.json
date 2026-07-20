@@ -1,0 +1,16 @@
+{
+  "harness": {
+    "homeTitle": "登入流程測試台",
+    "homeLede": "共用登入流程的審視介面。以下連結可到達每一個狀態。",
+    "doctorSignIn": "醫生登入",
+    "operatorSignIn": "營運人員登入",
+    "formsTitle": "工作主頁",
+    "formsLede": "受保護的醫生目的地。到達此頁即代表登入後轉接成功。",
+    "clinicsTitle": "診所總覽",
+    "clinicsLede": "受保護的營運目的地。到達此頁即代表主控台轉接成功。",
+    "signOut": "登出",
+    "expireSession": "模擬工作階段過期",
+    "checking": "正在檢查你的工作階段⋯",
+    "signedInAs": "已登入為"
+  }
+}

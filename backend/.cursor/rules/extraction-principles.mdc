@@ -1,0 +1,52 @@
+---
+description: 病历信息提取不可违背的原则性约束（详见 EXTRACTION_PRINCIPLES.zh-CN.md）
+globs: apps/api/src/modules/ai_extraction/**,apps/api/src/modules/pdf_extraction/**,apps/api/src/modules/claims/**,apps/api/src/tasks/**,apps/api/src/modules/pdf_generation/**,EXTRACTION_PRINCIPLES.zh-CN.md,REQUIREMENTS.zh-CN.md,病历PDF智能提取_功能文档.md
+alwaysApply: true
+---
+
+# 信息提取系统约束
+
+实现或修改病历/文档信息提取相关代码时，必须遵守 `EXTRACTION_PRINCIPLES.zh-CN.md`（源自 `REQUIREMENTS.zh-CN.md`）。以下为不可违背的硬约束。
+
+## 四条底线
+
+1. **如实提取** — 文档有且能确定的，必须提取并标准化
+2. **如实缺失** — 文档没有的，必须 `missing`；禁止编造、推断、跨文档搬运
+3. **剔除干扰** — 噪声不得进入任何理赔字段
+4. **绑定正确** — 字段必须归属正确病人、正确就诊
+
+> 理赔场景：宁可漏提 / 低置信 / 标缺失，也不可填错人、填错就诊、填干扰项、填不存在的数据。
+
+## 输出契约（每个标准字段）
+
+必须输出：`value`、`status`（`extracted` | `missing` | `low_confidence`）、`confidence`、`source`（至少页码）。
+
+- 无依据 → `value: null`，`status: missing`
+- OCR/打码/冲突/低质量 → 降低 `confidence` 或 `low_confidence`，**禁止乱码或猜测值充数**
+
+## 禁止行为（一票否决）
+
+- 绑错病人（多病人文档须取「索償對象」）
+- 臆造取值（文档不存在的数据）
+- 干扰项入字段（积分≠会员号、网络代码≠保单号、预约编号≠收据号等）
+- 补全打码 HKID（`A12XXX6(7)` 不得猜测遮蔽位）
+- 歧义日期默默解析错（`MM/DD/YYYY` 须判定或标歧义）
+- 跨就诊串用；把既往/慢性病当作本次理赔诊断或手术
+- 冲突未显性处理（初步诊断当最终、总额与明细矛盾须提示）
+
+## 标准化
+
+- 日期 → `YYYY-MM-DD`；金额 → 数值 + HKD
+- 枚举映射到标准值（gender: Male/Female；ward_class: Private/Semi-private/Standard/ICU/Day）
+- 中英标签映射同一标准字段；医生姓名与注册编号须拆分
+- 姓名用 `patient_name_cn` / `patient_name_en`；其余字段对齐 REQUIREMENTS 命名
+
+## 实现检查清单
+
+编写 Prompt、解析、校验、测试时确认：
+
+- [ ] 全标准字段均有 `status`，无静默遗漏
+- [ ] 缺失与低置信有区分，未把 missing 伪装成 extracted
+- [ ] 干扰项黑名单未进入字段映射
+- [ ] 多病人/多就诊/全量病历场景有归属约束
+- [ ] 冲突与低质量场景降低置信度并触发复核标记

@@ -1,0 +1,485 @@
+{
+  "$description": "Caliber (light-only) preset for acuity-dev. A tier-2 semantic overlay on the shared design-kit base (pinned 499fb3a) - it changes token values only, never component structure. Navy core (#072052) on a bright warm-cream field (#FFFEFD), an 8/10/16px boxed-canvas radius scale, narrow-spread navy-tinted soft elevation, Fraunces 600 titles over a system-sans body, IBM Plex Mono accents. Every value is verbatim from docs/design/branding/FINAL.md, which mirrors the ratified acuity-labs ADR 0040/0042 palette; values flagged ink-muted are derived per FINAL.md's auditable-fill convention. Light mode only: dark mode is out of scope for Phase 1 (FINAL.md Dark mode). Applied over the base the same way canvas/dusk/bloom are - the component tier is untouched, so the whole roster re-themes through the semantic CSS-var layer alone.",
+  "$preset": {
+    "name": "caliber-light",
+    "title": "Caliber (light)",
+    "summary": "Warm clinical: navy core on bright cream, hairline structure, narrow soft elevation, 8/10/16px radius scale, serif titles - light only.",
+    "seed": "#072052"
+  },
+  "primitive": {
+    "color": {
+      "$type": "color",
+      "caliber": {
+        "$description": "The ratified Caliber palette, verbatim from docs/design/branding/FINAL.md (acuity-labs ADR 0040/0042). Neutrals + accents the Caliber semantic roles alias. ink-muted is a derived auditable fill (~5.9:1 on cream, AA normal) since FINAL.md defines no muted-ink value.",
+        "navy": {
+          "$value": "#072052"
+        },
+        "ink": {
+          "$value": "#0A122A"
+        },
+        "ink-muted": {
+          "$value": "#5C6478"
+        },
+        "cream": {
+          "$value": "#FFFEFD"
+        },
+        "cream-contrast": {
+          "$value": "#FCFBF9"
+        },
+        "hover": {
+          "$value": "#ECEFF4",
+          "$description": "Interactive hover/selected surface - a perceptible step above cream. cream-contrast is intentionally near-invisible for resting fills, so it cannot double as hover feedback; this reads as a calm cool-neutral tint on the warm cream ground."
+        },
+        "border": {
+          "$value": "#EAE6E0"
+        },
+        "border-strong": {
+          "$value": "#DAD3CA"
+        },
+        "sky-blue": {
+          "$value": "#C7D9E6"
+        },
+        "glaucous": {
+          "$value": "#6082B6"
+        },
+        "venice-blue": {
+          "$value": "#16587B"
+        },
+        "slate-blue": {
+          "$value": "#629BB5"
+        },
+        "dust-blue": {
+          "$value": "#8AA8C0"
+        },
+        "muted-iris": {
+          "$value": "#8F89B7"
+        },
+        "dusty-rose": {
+          "$value": "#DEBEC8"
+        },
+        "lavender-grey": {
+          "$value": "#C4C7DB"
+        },
+        "dusty-lilac": {
+          "$value": "#C5BDD5"
+        },
+        "soft-plum": {
+          "$value": "#867A98"
+        },
+        "champagne": {
+          "$value": "#E5DBCF"
+        },
+        "mist-lavender": {
+          "$value": "#D0CCE1"
+        },
+        "wisteria": {
+          "$value": "#BEB7D5"
+        },
+        "blush-stone": {
+          "$value": "#E7D4D4"
+        },
+        "mauve-taupe": {
+          "$value": "#D4BCC8"
+        },
+        "rose-quartz": {
+          "$value": "#F0E0E1"
+        },
+        "cranberry": {
+          "$value": "#C86F84"
+        },
+        "soft-coral": {
+          "$value": "#D9958B"
+        },
+        "pale-gold": {
+          "$value": "#E1D2A7"
+        },
+        "champagne-ochre": {
+          "$value": "#DCCF9B"
+        },
+        "sage": {
+          "$value": "#7EB1B2"
+        },
+        "eucalyptus": {
+          "$value": "#518F94"
+        },
+        "plum": {
+          "$value": "#8A7EA0"
+        },
+        "steel-grey": {
+          "$value": "#98A1B1"
+        },
+        "navy-deep": {
+          "$value": "#04153a",
+          "$description": "Darkened navy (pressed/active step; superseded as the HOVER step by navy-bright - hover now lightens, per the perceptible-lift feedback rule)."
+        },
+        "navy-bright": {
+          "$value": "#16387E",
+          "$description": "Brightened navy - the primary-action HOVER step. Hover lightens rather than darkens so the state change is perceptible on the dark navy fill (cream text stays ~10:1)."
+        },
+        "cranberry-deep": {
+          "$value": "#b4566d",
+          "$description": "Darkened cranberry for the destructive-action hover step."
+        },
+        "venice-blue-deep": {
+          "$value": "#0f425e",
+          "$description": "Deepened venice-blue for the link-hover step."
+        },
+        "pale-gold-deep": {
+          "$value": "#9C8A3E",
+          "$description": "Darkened pale-gold for warning glyphs on light tint grounds (AA-contrast icon step; replaces the ad-hoc #9c8a3e)."
+        },
+        "glaucous-loading": {
+          "$value": "rgba(96, 130, 182, 0.12)",
+          "$description": "Glaucous (#6082B6) at 12% - the named loading-placeholder tint."
+        },
+        "glaucous-shimmer": {
+          "$value": "rgba(96, 130, 182, 0.2)",
+          "$description": "Glaucous (#6082B6) at 20% - the loading shimmer's bright midpoint."
+        }
+      }
+    },
+    "dimension": {
+      "$type": "dimension",
+      "radius": {
+        "base": {
+          "$value": "0.5rem"
+        },
+        "sm": {
+          "$value": "0.5rem",
+          "$description": "8px - dense controls (chips, tags, inline fields)."
+        },
+        "md": {
+          "$value": "0.625rem",
+          "$description": "10px - buttons, inputs, small cards."
+        },
+        "lg": {
+          "$value": "1rem",
+          "$description": "16px - cards, panels, dialogs (boxed-canvas material, Fluence scale)."
+        }
+      },
+      "container": {
+        "max": {
+          "$value": "75rem",
+          "$description": "1200px content max-width (FINAL.md container)."
+        },
+        "wide": {
+          "$value": "82.5rem",
+          "$description": "1320px wide content cap (FINAL.md container-wide)."
+        }
+      },
+      "size": {
+        "sidebar": {
+          "$value": "15.5rem",
+          "$description": "248px nav rail width (FINAL.md sidebar)."
+        }
+      }
+    },
+    "shadow": {
+      "$type": "shadow",
+      "$description": "Canonical elevation tiers - every box- or button-like element on every surface belongs to exactly one: FLAT (border only, no shadow token), CONTROL (sm - buttons, inputs, chips: a crisp 1px drop), RAISED (base/md - resting cards and panels: a soft close shadow plus a faint ambient one), OVERLAY (lg - popovers, dialogs, floating bars: a pronounced ambient shadow). Values follow the desktop-app soft-neutral school (hairline-plus-whisper shadows, never heavy blur on resting content).",
+      "sm": {
+        "$value": {
+          "color": "rgba(10, 18, 42, 0.06)",
+          "offsetX": "0rem",
+          "offsetY": "0.0625rem",
+          "blur": "0.125rem",
+          "spread": "0rem"
+        },
+        "$description": "CONTROL tier - buttons, inputs, chips."
+      },
+      "base": {
+        "$value": [
+          {
+            "color": "rgba(10, 18, 42, 0.04)",
+            "offsetX": "0rem",
+            "offsetY": "0.0625rem",
+            "blur": "0.125rem",
+            "spread": "0rem"
+          },
+          {
+            "color": "rgba(10, 18, 42, 0.05)",
+            "offsetX": "0rem",
+            "offsetY": "0.25rem",
+            "blur": "0.75rem",
+            "spread": "0rem"
+          }
+        ],
+        "$description": "RAISED tier - resting cards and panels."
+      },
+      "md": {
+        "$value": [
+          {
+            "color": "rgba(10, 18, 42, 0.05)",
+            "offsetX": "0rem",
+            "offsetY": "0.125rem",
+            "blur": "0.25rem",
+            "spread": "0rem"
+          },
+          {
+            "color": "rgba(10, 18, 42, 0.07)",
+            "offsetX": "0rem",
+            "offsetY": "0.5rem",
+            "blur": "1rem",
+            "spread": "0rem"
+          }
+        ],
+        "$description": "RAISED-emphasis tier - hovered/prominent cards, the compact floating header."
+      },
+      "lg": {
+        "$value": [
+          {
+            "color": "rgba(10, 18, 42, 0.06)",
+            "offsetX": "0rem",
+            "offsetY": "0.125rem",
+            "blur": "0.5rem",
+            "spread": "0rem"
+          },
+          {
+            "color": "rgba(10, 18, 42, 0.14)",
+            "offsetX": "0rem",
+            "offsetY": "0.5rem",
+            "blur": "1.875rem",
+            "spread": "0rem"
+          }
+        ],
+        "$description": "OVERLAY tier - dialogs, popovers, floating figures."
+      }
+    },
+    "duration": {
+      "$type": "duration",
+      "fast": {
+        "$value": "120ms"
+      },
+      "base": {
+        "$value": "200ms"
+      },
+      "slow": {
+        "$value": "320ms"
+      }
+    },
+    "font": {
+      "family": {
+        "$type": "fontFamily",
+        "sans": {
+          "$value": [
+            "-apple-system",
+            "BlinkMacSystemFont",
+            "Segoe UI",
+            "Roboto",
+            "Helvetica Neue",
+            "Arial",
+            "sans-serif"
+          ]
+        },
+        "mono": {
+          "$value": [
+            "IBM Plex Mono",
+            "ui-monospace",
+            "monospace"
+          ]
+        },
+        "title": {
+          "$value": [
+            "Fraunces",
+            "Georgia",
+            "Times New Roman",
+            "serif"
+          ]
+        },
+        "title-tc": {
+          "$value": [
+            "Noto Serif TC",
+            "serif"
+          ]
+        },
+        "body-tc": {
+          "$value": [
+            "Noto Sans TC",
+            "PingFang TC",
+            "system-ui",
+            "sans-serif"
+          ]
+        }
+      }
+    }
+  },
+  "semantic": {
+    "color": {
+      "$type": "color",
+      "background": {
+        "$value": "{color.caliber.cream}"
+      },
+      "foreground": {
+        "$value": "{color.caliber.ink}"
+      },
+      "card": {
+        "$value": "{color.caliber.cream}"
+      },
+      "card-foreground": {
+        "$value": "{color.caliber.ink}"
+      },
+      "popover": {
+        "$value": "{color.caliber.cream}"
+      },
+      "popover-foreground": {
+        "$value": "{color.caliber.ink}"
+      },
+      "primary": {
+        "$value": "{color.caliber.navy}"
+      },
+      "primary-foreground": {
+        "$value": "{color.caliber.cream}"
+      },
+      "secondary": {
+        "$value": "{color.caliber.glaucous}"
+      },
+      "secondary-foreground": {
+        "$value": "{color.caliber.ink}"
+      },
+      "muted": {
+        "$value": "{color.caliber.cream-contrast}"
+      },
+      "muted-foreground": {
+        "$value": "{color.caliber.ink-muted}"
+      },
+      "accent": {
+        "$value": "{color.caliber.hover}"
+      },
+      "accent-foreground": {
+        "$value": "{color.caliber.navy}"
+      },
+      "destructive": {
+        "$value": "{color.caliber.cranberry-deep}",
+        "$description": "Deep cranberry step: base cranberry is 3.4:1 against cream in both directions (destructive text on ground, cream label on fill), failing AA; the deep step clears 4.5:1 both ways."
+      },
+      "destructive-foreground": {
+        "$value": "{color.caliber.cream}"
+      },
+      "success": {
+        "$value": "{color.caliber.sage}"
+      },
+      "success-foreground": {
+        "$value": "{color.caliber.ink}"
+      },
+      "warning": {
+        "$value": "{color.caliber.pale-gold}"
+      },
+      "warning-foreground": {
+        "$value": "{color.caliber.ink}"
+      },
+      "info": {
+        "$value": "{color.caliber.slate-blue}"
+      },
+      "info-foreground": {
+        "$value": "{color.caliber.ink}"
+      },
+      "state-optional": {
+        "$value": "{color.caliber.steel-grey}",
+        "$description": "acuity delta (not a base role): doctor-app four-status field-state model, FINAL.md Functional field-state mapping."
+      },
+      "state-needs-input": {
+        "$value": "{color.caliber.cranberry}"
+      },
+      "state-drafted": {
+        "$value": "{color.caliber.glaucous}"
+      },
+      "state-confirmed": {
+        "$value": "{color.caliber.sage}"
+      },
+      "tone-neutral": {
+        "$value": "{color.caliber.steel-grey}",
+        "$description": "acuity delta (not a base role): operator-console status-tone set (FINAL.md status badges - tint ground + tone glyph + ink label)."
+      },
+      "tone-info": {
+        "$value": "{color.caliber.glaucous}"
+      },
+      "tone-success": {
+        "$value": "{color.caliber.sage}"
+      },
+      "tone-warning": {
+        "$value": "{color.caliber.pale-gold}"
+      },
+      "tone-warning-glyph": {
+        "$value": "{color.caliber.pale-gold-deep}",
+        "$description": "Warning-glyph icon colour: pale-gold is too light for a glyph on its own tint, so the glyph takes the darkened step."
+      },
+      "tone-danger": {
+        "$value": "{color.caliber.cranberry}"
+      },
+      "tone-accent": {
+        "$value": "{color.caliber.muted-iris}"
+      },
+      "border": {
+        "$value": "{color.caliber.border}"
+      },
+      "input": {
+        "$value": "{color.caliber.border}"
+      },
+      "ring": {
+        "$value": "{color.caliber.navy}"
+      },
+      "sidebar": {
+        "$value": "{color.caliber.cream}"
+      },
+      "sidebar-foreground": {
+        "$value": "{color.caliber.ink}"
+      },
+      "sidebar-primary": {
+        "$value": "{color.caliber.navy}"
+      },
+      "sidebar-primary-foreground": {
+        "$value": "{color.caliber.cream}"
+      },
+      "sidebar-accent": {
+        "$value": "{color.caliber.hover}"
+      },
+      "sidebar-accent-foreground": {
+        "$value": "{color.caliber.navy}"
+      },
+      "sidebar-border": {
+        "$value": "{color.caliber.border}"
+      },
+      "sidebar-ring": {
+        "$value": "{color.caliber.navy}"
+      },
+      "chart-1": {
+        "$value": "{color.caliber.glaucous}"
+      },
+      "chart-2": {
+        "$value": "{color.caliber.venice-blue}"
+      },
+      "chart-3": {
+        "$value": "{color.caliber.muted-iris}"
+      },
+      "chart-4": {
+        "$value": "{color.caliber.sage}"
+      },
+      "chart-5": {
+        "$value": "{color.caliber.dusty-rose}"
+      },
+      "action-bg-hover": {
+        "$value": "{color.caliber.navy-bright}",
+        "$description": "Caliber primary-action hover: the harmonised single BRIGHTENED navy step (hover lightens for perceptible feedback on the dark fill)."
+      },
+      "destructive-bg-hover": {
+        "$value": "{color.caliber.cranberry}",
+        "$description": "Destructive hover mirrors the primary grammar (hover LIGHTENS the dark resting fill) now that resting sits on the deep step."
+      },
+      "secondary-bg-hover": {
+        "$value": "{color.caliber.venice-blue}"
+      },
+      "link-text": {
+        "$value": "{color.caliber.venice-blue}"
+      },
+      "link-text-hover": {
+        "$value": "{color.caliber.venice-blue-deep}"
+      },
+      "loading-placeholder": {
+        "$value": "{color.caliber.glaucous-loading}"
+      },
+      "loading-placeholder-shimmer": {
+        "$value": "{color.caliber.glaucous-shimmer}"
+      }
+    }
+  }
+}

@@ -1,0 +1,84 @@
+name: ci
+
+# Monorepo gate: install -> generate -> lint -> typecheck -> build -> unit
+# tests, plus the token verifier, token-usage scan, and bilingual catalog
+# parity checks. The build prerenders both locale trees (en-HK + zh-Hant-HK),
+# so every catalog is exercised at build time.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate (contract types)
+        run: pnpm generate
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Token-usage scan
+        run: pnpm check:tokens
+
+      - name: i18n catalog parity + Simplified-Chinese scan
+        run: pnpm check:i18n
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build (both locales)
+        run: pnpm build
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Theme token verifier
+        # The theme's determinism gate: regenerated tokens.css must match the
+        # canonical caliber-light preset byte-for-byte.
+        run: pnpm --filter ./packages/theme run verify
+
+  # End-to-end smoke + accessibility (Playwright) — blocking, like every
+  # other gate.
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate (contract types)
+        run: pnpm generate
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @acuity/quality exec playwright install --with-deps chromium
+
+      - name: Smoke + accessibility
+        run: pnpm test:e2e
+        env:
+          CI: "true"

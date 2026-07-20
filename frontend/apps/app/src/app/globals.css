@@ -1,0 +1,166 @@
+/*
+ * App global stylesheet. Imports the single @acuity/ui entry (Tailwind engine +
+ * design-kit base tokens + caliber-light overlay + the shared loading /
+ * scrollbar / reduced-motion grammar), then adds @source globs so Tailwind
+ * scans this app's own components, the catch-up arc, and the insurer-form
+ * facsimile geometry.
+ */
+@import "@acuity/ui/styles.css";
+@import "@acuity/auth-ui/styles.css";
+
+@source "./**/*.{ts,tsx}";
+@source "../components/**/*.{ts,tsx}";
+@source "../mocks/**/*.{ts,tsx}";
+@source "../../node_modules/@acuity/auth-ui/src/**/*.{ts,tsx}";
+
+/* The slow catch-up arc (components.md §8): ~1600ms per rotation with a
+   grow-then-catch-up ease — deliberately calmer than a fast tight spinner.
+   Reduced motion collapses via the shared @acuity/ui block. */
+@keyframes acuity-arc-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.acuity-arc {
+  animation: acuity-arc-spin 1.6s cubic-bezier(0.45, 0.1, 0.35, 0.9) infinite;
+}
+
+/* --- Insurer-form facsimile palette ----------------------------------------
+   The paper form's own colours (white sheet, print ink, pen ink) — a NON-BRAND
+   token layer now defined centrally in @acuity/theme (facsimile.tokens.json →
+   --facsimile-* at :root), no longer hand-set here. Deliberately outside the
+   Caliber brand scale. The .facsimile geometry below consumes those tokens. */
+
+/* --- Insurer-form facsimile geometry ----------------------------------------
+   The paper form's own print metrics (点-size labels, comb cells, dotted value
+   lines) — document content, not app chrome; kept out of the utility scale on
+   purpose and scoped under .facsimile. */
+.facsimile {
+  background: var(--facsimile-paper);
+  border-radius: 4px;
+  color: var(--facsimile-ink);
+  font-size: 12.5px;
+  line-height: 1.5;
+  padding: 28px 26px;
+}
+.facsimile-letterhead {
+  border-bottom: 2px solid var(--facsimile-ink);
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  text-align: center;
+}
+.facsimile-letterhead-title {
+  /* Facsimile headings keep the printed form's serif — the shared heading
+     base would otherwise switch real heading tags to the title face. */
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.facsimile-letterhead-sub {
+  color: var(--facsimile-muted);
+  font-size: 11px;
+}
+.facsimile-section-title {
+  background: var(--facsimile-section);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 12px 0 8px;
+  padding: 3px 8px;
+}
+.facsimile-row {
+  align-items: flex-end;
+  display: flex;
+  gap: 8px;
+  margin-bottom: 7px;
+  scroll-margin-top: 64px;
+}
+.facsimile-label {
+  color: var(--facsimile-muted);
+  flex-shrink: 0;
+  font-size: 11px;
+  min-width: 130px;
+}
+.facsimile-value {
+  border-bottom: 1px dotted var(--facsimile-faint);
+  color: var(--facsimile-value);
+  flex: 1;
+  font-weight: 600;
+  min-height: 16px;
+}
+.facsimile-value-empty {
+  color: var(--facsimile-blank);
+  font-weight: 400;
+}
+.facsimile-comb {
+  display: flex;
+  gap: 2px;
+}
+.facsimile-comb-cell {
+  align-items: center;
+  border: 1px solid var(--facsimile-line);
+  color: var(--facsimile-value);
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 600;
+  height: 20px;
+  justify-content: center;
+  width: 16px;
+}
+.facsimile-checkbox-row {
+  display: flex;
+  gap: 14px;
+  padding-bottom: 1px;
+}
+.facsimile-checkbox {
+  align-items: center;
+  display: inline-flex;
+  font-size: 11.5px;
+  gap: 4px;
+}
+.facsimile-checkbox-box {
+  align-items: center;
+  border: 1px solid var(--facsimile-ink);
+  display: inline-flex;
+  font-size: 9px;
+  height: 11px;
+  justify-content: center;
+  width: 11px;
+}
+.facsimile-signature-line {
+  align-items: flex-end;
+  border-bottom: 1px solid var(--facsimile-ink);
+  display: flex;
+  height: 34px;
+  width: 160px;
+}
+.facsimile-signature-name {
+  color: var(--facsimile-value);
+  font-size: 18px;
+  font-style: italic;
+  /* A facsimile signature stays light italic — opt out of the semibold
+     font-title default so it reads as a handwritten mark, not a title. */
+  font-weight: 400;
+  padding-bottom: 2px;
+}
+.facsimile-signature-caption {
+  color: var(--facsimile-muted);
+  font-size: 10px;
+  margin-top: 3px;
+}
+.facsimile-footer-ref {
+  /* muted, not faint: #999 on the paper white is 2.8:1 (AA fail for the
+     10px reference line); the muted step reads quiet at 7.5:1. */
+  color: var(--facsimile-muted);
+  font-size: 10px;
+}
+
+/* Focus never obscured by the sticky loop footer (WCAG 2.4.11): anchored
+   scrolls keep the focused row clear of the pinned bar. */
+html {
+  scroll-padding-bottom: 6rem;
+}

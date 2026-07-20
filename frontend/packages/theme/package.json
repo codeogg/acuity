@@ -1,0 +1,27 @@
+{
+  "name": "@component-core/acuity",
+  "version": "0.1.0",
+  "description": "Acuity's private caliber-light theme: a semantic-tier CSS-variable overlay on the @component-core/ui base, plus any Acuity-only components. Redefines the base semantic variables with Acuity's Caliber values so every base component adopts Acuity's look. Published privately under the @component-core scope (project-specific design packages are private).",
+  "license": "UNLICENSED",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    "./tokens.css": "./tokens.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "tokens.css"
+  ],
+  "publishConfig": {
+    "access": "restricted"
+  },
+  "peerDependencies": {
+    "@component-core/ui": ">=0.1.0"
+  },
+  "scripts": {
+    "generate": "node scripts/build-tokens.mjs",
+    "verify": "node scripts/verify-tokens.mjs"
+  }
+}

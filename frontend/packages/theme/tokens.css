@@ -1,0 +1,245 @@
+/*
+ * Acuity caliber-light theme overlay. GENERATED - do not hand-edit.
+ *
+ * Built by scripts/build-tokens.mjs from presets/caliber-light.tokens.json
+ * (a snapshot of the canonical acuity-dev preset). Redefines the semantic-
+ * tier CSS custom properties that @component-core/ui components consume;
+ * import order is load-bearing: base tokens.css first, then this file.
+ *
+ * This is the source of the private @component-core/acuity package. The
+ * monorepo consumes it via workspace:*; a split-out repo installs the
+ * published package at a pinned semver.
+ */
+
+:root {
+  /* --- Caliber primitive palette (canonical names, verbatim values) --- */
+  --caliber-navy: #072052;
+  --caliber-ink: #0A122A;
+  --caliber-ink-muted: #5C6478;
+  --caliber-cream: #FFFEFD;
+  --caliber-cream-contrast: #FCFBF9;
+  --caliber-hover: #ECEFF4;
+  --caliber-border: #EAE6E0;
+  --caliber-border-strong: #DAD3CA;
+  --caliber-sky-blue: #C7D9E6;
+  --caliber-glaucous: #6082B6;
+  --caliber-venice-blue: #16587B;
+  --caliber-slate-blue: #629BB5;
+  --caliber-dust-blue: #8AA8C0;
+  --caliber-muted-iris: #8F89B7;
+  --caliber-dusty-rose: #DEBEC8;
+  --caliber-lavender-grey: #C4C7DB;
+  --caliber-dusty-lilac: #C5BDD5;
+  --caliber-soft-plum: #867A98;
+  --caliber-champagne: #E5DBCF;
+  --caliber-mist-lavender: #D0CCE1;
+  --caliber-wisteria: #BEB7D5;
+  --caliber-blush-stone: #E7D4D4;
+  --caliber-mauve-taupe: #D4BCC8;
+  --caliber-rose-quartz: #F0E0E1;
+  --caliber-cranberry: #C86F84;
+  --caliber-soft-coral: #D9958B;
+  --caliber-pale-gold: #E1D2A7;
+  --caliber-champagne-ochre: #DCCF9B;
+  --caliber-sage: #7EB1B2;
+  --caliber-eucalyptus: #518F94;
+  --caliber-plum: #8A7EA0;
+  --caliber-steel-grey: #98A1B1;
+  --caliber-navy-deep: #04153a;
+  --caliber-navy-bright: #16387E;
+  --caliber-cranberry-deep: #b4566d;
+  --caliber-venice-blue-deep: #0f425e;
+  --caliber-pale-gold-deep: #9C8A3E;
+  --caliber-glaucous-loading: rgba(96, 130, 182, 0.12);
+  --caliber-glaucous-shimmer: rgba(96, 130, 182, 0.2);
+
+  /* --- Semantic color roles (override @component-core/ui base) --- */
+  --background: var(--caliber-cream);
+  --foreground: var(--caliber-ink);
+  --card: var(--caliber-cream);
+  --card-foreground: var(--caliber-ink);
+  --popover: var(--caliber-cream);
+  --popover-foreground: var(--caliber-ink);
+  --primary: var(--caliber-navy);
+  --primary-foreground: var(--caliber-cream);
+  --secondary: var(--caliber-glaucous);
+  --secondary-foreground: var(--caliber-ink);
+  --muted: var(--caliber-cream-contrast);
+  --muted-foreground: var(--caliber-ink-muted);
+  --accent: var(--caliber-hover);
+  --accent-foreground: var(--caliber-navy);
+  --destructive: var(--caliber-cranberry-deep);
+  --destructive-foreground: var(--caliber-cream);
+  --success: var(--caliber-sage);
+  --success-foreground: var(--caliber-ink);
+  --warning: var(--caliber-pale-gold);
+  --warning-foreground: var(--caliber-ink);
+  --info: var(--caliber-slate-blue);
+  --info-foreground: var(--caliber-ink);
+  --border: var(--caliber-border);
+  --input: var(--caliber-border);
+  --ring: var(--caliber-navy);
+
+  /* sidebar / nav */
+  --sidebar: var(--caliber-cream);
+  --sidebar-foreground: var(--caliber-ink);
+  --sidebar-primary: var(--caliber-navy);
+  --sidebar-primary-foreground: var(--caliber-cream);
+  --sidebar-accent: var(--caliber-hover);
+  --sidebar-accent-foreground: var(--caliber-navy);
+  --sidebar-border: var(--caliber-border);
+  --sidebar-ring: var(--caliber-navy);
+
+  /* charts */
+  --chart-1: var(--caliber-glaucous);
+  --chart-2: var(--caliber-venice-blue);
+  --chart-3: var(--caliber-muted-iris);
+  --chart-4: var(--caliber-sage);
+  --chart-5: var(--caliber-dusty-rose);
+
+  /* interaction / hover + link + loading (@component-core/ui --color-* names) */
+  --color-action-bg-hover: var(--caliber-navy-bright);
+  --color-destructive-bg-hover: var(--caliber-cranberry);
+  --color-secondary-bg-hover: var(--caliber-venice-blue);
+  --color-link-text: var(--caliber-venice-blue);
+  --color-link-text-hover: var(--caliber-venice-blue-deep);
+  --color-loading-placeholder: var(--caliber-glaucous-loading);
+  --color-loading-placeholder-shimmer: var(--caliber-glaucous-shimmer);
+  --link-text: var(--color-link-text);
+  --link-text-hover: var(--color-link-text-hover);
+
+  /* Acuity delta: doctor-app four-status field-state model */
+  --state-optional: var(--caliber-steel-grey);
+  --state-needs-input: var(--caliber-cranberry);
+  --state-drafted: var(--caliber-glaucous);
+  --state-confirmed: var(--caliber-sage);
+
+  /* Acuity delta: operator-console status-tone set (badge tints + glyphs) */
+  --tone-neutral: var(--caliber-steel-grey);
+  --color-tone-neutral: var(--tone-neutral);
+  --tone-info: var(--caliber-glaucous);
+  --color-tone-info: var(--tone-info);
+  --tone-success: var(--caliber-sage);
+  --color-tone-success: var(--tone-success);
+  --tone-warning: var(--caliber-pale-gold);
+  --color-tone-warning: var(--tone-warning);
+  --tone-warning-glyph: var(--caliber-pale-gold-deep);
+  --color-tone-warning-glyph: var(--tone-warning-glyph);
+  --tone-danger: var(--caliber-cranberry);
+  --color-tone-danger: var(--tone-danger);
+  --tone-accent: var(--caliber-muted-iris);
+  --color-tone-accent: var(--tone-accent);
+
+  /* Surface + border aliases (utility-layer names apps consume via var()) */
+  --color-surface: var(--caliber-cream);
+  --color-surface-contrast: var(--caliber-cream-contrast);
+  --color-border-strong: var(--caliber-border-strong);
+
+  /* --- Insurer-form facsimile palette (NON-BRAND): reproduces the printed
+     insurer paper form (sheet, print ink, pen ink). A reusable token layer
+     deliberately outside the Caliber brand scale. --- */
+  --facsimile-paper: #ffffff;
+  --facsimile-value: #15306a;
+  --facsimile-ink: #1a1a1a;
+  --facsimile-muted: #555555;
+  --facsimile-line: #888888;
+  --facsimile-faint: #999999;
+  --facsimile-blank: #bbbbbb;
+  --facsimile-section: #f0f0ec;
+
+  /* --- Radius: Caliber boxed-canvas scale (8 / 10 / 16) --- */
+  --dimension-radius-base: 0.5rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 1rem;
+
+  /* --- Elevation tiers: FLAT (border only) / CONTROL (sm) / RAISED
+     (base, md emphasis) / OVERLAY (lg). Navy-tinted soft shadows. --- */
+  --shadow-sm: 0rem 0.0625rem 0.125rem 0rem rgba(10, 18, 42, 0.06);
+  --shadow-base: 0rem 0.0625rem 0.125rem 0rem rgba(10, 18, 42, 0.04), 0rem 0.25rem 0.75rem 0rem rgba(10, 18, 42, 0.05);
+  --shadow-md: 0rem 0.125rem 0.25rem 0rem rgba(10, 18, 42, 0.05), 0rem 0.5rem 1rem 0rem rgba(10, 18, 42, 0.07);
+  --shadow-lg: 0rem 0.125rem 0.5rem 0rem rgba(10, 18, 42, 0.06), 0rem 0.5rem 1.875rem 0rem rgba(10, 18, 42, 0.14);
+  --elevation-sm: 0rem 0.0625rem 0.125rem 0rem rgba(10, 18, 42, 0.06);
+  --elevation-base: 0rem 0.0625rem 0.125rem 0rem rgba(10, 18, 42, 0.04), 0rem 0.25rem 0.75rem 0rem rgba(10, 18, 42, 0.05);
+  --elevation-md: 0rem 0.125rem 0.25rem 0rem rgba(10, 18, 42, 0.05), 0rem 0.5rem 1rem 0rem rgba(10, 18, 42, 0.07);
+  --elevation-lg: 0rem 0.125rem 0.5rem 0rem rgba(10, 18, 42, 0.06), 0rem 0.5rem 1.875rem 0rem rgba(10, 18, 42, 0.14);
+  /* Named tier aliases (consume by role, not size) */
+  --elevation-control: var(--shadow-sm);
+  --elevation-raised: var(--shadow-base);
+  --elevation-raised-emphasis: var(--shadow-md);
+  --elevation-overlay: var(--shadow-lg);
+
+  /* --- Motion: Caliber timing --- */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 320ms;
+  --motion: var(--duration-fast); /* bare alias some call sites consume */
+
+  /* --- Typography: Fraunces titles, system sans body, IBM Plex Mono --- */
+  --font-family-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-family-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-family-title: Fraunces, Georgia, "Times New Roman", serif;
+  --font-family-title-tc: "Noto Serif TC", serif;
+  --font-family-body-tc: "Noto Sans TC", "PingFang TC", system-ui, sans-serif;
+  --typography-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --typography-font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --typography-font-title: Fraunces, Georgia, "Times New Roman", serif;
+
+  /* --- Layout sizes (Caliber container + rail) --- */
+  --container-max: 75rem;
+  --container-wide: 82.5rem;
+  --dimension-container-max: 75rem;
+  --dimension-container-wide: 82.5rem;
+  --sidebar-width: 15.5rem;
+  --dimension-size-sidebar: 15.5rem;
+}
+
+/*
+ * Dark mode: Caliber is light-only for Phase 1. This mirrors the shared
+ * neutral dark tokens (design-kit semantic.dark.tokens.json, resolved from
+ * the OKLCH neutral ramp) so a .dark toggle degrades coherently rather than
+ * showing a broken palette.
+ */
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --success: oklch(0.723 0.219 149.579);
+  --success-foreground: oklch(0.145 0 0);
+  --warning: oklch(0.769 0.188 70.08);
+  --warning-foreground: oklch(0.145 0 0);
+  --info: oklch(0.623 0.214 259.815);
+  --info-foreground: oklch(0.145 0 0);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.556 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.922 0 0);
+  --sidebar-primary-foreground: oklch(0.205 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.269 0 0);
+  --sidebar-ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+}

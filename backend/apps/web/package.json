@@ -1,0 +1,44 @@
+{
+  "name": "insurance-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "gen:api": "openapi-typescript http://localhost:8000/openapi.json -o lib/api/generated/schema.d.ts"
+  },
+  "dependencies": {
+    "next": "^15.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@tanstack/react-query": "^5.62.0",
+    "zustand": "^5.0.2",
+    "zod": "^3.24.1",
+    "react-hook-form": "^7.54.0",
+    "@hookform/resolvers": "^3.9.1",
+    "openapi-fetch": "^0.13.0",
+    "react-aria-components": "^1.5.0",
+    "@internationalized/date": "^3.6.0",
+    "date-fns": "^4.1.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.5",
+    "class-variance-authority": "^0.7.1",
+    "lucide-react": "^0.468.0",
+    "pdfjs-dist": "^4.9.155"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.2",
+    "tailwindcss": "^4.0.0",
+    "@tailwindcss/postcss": "^4.0.0",
+    "postcss": "^8.4.49",
+    "openapi-typescript": "^7.4.4",
+    "eslint": "^9.17.0",
+    "eslint-config-next": "^15.1.0"
+  }
+}

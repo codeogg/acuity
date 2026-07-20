@@ -1,0 +1,81 @@
+{
+  "auth": {
+    "common": {
+      "wordmark": "Acuity",
+      "loading": "正在為你登入⋯",
+      "longWait": "仍在處理 — 就快好了。",
+      "working": "處理中⋯",
+      "footerPrivacy": "私隱政策",
+      "footerTerms": "服務條款",
+      "back": "返回登入",
+      "signIn": "登入",
+      "continue": "繼續",
+      "confirm": "確認",
+      "startRecovery": "開始復原",
+      "emailLabel": "電郵",
+      "passwordLabel": "密碼",
+      "orDivider": "或"
+    },
+    "doctor": {
+      "heading": "登入 Acuity",
+      "support": "登入以繼續處理你的表格。",
+      "oidc": "以 Google 繼續",
+      "factorHeading": "最後一步",
+      "factorSupport": "用你的通行密鑰或裝置確認身分。",
+      "factorHint": "可使用 Touch ID、Windows Hello 或你的保安裝置。",
+      "clinicHeading": "今天在哪一間診所？",
+      "clinicSupport": "你已連結多於一間診所。",
+      "clinicAria": "選擇你的診所",
+      "recovery": "遺失裝置？",
+      "recoveryHeading": "遺失裝置？",
+      "recoveryStarted": "已開始復原。請查看你的電郵 — 我們會先確認幾項資料，才為你設定新裝置。",
+      "langToggle": "English",
+      "landed": "已登入，正帶你前往表格⋯",
+      "landedReturn": "已登入，正帶你回到剛才的位置⋯",
+      "goToConsole": "前往營運主控台",
+      "states": {
+        "wrongCredentials": "讓我們帶你重新登入。資料不符，請檢查後再試一次，或使用下方的遺失裝置復原。",
+        "locked": "為安全起見，多次嘗試後此帳戶已暫停。請稍候數分鐘，或聯絡診所管理員以提早解鎖。你的資料不會遺失。",
+        "lostDevice": "沒問題 — 我們會協助你設定新裝置。這是謹慎的一步，我們會先確認幾項資料。",
+        "sessionExpired": "你已離開一段時間，為安全起見我們已將你登出。重新登入後，我們會帶你回到剛才的表格。",
+        "permissionDenied": "此登入頁面屬於診所應用程式。如果你是 Acuity 營運人員，請前往營運主控台。",
+        "networkError": "目前無法連接 Acuity。請檢查你的網絡後再試一次 — 你的資料不會遺失。",
+        "mfaFailed": "未能完成確認。請再以你的通行密鑰或裝置試一次。",
+        "mfaExpired": "這一步用時較長，為安全起見已重設。請重新開始確認。",
+        "clinicSelectFailed": "暫時未能設定該診所。請再選一次，或重新開始。",
+        "recoveryFailed": "暫時未能開始復原。請稍後再試 — 沒有任何更改。"
+      }
+    },
+    "operator": {
+      "hostEyebrow": "OPERATOR CONSOLE",
+      "hostName": "console.acuity.hk",
+      "heading": "營運人員登入",
+      "support": "以你的保安金鑰登入 Acuity 主控台。",
+      "oidc": "以 Google 繼續",
+      "factorHeading": "以你的保安金鑰確認",
+      "factorAction": "模擬觸碰金鑰",
+      "factorBusy": "正在等待你的金鑰",
+      "factorSteps": {
+        "insert": "插入你的金鑰",
+        "touch": "觸碰你的金鑰",
+        "verify": "正在驗證⋯"
+      },
+      "recovery": "遺失保安金鑰？",
+      "recoveryHeading": "遺失保安金鑰？",
+      "recoveryStarted": "已開始復原。超級管理員會先核實你的身分，才會發出新金鑰。",
+      "landed": "已登入，正帶你前往診所總覽⋯",
+      "landedReturn": "已登入，正帶你回到剛才的位置⋯",
+      "states": {
+        "wrongCredentials": "讓我們帶你重新登入。資料不符，請檢查後再試一次。",
+        "locked": "為安全起見，多次嘗試後此帳戶已暫停。它會很快解除，或由超級管理員提早解鎖。不會遺失任何資料。",
+        "lostKey": "我們會協助你恢復存取權。更換保安金鑰是一個謹慎、須核實的步驟 — 我們會逐步引導你。",
+        "sessionExpired": "為保障主控台安全，你已被登出。請以你的金鑰重新登入以繼續。",
+        "permissionDenied": "這是營運主控台。診所應用程式的登入無法在此使用 — 請使用你的營運人員帳戶及保安金鑰。",
+        "networkError": "目前無法連接主控台。請檢查你的網絡後再試一次。",
+        "mfaFailed": "未能識別你的金鑰。請取出後重新插入並再觸碰一次。",
+        "mfaExpired": "這一步用時過長，為保障主控台安全已重設。請重新開始金鑰確認。",
+        "recoveryFailed": "暫時未能開始復原。請稍後再試，或聯絡超級管理員。"
+      }
+    }
+  }
+}

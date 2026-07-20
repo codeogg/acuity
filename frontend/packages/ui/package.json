@@ -1,0 +1,49 @@
+{
+  "name": "@acuity/ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The single UI import surface for Acuity apps: re-exports @component-core/ui components under the Acuity caliber-light theme, and owns the Tailwind v4 wiring (base tokens + theme overlay + @source globs).",
+  "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "import": "./src/index.ts"
+    },
+    "./styles.css": "./src/styles.css",
+    "./fonts": {
+      "types": "./src/fonts.ts",
+      "import": "./src/fonts.ts"
+    }
+  },
+  "files": [
+    "src"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@component-core/acuity": "workspace:*",
+    "@component-core/ui": "file:../../vendor/component-core-ui-0.2.0.tgz",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.23.0",
+    "tailwind-merge": "^3.6.0"
+  },
+  "peerDependencies": {
+    "next": ">=15",
+    "react": ">=19",
+    "react-dom": ">=19"
+  },
+  "devDependencies": {
+    "@acuity/config": "workspace:*",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "next": "^15.2.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "~5.9.2"
+  }
+}

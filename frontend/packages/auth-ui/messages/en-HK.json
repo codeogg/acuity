@@ -1,0 +1,81 @@
+{
+  "auth": {
+    "common": {
+      "wordmark": "Acuity",
+      "loading": "Signing you in…",
+      "longWait": "Still working — almost there.",
+      "working": "Working…",
+      "footerPrivacy": "Privacy",
+      "footerTerms": "Terms",
+      "back": "Back to sign in",
+      "signIn": "Sign in",
+      "continue": "Continue",
+      "confirm": "Confirm",
+      "startRecovery": "Start recovery",
+      "emailLabel": "Email",
+      "passwordLabel": "Password",
+      "orDivider": "or"
+    },
+    "doctor": {
+      "heading": "Sign in to Acuity",
+      "support": "Sign in to pick up your forms.",
+      "oidc": "Continue with Google",
+      "factorHeading": "One more step",
+      "factorSupport": "Confirm it's you with your passkey or device.",
+      "factorHint": "Use Touch ID, Windows Hello, or your security device.",
+      "clinicHeading": "Which clinic today?",
+      "clinicSupport": "You're linked to more than one clinic.",
+      "clinicAria": "Select your clinic",
+      "recovery": "Lost your device?",
+      "recoveryHeading": "Lost your device?",
+      "recoveryStarted": "Recovery started. Check your email — we'll confirm a few details before setting up your new device.",
+      "langToggle": "中文",
+      "landed": "You're in. Taking you to your forms…",
+      "landedReturn": "You're in. Taking you back to where you were…",
+      "goToConsole": "Go to the operator console",
+      "states": {
+        "wrongCredentials": "Let's get you back in. That didn't match — check your details and try again, or use lost-device recovery below.",
+        "locked": "Your account is paused for safety after several tries. Give it a few minutes, or reach your clinic admin to unlock it sooner. Nothing you've done is lost.",
+        "lostDevice": "No problem — we'll help you set up a new device. This is a careful step, so we'll confirm a few things first.",
+        "sessionExpired": "You've been away a while, so we signed you out to keep things safe. Sign in again and we'll take you right back to the form you were on.",
+        "permissionDenied": "This sign-in is for the clinic app. If you're an Acuity operator, head to the operator console instead.",
+        "networkError": "We can't reach Acuity right now. Check your connection and try again — nothing you've done is lost.",
+        "mfaFailed": "That confirmation didn't go through. Try again with your passkey or device.",
+        "mfaExpired": "That step took a little too long, so we've reset it to keep things safe. Start the confirmation again.",
+        "clinicSelectFailed": "We couldn't set that clinic just now. Pick it again, or start over.",
+        "recoveryFailed": "We couldn't start recovery just now. Try again in a moment — no changes were made."
+      }
+    },
+    "operator": {
+      "hostEyebrow": "OPERATOR CONSOLE",
+      "hostName": "console.acuity.hk",
+      "heading": "Operator sign-in",
+      "support": "Sign in to the Acuity console with your security key.",
+      "oidc": "Continue with Google",
+      "factorHeading": "Confirm with your security key",
+      "factorAction": "Simulate key touch",
+      "factorBusy": "Waiting for your key",
+      "factorSteps": {
+        "insert": "Insert your key",
+        "touch": "Touch your key",
+        "verify": "Verifying…"
+      },
+      "recovery": "Lost your security key?",
+      "recoveryHeading": "Lost your security key?",
+      "recoveryStarted": "Recovery started. A super-admin will verify your identity before issuing a new key.",
+      "landed": "Signed in. Taking you to the Clinics portfolio…",
+      "landedReturn": "Signed in. Taking you back to where you were…",
+      "states": {
+        "wrongCredentials": "Let's get you back in. That didn't match — check your details and try again.",
+        "locked": "This account is paused for safety after several tries. It'll clear shortly, or a super-admin can lift it sooner. Nothing's lost.",
+        "lostKey": "We'll help you recover access. Replacing a security key is a careful, verified step — we'll walk you through it.",
+        "sessionExpired": "You've been signed out to keep the console secure. Sign in again with your key to continue.",
+        "permissionDenied": "This is the operator console. A clinic-app sign-in won't work here — use your operator account and security key.",
+        "networkError": "We can't reach the console right now. Check your connection and try again.",
+        "mfaFailed": "Your key wasn't recognised. Remove it, then insert and touch it again.",
+        "mfaExpired": "That step took too long, so it was reset to keep the console secure. Start the key check again.",
+        "recoveryFailed": "We couldn't start recovery just now. Try again in a moment, or reach a super-admin."
+      }
+    }
+  }
+}

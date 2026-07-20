@@ -1,0 +1,59 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "infra: docker up",
+      "type": "shell",
+      "command": "docker compose up -d postgres redis minio",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "api: install deps",
+      "type": "shell",
+      "command": "source .venv/bin/activate && pip install -e \".[dev]\"",
+      "options": {
+        "cwd": "${workspaceFolder}/apps/api"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "api: seed database",
+      "type": "shell",
+      "command": "source .venv/bin/activate && python -m src.seed",
+      "options": {
+        "cwd": "${workspaceFolder}/apps/api",
+        "env": {
+          "PYTHONPATH": "${workspaceFolder}/apps/api"
+        }
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "web: install deps",
+      "type": "shell",
+      "command": "npm install",
+      "options": {
+        "cwd": "${workspaceFolder}/apps/web"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "dev: setup (首次)",
+      "dependsOrder": "sequence",
+      "dependsOn": [
+        "infra: docker up",
+        "api: install deps",
+        "web: install deps",
+        "api: seed database"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "name": "@acuity/config",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared build configuration for the Acuity frontend monorepo: base tsconfigs, a Next.js tsconfig, an eslint flat config, and the PostCSS (Tailwind v4) config.",
+  "type": "module",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./tsconfig.next.json": "./tsconfig.next.json",
+    "./eslint": "./eslint.config.js",
+    "./postcss.config.mjs": "./postcss.config.mjs"
+  },
+  "files": [
+    "tsconfig.base.json",
+    "tsconfig.next.json",
+    "eslint.config.js",
+    "postcss.config.mjs"
+  ],
+  "peerDependencies": {
+    "eslint": "^9",
+    "typescript": ">=5.5"
+  },
+  "dependencies": {
+    "@eslint/js": "^9.17.0",
+    "@next/eslint-plugin-next": "^15.2.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^15.14.0",
+    "typescript-eslint": "^8.20.0"
+  }
+}

@@ -1,0 +1,163 @@
+import secrets
+
+from sqlalchemy import func, or_, select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.core.exceptions import ConflictException, NotFoundException
+from src.core.security import hash_password
+from src.db.models import ClaimSubmission, Clinic, Doctor, ExtractionReviewOutput, ExtractionTask
+from src.modules.doctors.schemas import DoctorCreate, DoctorUpdate
+
+
+async def _ensure_unique(
+    db: AsyncSession,
+    *,
+    login_account: str | None = None,
+    reg_no: str | None = None,
+    exclude_id: int | None = None,
+) -> None:
+    """校验登录账号、注册编号唯一（数据库对 reg_no 无唯一约束，需应用层保证）。"""
+    if login_account:
+        stmt = select(Doctor.id).where(Doctor.login_account == login_account)
+        if exclude_id is not None:
+            stmt = stmt.where(Doctor.id != exclude_id)
+        if (await db.execute(stmt)).first():
+            raise ConflictException("登录账号已存在")
+    if reg_no:
+        stmt = select(Doctor.id).where(Doctor.reg_no == reg_no)
+        if exclude_id is not None:
+            stmt = stmt.where(Doctor.id != exclude_id)
+        if (await db.execute(stmt)).first():
+            raise ConflictException("注册编号已存在")
+
+
+async def create_doctor(db: AsyncSession, data: DoctorCreate) -> Doctor:
+    await _ensure_unique(db, login_account=data.login_account, reg_no=data.reg_no)
+    doctor = Doctor(
+        clinic_id=data.clinic_id,
+        doctor_name=data.doctor_name,
+        doctor_name_en=data.doctor_name_en,
+        reg_no=data.reg_no,
+        login_account=data.login_account,
+        password_hash=hash_password(data.password),
+        signature_url=data.signature_url,
+    )
+    db.add(doctor)
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        raise ConflictException("登录账号已存在") from exc
+    return doctor
+
+
+async def list_doctors(
+    db: AsyncSession,
+    *,
+    page: int,
+    page_size: int,
+    clinic_id: int | None,
+    keyword: str | None = None,
+) -> tuple[list[Doctor], int]:
+    stmt = select(Doctor)
+    count_stmt = select(func.count()).select_from(Doctor)
+    if clinic_id:
+        stmt = stmt.where(Doctor.clinic_id == clinic_id)
+        count_stmt = count_stmt.where(Doctor.clinic_id == clinic_id)
+    if keyword:
+        like = f"%{keyword}%"
+        stmt = stmt.join(Clinic, Doctor.clinic_id == Clinic.id)
+        count_stmt = count_stmt.join(Clinic, Doctor.clinic_id == Clinic.id)
+        cond = or_(
+            Doctor.doctor_name.ilike(like),
+            Doctor.doctor_name_en.ilike(like),
+            Doctor.login_account.ilike(like),
+            Doctor.reg_no.ilike(like),
+            Clinic.clinic_name.ilike(like),
+            Clinic.clinic_name_en.ilike(like),
+        )
+        stmt = stmt.where(cond)
+        count_stmt = count_stmt.where(cond)
+    total = (await db.execute(count_stmt)).scalar_one()
+    stmt = stmt.order_by(Doctor.id.desc()).offset((page - 1) * page_size).limit(page_size)
+    return list((await db.execute(stmt)).scalars().all()), total
+
+
+async def get_doctor(db: AsyncSession, doctor_id: int) -> Doctor:
+    doctor = await db.get(Doctor, doctor_id)
+    if not doctor:
+        raise NotFoundException("医生不存在")
+    return doctor
+
+
+async def update_doctor(db: AsyncSession, doctor_id: int, data: DoctorUpdate) -> Doctor:
+    doctor = await get_doctor(db, doctor_id)
+    values = data.model_dump(exclude_unset=True)
+    await _ensure_unique(
+        db,
+        login_account=values.get("login_account"),
+        reg_no=values.get("reg_no"),
+        exclude_id=doctor_id,
+    )
+    for key, value in values.items():
+        setattr(doctor, key, value)
+    try:
+        await db.flush()
+    except IntegrityError as exc:
+        raise ConflictException("登录账号已存在") from exc
+    return doctor
+
+
+async def set_status(db: AsyncSession, doctor_id: int, status: int) -> Doctor:
+    doctor = await get_doctor(db, doctor_id)
+    doctor.status = status
+    await db.flush()
+    return doctor
+
+
+async def delete_doctor(db: AsyncSession, doctor_id: int) -> None:
+    """删除医生。存在关联理赔单或 PDF 提取任务时拒绝删除。"""
+    doctor = await get_doctor(db, doctor_id)
+    claim_count = (
+        await db.execute(
+            select(func.count())
+            .select_from(ClaimSubmission)
+            .where(ClaimSubmission.doctor_id == doctor_id)
+        )
+    ).scalar_one()
+    if claim_count:
+        raise ConflictException("该医生存在关联理赔单，无法删除，可改为停用")
+
+    extraction_count = (
+        await db.execute(
+            select(func.count())
+            .select_from(ExtractionTask)
+            .where(ExtractionTask.doctor_id == doctor_id)
+        )
+    ).scalar_one()
+    if extraction_count:
+        raise ConflictException("该医生存在关联 PDF 提取任务，无法删除，可改为停用")
+
+    review_count = (
+        await db.execute(
+            select(func.count())
+            .select_from(ExtractionReviewOutput)
+            .where(ExtractionReviewOutput.reviewed_by_id == doctor_id)
+        )
+    ).scalar_one()
+    if review_count:
+        raise ConflictException("该医生存在关联审核记录，无法删除，可改为停用")
+
+    try:
+        await db.delete(doctor)
+        await db.flush()
+    except IntegrityError as exc:
+        raise ConflictException("该医生存在关联数据，无法删除，可改为停用") from exc
+
+
+async def reset_password(db: AsyncSession, doctor_id: int) -> str:
+    doctor = await get_doctor(db, doctor_id)
+    temp = secrets.token_urlsafe(9)
+    doctor.password_hash = hash_password(temp)
+    await db.flush()
+    return temp

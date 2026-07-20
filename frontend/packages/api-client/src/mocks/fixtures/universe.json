@@ -1,0 +1,3222 @@
+{
+  "meta": {
+    "description": "Shared mock fixture universe for every Acuity frontend surface. One coherent dataset: the entities the doctor app mutates are the entities the operator console lists. Illustrative bilingual (zh-Hant-HK + en-HK) mock data only; no real PII.",
+    "session_doctor_id": 2207,
+    "session_clinic_id": 142
+  },
+  "clinics": [
+    {
+      "id": 142,
+      "clinic_code": "CL-0142",
+      "clinic_name": "中環家庭醫療中心",
+      "clinic_name_en": "Central Family Medical",
+      "address": "香港中環皇后大道中 100 號",
+      "phone": "+852 2521 0142",
+      "chop_image_url": null,
+      "status": 1,
+      "created_at": "2026-01-14T02:14:00Z",
+      "notes": "Founding pilot clinic. Contact: practice manager (Ms Wong). Invoice monthly.\n\n**Watch:** printer setup pending for the Acuity Print rollout."
+    },
+    {
+      "id": 138,
+      "clinic_code": "CL-0138",
+      "clinic_name": "港島心臟中心",
+      "clinic_name_en": "Island Heart Centre",
+      "address": "香港灣仔軒尼詩道 88 號",
+      "phone": "+852 2802 0138",
+      "chop_image_url": null,
+      "status": 1,
+      "created_at": "2026-02-03T09:40:00Z",
+      "notes": ""
+    },
+    {
+      "id": 151,
+      "clinic_code": "CL-0151",
+      "clinic_name": "海港皮膚激光中心",
+      "clinic_name_en": "Harbour Skin & Laser",
+      "address": "九龍尖沙咀彌敦道 12 號",
+      "phone": "+852 2367 0151",
+      "chop_image_url": null,
+      "status": 1,
+      "created_at": "2026-06-20T01:30:00Z",
+      "notes": ""
+    },
+    {
+      "id": 166,
+      "clinic_code": "CL-0166",
+      "clinic_name": "銅鑼灣骨科中心",
+      "clinic_name_en": "Causeway Orthopaedic",
+      "address": "香港銅鑼灣軒尼詩道 500 號",
+      "phone": "+852 2895 0166",
+      "chop_image_url": null,
+      "status": 0,
+      "created_at": "2026-07-02T03:00:00Z",
+      "notes": ""
+    },
+    {
+      "id": 103,
+      "clinic_code": "CL-0103",
+      "clinic_name": "半山醫療集團",
+      "clinic_name_en": "Mid-Levels Medical Group",
+      "address": "香港半山堅道 30 號",
+      "phone": "+852 2524 0103",
+      "chop_image_url": null,
+      "status": 1,
+      "created_at": "2025-11-11T05:00:00Z",
+      "notes": ""
+    },
+    {
+      "id": 188,
+      "clinic_code": "CL-0188",
+      "clinic_name": "太古健康中心",
+      "clinic_name_en": "Tai Koo Wellness",
+      "address": "香港太古城道 18 號",
+      "phone": "+852 2568 0188",
+      "chop_image_url": null,
+      "status": 1,
+      "created_at": "2026-06-28T04:00:00Z",
+      "notes": ""
+    },
+    {
+      "id": 175,
+      "clinic_code": "CL-0175",
+      "clinic_name": "沙田家庭醫學診所",
+      "clinic_name_en": "Sha Tin Family Practice",
+      "address": "新界沙田正街 11 號",
+      "phone": "+852 2691 0175",
+      "chop_image_url": null,
+      "status": 1,
+      "created_at": "2026-05-06T02:00:00Z",
+      "notes": ""
+    },
+    {
+      "id": 197,
+      "clinic_code": "CL-0197",
+      "clinic_name": "旺角全科醫務所",
+      "clinic_name_en": "Mong Kok General Clinic",
+      "address": "九龍旺角彌敦道 688 號",
+      "phone": "+852 2380 0197",
+      "chop_image_url": null,
+      "status": 0,
+      "created_at": "2026-07-08T06:30:00Z",
+      "notes": ""
+    }
+  ],
+  "doctors": [
+    {
+      "id": 2207,
+      "clinic_id": 142,
+      "doctor_name": "陳美玲",
+      "doctor_name_en": "Chan Mei Ling",
+      "reg_no": "M12207",
+      "signature_url": null,
+      "login_account": "dr2207",
+      "status": 1,
+      "created_at": "2026-01-15T02:14:00Z",
+      "clinic_ids": [
+        142,
+        103
+      ],
+      "notes": "Multi-clinic pilot doctor. Prefers **WhatsApp** contact; bilingual forms.\n\n- Piloting since W6\n- Interested in the Bupa pre-auth flow",
+      "workspace_separation": "separated",
+      "mfa_enabled": false
+    },
+    {
+      "id": 2188,
+      "clinic_id": 142,
+      "doctor_name": "李美娟",
+      "doctor_name_en": "Lee Mei Kuen",
+      "reg_no": "M12188",
+      "signature_url": "https://storage.example/sig/2188.png",
+      "login_account": "dr2188",
+      "status": 1,
+      "created_at": "2026-01-15T03:00:00Z",
+      "clinic_ids": [
+        142
+      ],
+      "notes": "Single-clinic; onboarded in person at Central Family Medical.",
+      "workspace_separation": "separated",
+      "mfa_enabled": false
+    },
+    {
+      "id": 2255,
+      "clinic_id": 142,
+      "doctor_name": "周美玲",
+      "doctor_name_en": "Chau Mei Ling",
+      "reg_no": "M12255",
+      "signature_url": null,
+      "login_account": "dr2255",
+      "status": 1,
+      "created_at": "2026-03-02T02:00:00Z",
+      "clinic_ids": [
+        142
+      ],
+      "notes": "",
+      "workspace_separation": "separated",
+      "mfa_enabled": false
+    },
+    {
+      "id": 2301,
+      "clinic_id": 138,
+      "doctor_name": "王志強",
+      "doctor_name_en": "Wong Chi Keung",
+      "reg_no": "M12301",
+      "signature_url": "https://storage.example/sig/2301.png",
+      "login_account": "dr2301",
+      "status": 1,
+      "created_at": "2026-02-04T09:40:00Z",
+      "clinic_ids": [
+        138
+      ],
+      "notes": "",
+      "workspace_separation": "separated",
+      "mfa_enabled": false
+    },
+    {
+      "id": 2320,
+      "clinic_id": 138,
+      "doctor_name": "鄭俊傑",
+      "doctor_name_en": "Cheng Chun Kit",
+      "reg_no": "M12320",
+      "signature_url": null,
+      "login_account": "dr2320",
+      "status": 1,
+      "created_at": "2026-02-20T08:00:00Z",
+      "clinic_ids": [
+        138
+      ],
+      "notes": "",
+      "workspace_separation": "separated",
+      "mfa_enabled": false
+    },
+    {
+      "id": 2520,
+      "clinic_id": 138,
+      "doctor_name": "何俊彥",
+      "doctor_name_en": "Ho Chun Yin",
+      "reg_no": "M12520",
+      "signature_url": null,
+      "login_account": "dr2520",
+      "status": 1,
+      "created_at": "2026-06-28T03:05:00Z",
+      "clinic_ids": [
+        138,
+        151
+      ],
+      "notes": "Cross-clinic cardiology cover. **Merged workspace** agreed at onboarding – works both sites in one list.",
+      "workspace_separation": "merged",
+      "mfa_enabled": false
+    },
+    {
+      "id": 2410,
+      "clinic_id": 151,
+      "doctor_name": "張家豪",
+      "doctor_name_en": "Cheung Ka Ho",
+      "reg_no": "M12410",
+      "signature_url": null,
+      "login_account": "dr2410",
+      "status": 1,
+      "created_at": "2026-06-21T01:30:00Z",
+      "clinic_ids": [
+        151
+      ],
+      "notes": "",
+      "workspace_separation": "separated",
+      "mfa_enabled": false
+    },
+    {
+      "id": 2450,
+      "clinic_id": 151,
+      "doctor_name": "馬曉彤",
+      "doctor_name_en": "Ma Hiu Tung",
+      "reg_no": "M12450",
+      "signature_url": null,
+      "login_account": "dr2450",
+      "status": 1,
+      "created_at": "2026-06-25T01:00:00Z",
+      "clinic_ids": [
+        151
+      ],
+      "notes": "",
+      "workspace_separation": "separated",
+      "mfa_enabled": false
+    },
+    {
+      "id": 2511,
+      "clinic_id": 166,
+      "doctor_name": "何秀英",
+      "doctor_name_en": "Ho Sau Ying",
+      "reg_no": "M12511",
+      "signature_url": null,
+      "login_account": "dr2511",
+      "status": 0,
+      "created_at": "2026-07-02T03:30:00Z",
+      "clinic_ids": [
+        166
+      ],
+      "notes": "",
+      "workspace_separation": "separated",
+      "mfa_enabled": false
+    },
+    {
+      "id": 2044,
+      "clinic_id": 103,
+      "doctor_name": "林國明",
+      "doctor_name_en": "Lam Kwok Ming",
+      "reg_no": "M12044",
+      "signature_url": "https://storage.example/sig/2044.png",
+      "login_account": "dr2044",
+      "status": 1,
+      "created_at": "2025-11-12T05:00:00Z",
+      "clinic_ids": [
+        103
+      ],
+      "notes": "",
+      "workspace_separation": "separated",
+      "mfa_enabled": false
+    },
+    {
+      "id": 2077,
+      "clinic_id": 103,
+      "doctor_name": "蕭麗珊",
+      "doctor_name_en": "Siu Lai Shan",
+      "reg_no": "M12077",
+      "signature_url": null,
+      "login_account": "dr2077",
+      "status": 1,
+      "created_at": "2025-12-01T05:00:00Z",
+      "clinic_ids": [
+        103
+      ],
+      "notes": "",
+      "workspace_separation": "separated",
+      "mfa_enabled": false
+    },
+    {
+      "id": 2688,
+      "clinic_id": 188,
+      "doctor_name": "何志偉",
+      "doctor_name_en": "Ho Chi Wai",
+      "reg_no": "M12688",
+      "signature_url": null,
+      "login_account": "dr2688",
+      "status": 1,
+      "created_at": "2026-06-29T04:00:00Z",
+      "clinic_ids": [
+        188
+      ],
+      "notes": "",
+      "workspace_separation": "separated",
+      "mfa_enabled": false
+    },
+    {
+      "id": 2690,
+      "clinic_id": 188,
+      "doctor_name": "杜文迪",
+      "doctor_name_en": "To Man Tik",
+      "reg_no": "M12690",
+      "signature_url": null,
+      "login_account": "dr2690",
+      "status": 1,
+      "created_at": "2026-07-01T04:00:00Z",
+      "clinic_ids": [
+        188
+      ],
+      "notes": "",
+      "workspace_separation": "separated",
+      "mfa_enabled": false
+    },
+    {
+      "id": 2701,
+      "clinic_id": 175,
+      "doctor_name": "梁詠芝",
+      "doctor_name_en": "Leung Wing Chi",
+      "reg_no": "M12701",
+      "signature_url": "https://storage.example/sig/2701.png",
+      "login_account": "dr2701",
+      "status": 1,
+      "created_at": "2026-05-07T02:00:00Z",
+      "clinic_ids": [
+        175
+      ],
+      "notes": "",
+      "workspace_separation": "separated",
+      "mfa_enabled": false
+    },
+    {
+      "id": 2712,
+      "clinic_id": 197,
+      "doctor_name": "吳家樂",
+      "doctor_name_en": "Ng Ka Lok",
+      "reg_no": "M12712",
+      "signature_url": null,
+      "login_account": "dr2712",
+      "status": 0,
+      "created_at": "2026-07-08T07:00:00Z",
+      "clinic_ids": [
+        197
+      ],
+      "notes": "",
+      "workspace_separation": "separated",
+      "mfa_enabled": false
+    }
+  ],
+  "companies": [
+    {
+      "id": 1,
+      "company_code": "DEMO_INS",
+      "company_name": "示例保險有限公司",
+      "company_name_en": "Demo Insurance Ltd.",
+      "logo_url": null,
+      "contact_info": "claims@demo-insurance.example",
+      "status": 1,
+      "created_at": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "company_code": "VHH",
+      "company_name": "維港健康保險",
+      "company_name_en": "Victoria Harbour Health",
+      "logo_url": null,
+      "contact_info": "support@vhh.example",
+      "status": 1,
+      "created_at": "2025-10-05T00:00:00Z"
+    },
+    {
+      "id": 3,
+      "company_code": "PEARL",
+      "company_name": "珠江保險",
+      "company_name_en": "Pearl River Assurance",
+      "logo_url": null,
+      "contact_info": "hk@pearlriver.example",
+      "status": 0,
+      "created_at": "2025-12-01T00:00:00Z"
+    },
+    {
+      "id": 4,
+      "company_code": "HTL",
+      "company_name": "港安人壽",
+      "company_name_en": "Harbour Trust Life",
+      "logo_url": null,
+      "contact_info": "claims@harbourtrust.example",
+      "status": 1,
+      "created_at": "2026-02-01T00:00:00Z"
+    }
+  ],
+  "templates": [
+    {
+      "id": 101,
+      "company_id": 1,
+      "template_name": "門診理賠申請表 Outpatient Claim",
+      "template_code": "TPL3301A1B2",
+      "version": "V2",
+      "original_pdf_url": "https://storage.example/tpl/101.pdf",
+      "page_count": 2,
+      "page_width": 595,
+      "page_height": 842,
+      "parse_status": "PUBLISHED",
+      "parse_progress": 100,
+      "parse_message": null,
+      "parse_error": null,
+      "is_active": true,
+      "created_at": "2026-03-01T00:00:00Z"
+    },
+    {
+      "id": 102,
+      "company_id": 1,
+      "template_name": "住院理賠申請表 Inpatient Claim",
+      "template_code": "TPL3302C3D4",
+      "version": "V1",
+      "original_pdf_url": "https://storage.example/tpl/102.pdf",
+      "page_count": 3,
+      "page_width": 595,
+      "page_height": 842,
+      "parse_status": "PUBLISHED",
+      "parse_progress": 100,
+      "parse_message": null,
+      "parse_error": null,
+      "is_active": true,
+      "created_at": "2026-04-10T00:00:00Z"
+    },
+    {
+      "id": 103,
+      "company_id": 1,
+      "template_name": "牙科理賠表 Dental Claim",
+      "template_code": "TPL3303E5F6",
+      "version": "V1",
+      "original_pdf_url": "https://storage.example/tpl/103.pdf",
+      "page_count": 1,
+      "page_width": 595,
+      "page_height": 842,
+      "parse_status": "PARSING",
+      "parse_progress": 40,
+      "parse_message": "偵測欄位中… Detecting fields…",
+      "parse_error": null,
+      "is_active": false,
+      "created_at": "2026-07-06T01:00:00Z"
+    },
+    {
+      "id": 104,
+      "company_id": 1,
+      "template_name": "高解析掃描表 Scan Claim",
+      "template_code": "TPL3304G7H8",
+      "version": "V1",
+      "original_pdf_url": "https://storage.example/tpl/104.pdf",
+      "page_count": 2,
+      "page_width": 595,
+      "page_height": 842,
+      "parse_status": "PARSE_FAILED",
+      "parse_progress": 0,
+      "parse_message": null,
+      "parse_error": "掃描解像度過低，無法偵測欄位。請以 ≥200 dpi 重新上載。 Scanned PDF too low-resolution.",
+      "is_active": false,
+      "created_at": "2026-07-05T22:00:00Z"
+    },
+    {
+      "id": 105,
+      "company_id": 1,
+      "template_name": "預先批核申請表 Pre-authorisation Request",
+      "template_code": "TPL3305I9J0",
+      "version": "V1",
+      "original_pdf_url": "https://storage.example/tpl/105.pdf",
+      "page_count": 2,
+      "page_width": 595,
+      "page_height": 842,
+      "parse_status": "ANNOTATED",
+      "parse_progress": 100,
+      "parse_message": null,
+      "parse_error": null,
+      "is_active": false,
+      "created_at": "2026-06-30T00:00:00Z"
+    },
+    {
+      "id": 201,
+      "company_id": 2,
+      "template_name": "健康聲明表 Health Declaration",
+      "template_code": "TPL3401K1L2",
+      "version": "V1",
+      "original_pdf_url": "https://storage.example/tpl/201.pdf",
+      "page_count": 1,
+      "page_width": 595,
+      "page_height": 842,
+      "parse_status": "PUBLISHED",
+      "parse_progress": 100,
+      "parse_message": null,
+      "parse_error": null,
+      "is_active": true,
+      "created_at": "2026-05-01T00:00:00Z"
+    },
+    {
+      "id": 202,
+      "company_id": 2,
+      "template_name": "牙科理賠申請表 Dental Claim",
+      "template_code": "TPL3402M3N4",
+      "version": "V1",
+      "original_pdf_url": "https://storage.example/tpl/202.pdf",
+      "page_count": 2,
+      "page_width": 595,
+      "page_height": 842,
+      "parse_status": "AUTO_PARSED",
+      "parse_progress": 100,
+      "parse_message": null,
+      "parse_error": null,
+      "is_active": false,
+      "created_at": "2026-06-18T00:00:00Z"
+    },
+    {
+      "id": 301,
+      "company_id": 3,
+      "template_name": "危疾理賠申請表 Critical Illness Claim",
+      "template_code": "TPL3501P5Q6",
+      "version": "V1",
+      "original_pdf_url": "https://storage.example/tpl/301.pdf",
+      "page_count": 4,
+      "page_width": 595,
+      "page_height": 842,
+      "parse_status": "PENDING",
+      "parse_progress": 0,
+      "parse_message": null,
+      "parse_error": null,
+      "is_active": false,
+      "created_at": "2026-07-01T00:00:00Z"
+    },
+    {
+      "id": 401,
+      "company_id": 4,
+      "template_name": "意外醫療理賠表 Accident Medical Claim",
+      "template_code": "TPL3601R7S8",
+      "version": "V1",
+      "original_pdf_url": "https://storage.example/tpl/401.pdf",
+      "page_count": 2,
+      "page_width": 595,
+      "page_height": 842,
+      "parse_status": "PUBLISHED",
+      "parse_progress": 100,
+      "parse_message": null,
+      "parse_error": null,
+      "is_active": true,
+      "created_at": "2026-06-05T00:00:00Z"
+    }
+  ],
+  "template_fields": {
+    "101": [
+      {
+        "id": 9001,
+        "template_id": 101,
+        "page_no": 1,
+        "field_label_raw": "投保人姓名 Policy Holder Name",
+        "pdf_field_name": "policyholder_name",
+        "field_type": "text",
+        "pos_x": 120,
+        "pos_y": 210.5,
+        "width": 220,
+        "height": 18,
+        "font_size": 10,
+        "recognize_source": "AUTO_PDF",
+        "confidence_score": 0.97,
+        "is_confirmed": true,
+        "field_status": "MAPPED",
+        "ignore_reason": null,
+        "row_version": 3,
+        "mapping": {
+          "id": 1,
+          "standard_field_id": 1,
+          "transform_rule_id": null,
+          "fixed_value": null,
+          "checkbox_map_value": null
+        }
+      },
+      {
+        "id": 9002,
+        "template_id": 101,
+        "page_no": 1,
+        "field_label_raw": "就診日期 Visit Date",
+        "pdf_field_name": "visit_date",
+        "field_type": "date",
+        "pos_x": 120,
+        "pos_y": 250,
+        "width": 160,
+        "height": 18,
+        "font_size": 10,
+        "recognize_source": "AI_VISION",
+        "confidence_score": 0.72,
+        "is_confirmed": false,
+        "field_status": "PENDING",
+        "ignore_reason": null,
+        "row_version": 1,
+        "mapping": null
+      },
+      {
+        "id": 9003,
+        "template_id": 101,
+        "page_no": 2,
+        "field_label_raw": "備註 Remarks",
+        "pdf_field_name": null,
+        "field_type": "text",
+        "pos_x": 90,
+        "pos_y": 620,
+        "width": 400,
+        "height": 40,
+        "font_size": 9,
+        "recognize_source": "MANUAL",
+        "confidence_score": null,
+        "is_confirmed": false,
+        "field_status": "IGNORED",
+        "ignore_reason": "非理賠欄位 — not part of the claim payload.",
+        "row_version": 2,
+        "mapping": null
+      },
+      {
+        "id": 9004,
+        "template_id": 101,
+        "page_no": 1,
+        "field_label_raw": "身份證號碼 HKID No.",
+        "pdf_field_name": "hkid",
+        "field_type": "text",
+        "pos_x": 120,
+        "pos_y": 230,
+        "width": 180,
+        "height": 18,
+        "font_size": 10,
+        "recognize_source": "AUTO_PDF",
+        "confidence_score": 0.93,
+        "is_confirmed": true,
+        "field_status": "MAPPED",
+        "ignore_reason": null,
+        "row_version": 1,
+        "mapping": {
+          "id": 2,
+          "standard_field_id": 7,
+          "transform_rule_id": null,
+          "fixed_value": null,
+          "checkbox_map_value": null
+        }
+      }
+    ],
+    "105": [
+      {
+        "id": 9101,
+        "template_id": 105,
+        "page_no": 1,
+        "field_label_raw": "申請人姓名 Applicant Name",
+        "pdf_field_name": "applicant_name",
+        "field_type": "text",
+        "pos_x": 110,
+        "pos_y": 200,
+        "width": 220,
+        "height": 18,
+        "font_size": 10,
+        "recognize_source": "AI_VISION",
+        "confidence_score": 0.81,
+        "is_confirmed": false,
+        "field_status": "PENDING",
+        "ignore_reason": null,
+        "row_version": 1,
+        "mapping": null
+      },
+      {
+        "id": 9102,
+        "template_id": 105,
+        "page_no": 1,
+        "field_label_raw": "擬入院日期 Planned Admission",
+        "pdf_field_name": "planned_admission",
+        "field_type": "date",
+        "pos_x": 110,
+        "pos_y": 240,
+        "width": 160,
+        "height": 18,
+        "font_size": 10,
+        "recognize_source": "AI_VISION",
+        "confidence_score": 0.64,
+        "is_confirmed": false,
+        "field_status": "PENDING",
+        "ignore_reason": null,
+        "row_version": 1,
+        "mapping": null
+      }
+    ],
+    "201": [
+      {
+        "id": 9201,
+        "template_id": 201,
+        "page_no": 1,
+        "field_label_raw": "聲明人姓名 Declarant Name",
+        "pdf_field_name": "declarant_name",
+        "field_type": "text",
+        "pos_x": 100,
+        "pos_y": 190,
+        "width": 220,
+        "height": 18,
+        "font_size": 10,
+        "recognize_source": "AUTO_PDF",
+        "confidence_score": 0.98,
+        "is_confirmed": true,
+        "field_status": "MAPPED",
+        "ignore_reason": null,
+        "row_version": 2,
+        "mapping": {
+          "id": 3,
+          "standard_field_id": 1,
+          "transform_rule_id": null,
+          "fixed_value": null,
+          "checkbox_map_value": null
+        }
+      }
+    ]
+  },
+  "domains": [
+    {
+      "id": 1,
+      "domain_code": "PATIENT",
+      "domain_name": "患者信息",
+      "sort_order": 1,
+      "remark": null
+    },
+    {
+      "id": 2,
+      "domain_code": "DIAGNOSIS",
+      "domain_name": "診斷信息",
+      "sort_order": 2,
+      "remark": null
+    },
+    {
+      "id": 3,
+      "domain_code": "FEE",
+      "domain_name": "費用信息",
+      "sort_order": 3,
+      "remark": null
+    },
+    {
+      "id": 4,
+      "domain_code": "DOCTOR",
+      "domain_name": "醫生信息",
+      "sort_order": 4,
+      "remark": null
+    },
+    {
+      "id": 5,
+      "domain_code": "POLICY",
+      "domain_name": "保單信息",
+      "sort_order": 5,
+      "remark": null
+    }
+  ],
+  "standard_fields": [
+    {
+      "id": 1,
+      "field_code": "patient_name_cn",
+      "field_name": "患者中文姓名",
+      "field_name_en": "Patient name (CN)",
+      "domain_id": 1,
+      "data_type": "text",
+      "enum_options": null,
+      "is_required": true,
+      "source_type": "AI",
+      "ai_extraction_hint": "Extract the patient's Chinese name from the record header.",
+      "validation_rule": null,
+      "example_value": "李小明",
+      "is_active": true,
+      "created_at": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": 2,
+      "field_code": "patient_gender",
+      "field_name": "性別",
+      "field_name_en": "Gender",
+      "domain_id": 1,
+      "data_type": "enum",
+      "enum_options": [
+        "男",
+        "女"
+      ],
+      "is_required": false,
+      "source_type": "AI",
+      "ai_extraction_hint": null,
+      "validation_rule": null,
+      "example_value": "男",
+      "is_active": true,
+      "created_at": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": 3,
+      "field_code": "visit_date",
+      "field_name": "就診日期",
+      "field_name_en": "Visit date",
+      "domain_id": 1,
+      "data_type": "date",
+      "enum_options": null,
+      "is_required": true,
+      "source_type": "AI",
+      "ai_extraction_hint": null,
+      "validation_rule": null,
+      "example_value": "2026-07-05",
+      "is_active": true,
+      "created_at": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": 4,
+      "field_code": "diagnosis",
+      "field_name": "診斷",
+      "field_name_en": "Diagnosis",
+      "domain_id": 2,
+      "data_type": "text",
+      "enum_options": null,
+      "is_required": true,
+      "source_type": "AI",
+      "ai_extraction_hint": "Primary diagnosis in the clinician's words.",
+      "validation_rule": null,
+      "example_value": "急性上呼吸道感染",
+      "is_active": true,
+      "created_at": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": 5,
+      "field_code": "total_fee",
+      "field_name": "總費用",
+      "field_name_en": "Total fee",
+      "domain_id": 3,
+      "data_type": "number",
+      "enum_options": null,
+      "is_required": false,
+      "source_type": "AI",
+      "ai_extraction_hint": null,
+      "validation_rule": null,
+      "example_value": "480",
+      "is_active": true,
+      "created_at": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": 6,
+      "field_code": "doctor_signature",
+      "field_name": "醫生簽名",
+      "field_name_en": "Doctor signature",
+      "domain_id": 4,
+      "data_type": "signature",
+      "enum_options": null,
+      "is_required": false,
+      "source_type": "SYSTEM",
+      "ai_extraction_hint": null,
+      "validation_rule": null,
+      "example_value": null,
+      "is_active": true,
+      "created_at": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": 7,
+      "field_code": "patient_id_no",
+      "field_name": "身份證號碼",
+      "field_name_en": "HKID number",
+      "domain_id": 1,
+      "data_type": "text",
+      "enum_options": null,
+      "is_required": true,
+      "source_type": "AI",
+      "ai_extraction_hint": null,
+      "validation_rule": "hkid",
+      "example_value": "A123456(7)",
+      "is_active": true,
+      "created_at": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": 8,
+      "field_code": "patient_birth_date",
+      "field_name": "出生日期",
+      "field_name_en": "Date of birth",
+      "domain_id": 1,
+      "data_type": "date",
+      "enum_options": null,
+      "is_required": false,
+      "source_type": "AI",
+      "ai_extraction_hint": null,
+      "validation_rule": null,
+      "example_value": "1980-03-12",
+      "is_active": true,
+      "created_at": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": 9,
+      "field_code": "icd10_code",
+      "field_name": "ICD-10 編碼",
+      "field_name_en": "ICD-10 code",
+      "domain_id": 2,
+      "data_type": "text",
+      "enum_options": null,
+      "is_required": false,
+      "source_type": "AI",
+      "ai_extraction_hint": null,
+      "validation_rule": "icd10",
+      "example_value": "J06.9",
+      "is_active": true,
+      "created_at": "2025-10-01T00:00:00Z"
+    },
+    {
+      "id": 10,
+      "field_code": "policy_no",
+      "field_name": "保單號碼",
+      "field_name_en": "Policy number",
+      "domain_id": 5,
+      "data_type": "text",
+      "enum_options": null,
+      "is_required": true,
+      "source_type": "AI",
+      "ai_extraction_hint": null,
+      "validation_rule": null,
+      "example_value": "POL-2026-000123",
+      "is_active": true,
+      "created_at": "2025-10-01T00:00:00Z"
+    }
+  ],
+  "transform_rules": [
+    {
+      "id": 1,
+      "rule_code": "DATE_ISO",
+      "rule_name": "ISO 日期格式",
+      "rule_type": "DATE_FORMAT",
+      "rule_config": {
+        "format": "YYYY-MM-DD"
+      },
+      "remark": null
+    },
+    {
+      "id": 2,
+      "rule_code": "GENDER_MAP",
+      "rule_name": "性別對照",
+      "rule_type": "ENUM_MAP",
+      "rule_config": {
+        "男": "M",
+        "女": "F"
+      },
+      "remark": null
+    },
+    {
+      "id": 3,
+      "rule_code": "HKD_AMOUNT",
+      "rule_name": "港幣金額格式",
+      "rule_type": "NUMBER_FORMAT",
+      "rule_config": {
+        "currency": "HKD",
+        "decimals": 2
+      },
+      "remark": null
+    }
+  ],
+  "coverage_registry": [
+    {
+      "company_id": 1,
+      "company_name_en": "Demo Insurance Ltd.",
+      "company_name_zh": "示例保險有限公司",
+      "forms": [
+        {
+          "template_id": 101,
+          "form_name_en": "Outpatient Claim",
+          "form_name_zh": "門診理賠申請表",
+          "page_count": 2,
+          "coverage": "covered"
+        },
+        {
+          "template_id": 102,
+          "form_name_en": "Inpatient Claim",
+          "form_name_zh": "住院理賠申請表",
+          "page_count": 3,
+          "coverage": "covered"
+        },
+        {
+          "template_id": 103,
+          "form_name_en": "Dental Claim",
+          "form_name_zh": "牙科理賠表",
+          "page_count": 1,
+          "coverage": "roadmap"
+        },
+        {
+          "template_id": 105,
+          "form_name_en": "Pre-authorisation Request",
+          "form_name_zh": "預先批核申請表",
+          "page_count": 2,
+          "coverage": "roadmap"
+        }
+      ]
+    },
+    {
+      "company_id": 2,
+      "company_name_en": "Victoria Harbour Health",
+      "company_name_zh": "維港健康保險",
+      "forms": [
+        {
+          "template_id": 201,
+          "form_name_en": "Health Declaration",
+          "form_name_zh": "健康聲明表",
+          "page_count": 1,
+          "coverage": "covered"
+        },
+        {
+          "template_id": 202,
+          "form_name_en": "Dental Claim",
+          "form_name_zh": "牙科理賠申請表",
+          "page_count": 2,
+          "coverage": "roadmap"
+        }
+      ]
+    },
+    {
+      "company_id": 3,
+      "company_name_en": "Pearl River Assurance",
+      "company_name_zh": "珠江保險",
+      "forms": [
+        {
+          "template_id": 301,
+          "form_name_en": "Critical Illness Claim",
+          "form_name_zh": "危疾理賠申請表",
+          "page_count": 4,
+          "coverage": "roadmap"
+        }
+      ]
+    },
+    {
+      "company_id": 4,
+      "company_name_en": "Harbour Trust Life",
+      "company_name_zh": "港安人壽",
+      "forms": [
+        {
+          "template_id": 401,
+          "form_name_en": "Accident Medical Claim",
+          "form_name_zh": "意外醫療理賠表",
+          "page_count": 2,
+          "coverage": "covered"
+        }
+      ]
+    }
+  ],
+  "field_schemas": {
+    "101": {
+      "template_id": 101,
+      "categories": [
+        {
+          "code": "PATIENT",
+          "label_en": "Patient information",
+          "label_zh": "病人資料",
+          "order": 1
+        },
+        {
+          "code": "DIAGNOSIS",
+          "label_en": "Diagnosis",
+          "label_zh": "診斷",
+          "order": 2
+        },
+        {
+          "code": "FEE",
+          "label_en": "Visit & fees",
+          "label_zh": "就診及費用",
+          "order": 3
+        },
+        {
+          "code": "DECLARATION",
+          "label_en": "Declaration & signature",
+          "label_zh": "聲明及簽署",
+          "order": 4
+        }
+      ],
+      "fields": [
+        {
+          "field_code": "patient_name_cn",
+          "category_code": "PATIENT",
+          "order": 1,
+          "label_en": "Patient name (Chinese)",
+          "label_zh": "病人姓名（中文）",
+          "data_type": "text",
+          "required": true,
+          "source_span": "病人：李小明，男，1980 年 3 月 12 日出生"
+        },
+        {
+          "field_code": "patient_name_en",
+          "category_code": "PATIENT",
+          "order": 2,
+          "label_en": "Patient name (English)",
+          "label_zh": "病人姓名（英文）",
+          "data_type": "text",
+          "required": false,
+          "source_span": "Patient: Lee Siu Ming (M)"
+        },
+        {
+          "field_code": "patient_id_no",
+          "category_code": "PATIENT",
+          "order": 3,
+          "label_en": "HKID number",
+          "label_zh": "身份證號碼",
+          "data_type": "text",
+          "required": true,
+          "source_span": "HKID: A123456(7)",
+          "render": {
+            "shape": "comb",
+            "comb_length": 8
+          },
+          "validation": {
+            "rule": "hkid",
+            "message_en": "Enter a valid HKID, e.g. A123456(7).",
+            "message_zh": "請輸入有效的香港身份證號碼，例如 A123456(7)。"
+          }
+        },
+        {
+          "field_code": "patient_gender",
+          "category_code": "PATIENT",
+          "order": 4,
+          "label_en": "Sex",
+          "label_zh": "性別",
+          "data_type": "enum",
+          "required": false,
+          "source_span": "男",
+          "enum_options": [
+            "男",
+            "女"
+          ],
+          "render": {
+            "shape": "checkbox-row",
+            "options": [
+              "男 M",
+              "女 F"
+            ]
+          }
+        },
+        {
+          "field_code": "patient_birth_date",
+          "category_code": "PATIENT",
+          "order": 5,
+          "label_en": "Date of birth",
+          "label_zh": "出生日期",
+          "data_type": "date",
+          "required": true,
+          "source_span": "1980 年 3 月 12 日出生"
+        },
+        {
+          "field_code": "patient_phone",
+          "category_code": "PATIENT",
+          "order": 6,
+          "label_en": "Contact number",
+          "label_zh": "聯絡電話",
+          "data_type": "text",
+          "required": false,
+          "source_span": null
+        },
+        {
+          "field_code": "policy_no",
+          "category_code": "PATIENT",
+          "order": 7,
+          "label_en": "Policy number",
+          "label_zh": "保單號碼",
+          "data_type": "text",
+          "required": true,
+          "source_span": null,
+          "render": {
+            "shape": "comb",
+            "comb_length": 12
+          }
+        },
+        {
+          "field_code": "visit_date",
+          "category_code": "DIAGNOSIS",
+          "order": 1,
+          "label_en": "Visit date",
+          "label_zh": "就診日期",
+          "data_type": "date",
+          "required": true,
+          "source_span": "就診日期：2026 年 7 月 5 日"
+        },
+        {
+          "field_code": "diagnosis",
+          "category_code": "DIAGNOSIS",
+          "order": 2,
+          "label_en": "Diagnosis",
+          "label_zh": "診斷",
+          "data_type": "text",
+          "required": true,
+          "source_span": "診斷：急性上呼吸道感染"
+        },
+        {
+          "field_code": "icd10_code",
+          "category_code": "DIAGNOSIS",
+          "order": 3,
+          "label_en": "ICD-10 code",
+          "label_zh": "ICD-10 編碼",
+          "data_type": "text",
+          "required": false,
+          "source_span": null,
+          "validation": {
+            "rule": "icd10",
+            "message_en": "Use an ICD-10 code such as J06.9.",
+            "message_zh": "請使用 ICD-10 編碼，例如 J06.9。"
+          }
+        },
+        {
+          "field_code": "symptoms",
+          "category_code": "DIAGNOSIS",
+          "order": 4,
+          "label_en": "Symptoms",
+          "label_zh": "症狀",
+          "data_type": "text",
+          "required": false,
+          "source_span": "主訴：發燒、喉嚨痛、咳嗽三天"
+        },
+        {
+          "field_code": "treatment",
+          "category_code": "DIAGNOSIS",
+          "order": 5,
+          "label_en": "Treatment",
+          "label_zh": "治療",
+          "data_type": "text",
+          "required": false,
+          "source_span": null
+        },
+        {
+          "field_code": "prescription",
+          "category_code": "DIAGNOSIS",
+          "order": 6,
+          "label_en": "Prescription",
+          "label_zh": "處方",
+          "data_type": "text",
+          "required": false,
+          "source_span": null
+        },
+        {
+          "field_code": "consultation_fee",
+          "category_code": "FEE",
+          "order": 1,
+          "label_en": "Consultation fee (HKD)",
+          "label_zh": "診金（港幣）",
+          "data_type": "number",
+          "required": true,
+          "source_span": null
+        },
+        {
+          "field_code": "medication_fee",
+          "category_code": "FEE",
+          "order": 2,
+          "label_en": "Medication fee (HKD)",
+          "label_zh": "藥費（港幣）",
+          "data_type": "number",
+          "required": false,
+          "source_span": null
+        },
+        {
+          "field_code": "total_fee",
+          "category_code": "FEE",
+          "order": 3,
+          "label_en": "Total fee (HKD)",
+          "label_zh": "總費用（港幣）",
+          "data_type": "number",
+          "required": true,
+          "source_span": "收費：港幣 $480",
+          "validation": {
+            "rule": "amount",
+            "message_en": "Total must equal consultation + medication fees.",
+            "message_zh": "總費用須等於診金與藥費之和。"
+          }
+        },
+        {
+          "field_code": "doctor_remarks",
+          "category_code": "DECLARATION",
+          "order": 1,
+          "label_en": "Doctor remarks",
+          "label_zh": "醫生備註",
+          "data_type": "text",
+          "required": false,
+          "source_span": null
+        },
+        {
+          "field_code": "doctor_signature",
+          "category_code": "DECLARATION",
+          "order": 2,
+          "label_en": "Doctor signature",
+          "label_zh": "醫生簽名",
+          "data_type": "signature",
+          "required": false,
+          "source_span": null,
+          "render": {
+            "shape": "line"
+          }
+        }
+      ]
+    },
+    "102": {
+      "template_id": 102,
+      "categories": [
+        {
+          "code": "PATIENT",
+          "label_en": "Patient information",
+          "label_zh": "病人資料",
+          "order": 1
+        },
+        {
+          "code": "ADMISSION",
+          "label_en": "Admission",
+          "label_zh": "入院",
+          "order": 2
+        },
+        {
+          "code": "DIAGNOSIS",
+          "label_en": "Diagnosis",
+          "label_zh": "診斷",
+          "order": 3
+        },
+        {
+          "code": "FEE",
+          "label_en": "Fees",
+          "label_zh": "費用",
+          "order": 4
+        }
+      ],
+      "fields": [
+        {
+          "field_code": "patient_name_cn",
+          "category_code": "PATIENT",
+          "order": 1,
+          "label_en": "Patient name (Chinese)",
+          "label_zh": "病人姓名（中文）",
+          "data_type": "text",
+          "required": true,
+          "source_span": null
+        },
+        {
+          "field_code": "patient_id_no",
+          "category_code": "PATIENT",
+          "order": 2,
+          "label_en": "HKID number",
+          "label_zh": "身份證號碼",
+          "data_type": "text",
+          "required": true,
+          "source_span": null,
+          "render": {
+            "shape": "comb",
+            "comb_length": 8
+          }
+        },
+        {
+          "field_code": "patient_birth_date",
+          "category_code": "PATIENT",
+          "order": 3,
+          "label_en": "Date of birth",
+          "label_zh": "出生日期",
+          "data_type": "date",
+          "required": false,
+          "source_span": null
+        },
+        {
+          "field_code": "hospital_name",
+          "category_code": "ADMISSION",
+          "order": 1,
+          "label_en": "Hospital",
+          "label_zh": "入住醫院",
+          "data_type": "text",
+          "required": true,
+          "source_span": null
+        },
+        {
+          "field_code": "admission_date",
+          "category_code": "ADMISSION",
+          "order": 2,
+          "label_en": "Admission date",
+          "label_zh": "入院日期",
+          "data_type": "date",
+          "required": true,
+          "source_span": null
+        },
+        {
+          "field_code": "discharge_date",
+          "category_code": "ADMISSION",
+          "order": 3,
+          "label_en": "Discharge date",
+          "label_zh": "出院日期",
+          "data_type": "date",
+          "required": true,
+          "source_span": null
+        },
+        {
+          "field_code": "ward_class",
+          "category_code": "ADMISSION",
+          "order": 4,
+          "label_en": "Ward class",
+          "label_zh": "病房等級",
+          "data_type": "enum",
+          "required": false,
+          "source_span": null,
+          "enum_options": [
+            "普通房",
+            "半私家房",
+            "私家房"
+          ],
+          "render": {
+            "shape": "checkbox-row",
+            "options": [
+              "普通房 General",
+              "半私家房 Semi-private",
+              "私家房 Private"
+            ]
+          }
+        },
+        {
+          "field_code": "diagnosis",
+          "category_code": "DIAGNOSIS",
+          "order": 1,
+          "label_en": "Diagnosis",
+          "label_zh": "診斷",
+          "data_type": "text",
+          "required": true,
+          "source_span": null
+        },
+        {
+          "field_code": "operation_name",
+          "category_code": "DIAGNOSIS",
+          "order": 2,
+          "label_en": "Operation (if any)",
+          "label_zh": "手術名稱（如有）",
+          "data_type": "text",
+          "required": false,
+          "source_span": null
+        },
+        {
+          "field_code": "icd10_code",
+          "category_code": "DIAGNOSIS",
+          "order": 3,
+          "label_en": "ICD-10 code",
+          "label_zh": "ICD-10 編碼",
+          "data_type": "text",
+          "required": false,
+          "source_span": null
+        },
+        {
+          "field_code": "daily_room_fee",
+          "category_code": "FEE",
+          "order": 1,
+          "label_en": "Daily room fee (HKD)",
+          "label_zh": "每日房租（港幣）",
+          "data_type": "number",
+          "required": false,
+          "source_span": null
+        },
+        {
+          "field_code": "total_fee",
+          "category_code": "FEE",
+          "order": 2,
+          "label_en": "Total fee (HKD)",
+          "label_zh": "總費用（港幣）",
+          "data_type": "number",
+          "required": true,
+          "source_span": null
+        }
+      ]
+    },
+    "201": {
+      "template_id": 201,
+      "categories": [
+        {
+          "code": "PATIENT",
+          "label_en": "Declarant",
+          "label_zh": "聲明人",
+          "order": 1
+        },
+        {
+          "code": "DECLARATION",
+          "label_en": "Declaration",
+          "label_zh": "聲明",
+          "order": 2
+        }
+      ],
+      "fields": [
+        {
+          "field_code": "patient_name_cn",
+          "category_code": "PATIENT",
+          "order": 1,
+          "label_en": "Name (Chinese)",
+          "label_zh": "姓名（中文）",
+          "data_type": "text",
+          "required": true,
+          "source_span": null
+        },
+        {
+          "field_code": "patient_birth_date",
+          "category_code": "PATIENT",
+          "order": 2,
+          "label_en": "Date of birth",
+          "label_zh": "出生日期",
+          "data_type": "date",
+          "required": true,
+          "source_span": null
+        },
+        {
+          "field_code": "smoking_status",
+          "category_code": "PATIENT",
+          "order": 3,
+          "label_en": "Smoking status",
+          "label_zh": "吸煙狀況",
+          "data_type": "enum",
+          "required": false,
+          "source_span": null,
+          "enum_options": [
+            "非吸煙",
+            "吸煙"
+          ],
+          "render": {
+            "shape": "checkbox-row",
+            "options": [
+              "非吸煙 Non-smoker",
+              "吸煙 Smoker"
+            ]
+          }
+        },
+        {
+          "field_code": "declaration",
+          "category_code": "DECLARATION",
+          "order": 1,
+          "label_en": "Health declaration",
+          "label_zh": "健康聲明",
+          "data_type": "text",
+          "required": true,
+          "source_span": null
+        },
+        {
+          "field_code": "chronic_conditions",
+          "category_code": "DECLARATION",
+          "order": 2,
+          "label_en": "Chronic conditions",
+          "label_zh": "長期病患",
+          "data_type": "text",
+          "required": false,
+          "source_span": null
+        },
+        {
+          "field_code": "declaration_date",
+          "category_code": "DECLARATION",
+          "order": 3,
+          "label_en": "Declaration date",
+          "label_zh": "聲明日期",
+          "data_type": "date",
+          "required": false,
+          "source_span": null
+        }
+      ]
+    },
+    "401": {
+      "template_id": 401,
+      "categories": [
+        {
+          "code": "PATIENT",
+          "label_en": "Patient information",
+          "label_zh": "病人資料",
+          "order": 1
+        },
+        {
+          "code": "ACCIDENT",
+          "label_en": "Accident details",
+          "label_zh": "意外詳情",
+          "order": 2
+        },
+        {
+          "code": "FEE",
+          "label_en": "Visit & fees",
+          "label_zh": "就診及費用",
+          "order": 3
+        }
+      ],
+      "fields": [
+        {
+          "field_code": "patient_name_cn",
+          "category_code": "PATIENT",
+          "order": 1,
+          "label_en": "Patient name (Chinese)",
+          "label_zh": "病人姓名（中文）",
+          "data_type": "text",
+          "required": true,
+          "source_span": null
+        },
+        {
+          "field_code": "patient_id_no",
+          "category_code": "PATIENT",
+          "order": 2,
+          "label_en": "HKID number",
+          "label_zh": "身份證號碼",
+          "data_type": "text",
+          "required": true,
+          "source_span": null,
+          "render": {
+            "shape": "comb",
+            "comb_length": 8
+          }
+        },
+        {
+          "field_code": "accident_date",
+          "category_code": "ACCIDENT",
+          "order": 1,
+          "label_en": "Accident date",
+          "label_zh": "意外日期",
+          "data_type": "date",
+          "required": true,
+          "source_span": null
+        },
+        {
+          "field_code": "accident_place",
+          "category_code": "ACCIDENT",
+          "order": 2,
+          "label_en": "Accident location",
+          "label_zh": "意外地點",
+          "data_type": "text",
+          "required": false,
+          "source_span": null
+        },
+        {
+          "field_code": "accident_description",
+          "category_code": "ACCIDENT",
+          "order": 3,
+          "label_en": "How the accident happened",
+          "label_zh": "意外經過",
+          "data_type": "text",
+          "required": true,
+          "source_span": null
+        },
+        {
+          "field_code": "injury_type",
+          "category_code": "ACCIDENT",
+          "order": 4,
+          "label_en": "Injury sustained",
+          "label_zh": "受傷類型",
+          "data_type": "text",
+          "required": false,
+          "source_span": null
+        },
+        {
+          "field_code": "visit_date",
+          "category_code": "FEE",
+          "order": 1,
+          "label_en": "Visit date",
+          "label_zh": "就診日期",
+          "data_type": "date",
+          "required": true,
+          "source_span": null
+        },
+        {
+          "field_code": "total_fee",
+          "category_code": "FEE",
+          "order": 2,
+          "label_en": "Total fee (HKD)",
+          "label_zh": "總費用（港幣）",
+          "data_type": "number",
+          "required": true,
+          "source_span": null
+        }
+      ]
+    }
+  },
+  "extraction_canned": {
+    "patient_name_cn": {
+      "value": "李小明",
+      "confidence": 0.98
+    },
+    "patient_name_en": {
+      "value": "Lee Siu Ming",
+      "confidence": 0.95
+    },
+    "patient_id_no": {
+      "value": "A123456(7)",
+      "confidence": 0.9
+    },
+    "patient_gender": {
+      "value": "男",
+      "confidence": 0.97
+    },
+    "patient_birth_date": {
+      "value": "1980-03-12",
+      "confidence": 0.92
+    },
+    "visit_date": {
+      "value": "2026-07-05",
+      "confidence": 0.94
+    },
+    "diagnosis": {
+      "value": "急性上呼吸道感染",
+      "confidence": 0.91
+    },
+    "icd10_code": {
+      "value": "J06,9",
+      "confidence": 0.66
+    },
+    "symptoms": {
+      "value": "發燒、喉嚨痛、咳嗽",
+      "confidence": 0.83
+    },
+    "consultation_fee": {
+      "value": "380",
+      "confidence": 0.86
+    },
+    "medication_fee": {
+      "value": "100",
+      "confidence": 0.84
+    },
+    "total_fee": {
+      "value": "480",
+      "confidence": 0.88
+    }
+  },
+  "claims": [
+    {
+      "id": 5013,
+      "submission_no": "SUB20260710001395",
+      "clinic_id": 142,
+      "doctor_id": 2207,
+      "company_id": 1,
+      "template_id": 101,
+      "template_version": "V2",
+      "patient_name": "郭永昌 Kwok Wing Cheong",
+      "ai_raw_result": null,
+      "final_field_values": null,
+      "ai_token_usage": null,
+      "ai_process_time_ms": null,
+      "generated_pdf_url": null,
+      "status": "DRAFT",
+      "created_at": "2026-07-10T01:05:00Z"
+    },
+    {
+      "id": 5014,
+      "submission_no": "SUB20260710001396",
+      "clinic_id": 142,
+      "doctor_id": 2207,
+      "company_id": 1,
+      "template_id": 101,
+      "template_version": "V2",
+      "patient_name": "潘曉琳 Poon Hiu Lam",
+      "ai_raw_result": {
+        "patient_name_cn": {
+          "value": "潘曉琳",
+          "confidence": 0.98
+        },
+        "patient_name_en": {
+          "value": "Poon Hiu Lam",
+          "confidence": 0.95
+        },
+        "patient_id_no": {
+          "value": "N345672(9)",
+          "confidence": 0.9
+        },
+        "visit_date": {
+          "value": "2026-07-09",
+          "confidence": 0.94
+        },
+        "diagnosis": {
+          "value": "腰背痛",
+          "confidence": 0.91
+        },
+        "policy_no": {
+          "value": "POL-2026-000294",
+          "confidence": 0.8
+        },
+        "consultation_fee": {
+          "value": "465",
+          "confidence": 0.86
+        },
+        "medication_fee": {
+          "value": "155",
+          "confidence": 0.84
+        },
+        "total_fee": {
+          "value": "620",
+          "confidence": 0.88
+        }
+      },
+      "final_field_values": {
+        "patient_name_cn": "潘曉琳",
+        "patient_name_en": "Poon Hiu Lam",
+        "patient_id_no": "N345672(9)",
+        "visit_date": "2026-07-09",
+        "diagnosis": "腰背痛",
+        "policy_no": "POL-2026-000294",
+        "consultation_fee": "465",
+        "medication_fee": "155",
+        "total_fee": "620"
+      },
+      "ai_token_usage": 444,
+      "ai_process_time_ms": 1614,
+      "generated_pdf_url": null,
+      "status": "AI_FILLED",
+      "created_at": "2026-07-10T00:40:00Z"
+    },
+    {
+      "id": 5001,
+      "submission_no": "SUB20260709001389",
+      "clinic_id": 142,
+      "doctor_id": 2207,
+      "company_id": 1,
+      "template_id": 101,
+      "template_version": "V2",
+      "patient_name": "李小明 Lee Siu Ming",
+      "ai_raw_result": {
+        "patient_name_cn": {
+          "value": "李小明",
+          "confidence": 0.98
+        },
+        "patient_name_en": {
+          "value": "Lee Siu Ming",
+          "confidence": 0.95
+        },
+        "patient_id_no": {
+          "value": "A123456(7)",
+          "confidence": 0.9
+        },
+        "patient_gender": {
+          "value": "男",
+          "confidence": 0.97
+        },
+        "patient_birth_date": {
+          "value": "1980-03-12",
+          "confidence": 0.92
+        },
+        "visit_date": {
+          "value": "2026-07-05",
+          "confidence": 0.94
+        },
+        "diagnosis": {
+          "value": "急性上呼吸道感染",
+          "confidence": 0.91
+        },
+        "icd10_code": {
+          "value": "J06,9",
+          "confidence": 0.66
+        },
+        "symptoms": {
+          "value": "發燒、喉嚨痛、咳嗽",
+          "confidence": 0.83
+        },
+        "consultation_fee": {
+          "value": "380",
+          "confidence": 0.86
+        },
+        "medication_fee": {
+          "value": "100",
+          "confidence": 0.84
+        },
+        "total_fee": {
+          "value": "480",
+          "confidence": 0.88
+        }
+      },
+      "final_field_values": {
+        "patient_name_cn": "李小明",
+        "patient_name_en": "Lee Siu Ming",
+        "patient_id_no": "A123456(7)",
+        "patient_gender": "男",
+        "patient_birth_date": "1980-03-12",
+        "visit_date": "2026-07-05",
+        "diagnosis": "急性上呼吸道感染",
+        "icd10_code": "J06,9",
+        "symptoms": "發燒、喉嚨痛、咳嗽",
+        "consultation_fee": "380",
+        "medication_fee": "100",
+        "total_fee": "480"
+      },
+      "ai_token_usage": 431,
+      "ai_process_time_ms": 1601,
+      "generated_pdf_url": null,
+      "status": "AI_FILLED",
+      "created_at": "2026-07-09T02:14:00Z"
+    },
+    {
+      "id": 5002,
+      "submission_no": "SUB2026070800138A",
+      "clinic_id": 142,
+      "doctor_id": 2207,
+      "company_id": 1,
+      "template_id": 102,
+      "template_version": "V1",
+      "patient_name": "王美娟 Wong Mei Kuen",
+      "ai_raw_result": null,
+      "final_field_values": null,
+      "ai_token_usage": null,
+      "ai_process_time_ms": null,
+      "generated_pdf_url": null,
+      "status": "DRAFT",
+      "created_at": "2026-07-08T09:40:00Z"
+    },
+    {
+      "id": 5005,
+      "submission_no": "SUB2026070700138D",
+      "clinic_id": 142,
+      "doctor_id": 2207,
+      "company_id": 4,
+      "template_id": 401,
+      "template_version": "V1",
+      "patient_name": "何俊賢 Ho Chun Yin",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "何俊賢",
+        "patient_id_no": "D456789(0)",
+        "accident_date": "2026-07-06",
+        "accident_description": "於樓梯踏空扭傷右足踝。",
+        "injury_type": "軟組織挫傷",
+        "visit_date": "2026-07-07",
+        "total_fee": "850"
+      },
+      "ai_token_usage": 435,
+      "ai_process_time_ms": 1605,
+      "generated_pdf_url": null,
+      "status": "CONFIRMED",
+      "created_at": "2026-07-07T06:20:00Z"
+    },
+    {
+      "id": 5003,
+      "submission_no": "SUB2026070300138B",
+      "clinic_id": 142,
+      "doctor_id": 2207,
+      "company_id": 2,
+      "template_id": 201,
+      "template_version": "V1",
+      "patient_name": "張偉強 Cheung Wai Keung",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "張偉強",
+        "patient_birth_date": "1975-11-02",
+        "smoking_status": "非吸煙",
+        "declaration": "過往健康良好，無長期病患。",
+        "declaration_date": "2026-07-03"
+      },
+      "ai_token_usage": 433,
+      "ai_process_time_ms": 1603,
+      "generated_pdf_url": "/local-storage/generated/SUB2026070300138B.pdf",
+      "status": "PRINTED",
+      "created_at": "2026-07-03T04:22:00Z"
+    },
+    {
+      "id": 5004,
+      "submission_no": "SUB2026070200138C",
+      "clinic_id": 142,
+      "doctor_id": 2207,
+      "company_id": 1,
+      "template_id": 101,
+      "template_version": "V2",
+      "patient_name": "陳嘉欣 Chan Ka Yan",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "陳嘉欣",
+        "patient_name_en": "Chan Ka Yan",
+        "patient_id_no": "B987654(3)",
+        "visit_date": "2026-07-02",
+        "diagnosis": "偏頭痛",
+        "policy_no": "POL-2026-000817",
+        "consultation_fee": "390",
+        "medication_fee": "130",
+        "total_fee": "520"
+      },
+      "ai_token_usage": 434,
+      "ai_process_time_ms": 1604,
+      "generated_pdf_url": "/local-storage/generated/SUB2026070200138C.pdf",
+      "status": "PRINTED",
+      "created_at": "2026-07-02T07:05:00Z"
+    },
+    {
+      "id": 5006,
+      "submission_no": "SUB2026062800138E",
+      "clinic_id": 142,
+      "doctor_id": 2207,
+      "company_id": 1,
+      "template_id": 101,
+      "template_version": "V2",
+      "patient_name": "林淑芬 Lam Suk Fan",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "林淑芬",
+        "patient_name_en": "Lam Suk Fan",
+        "patient_id_no": "E567890(1)",
+        "visit_date": "2026-06-28",
+        "diagnosis": "腸胃炎",
+        "policy_no": "POL-2026-000214",
+        "consultation_fee": "345",
+        "medication_fee": "115",
+        "total_fee": "460"
+      },
+      "ai_token_usage": 436,
+      "ai_process_time_ms": 1606,
+      "generated_pdf_url": "/local-storage/generated/SUB2026062800138E.pdf",
+      "status": "PRINTED",
+      "created_at": "2026-06-28T03:30:00Z"
+    },
+    {
+      "id": 5007,
+      "submission_no": "SUB2026062500138F",
+      "clinic_id": 142,
+      "doctor_id": 2207,
+      "company_id": 1,
+      "template_id": 102,
+      "template_version": "V1",
+      "patient_name": "黃國棟 Wong Kwok Tung",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "黃國棟",
+        "patient_id_no": "F678901(2)",
+        "hospital_name": "港怡醫院 Gleneagles Hospital",
+        "admission_date": "2026-06-20",
+        "discharge_date": "2026-06-23",
+        "ward_class": "半私家房",
+        "diagnosis": "急性闌尾炎",
+        "total_fee": "48200"
+      },
+      "ai_token_usage": 437,
+      "ai_process_time_ms": 1607,
+      "generated_pdf_url": "/local-storage/generated/SUB2026062500138F.pdf",
+      "status": "PRINTED",
+      "created_at": "2026-06-25T08:10:00Z"
+    },
+    {
+      "id": 5008,
+      "submission_no": "SUB20260622001390",
+      "clinic_id": 142,
+      "doctor_id": 2207,
+      "company_id": 2,
+      "template_id": 201,
+      "template_version": "V1",
+      "patient_name": "蔡雅婷 Choi Nga Ting",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "蔡雅婷",
+        "patient_birth_date": "1975-11-02",
+        "smoking_status": "非吸煙",
+        "declaration": "偶發性季節性鼻敏感，其餘健康良好。",
+        "declaration_date": "2026-06-22"
+      },
+      "ai_token_usage": 438,
+      "ai_process_time_ms": 1608,
+      "generated_pdf_url": "/local-storage/generated/SUB20260622001390.pdf",
+      "status": "PRINTED",
+      "created_at": "2026-06-22T05:45:00Z"
+    },
+    {
+      "id": 5009,
+      "submission_no": "SUB20260620001391",
+      "clinic_id": 142,
+      "doctor_id": 2207,
+      "company_id": 1,
+      "template_id": 101,
+      "template_version": "V2",
+      "patient_name": "馮子軒 Fung Tsz Hin",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "馮子軒",
+        "patient_name_en": "Fung Tsz Hin",
+        "patient_id_no": "H890123(4)",
+        "visit_date": "2026-06-19",
+        "diagnosis": "上呼吸道感染",
+        "policy_no": "POL-2026-000180",
+        "consultation_fee": "315",
+        "medication_fee": "105",
+        "total_fee": "420"
+      },
+      "ai_token_usage": 439,
+      "ai_process_time_ms": 1609,
+      "generated_pdf_url": null,
+      "status": "CANCELLED",
+      "created_at": "2026-06-20T02:00:00Z"
+    },
+    {
+      "id": 5010,
+      "submission_no": "SUB20260618001392",
+      "clinic_id": 142,
+      "doctor_id": 2207,
+      "company_id": 1,
+      "template_id": 101,
+      "template_version": "V2",
+      "patient_name": "許家欣 Hui Ka Yan",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "許家欣",
+        "patient_name_en": "Hui Ka Yan",
+        "patient_id_no": "J901234(5)",
+        "visit_date": "2026-06-18",
+        "diagnosis": "急性咽喉炎",
+        "policy_no": "POL-2026-000642",
+        "consultation_fee": "360",
+        "medication_fee": "120",
+        "total_fee": "480"
+      },
+      "ai_token_usage": 440,
+      "ai_process_time_ms": 1610,
+      "generated_pdf_url": "/local-storage/generated/SUB20260618001392.pdf",
+      "status": "PRINTED",
+      "created_at": "2026-06-18T06:55:00Z"
+    },
+    {
+      "id": 5011,
+      "submission_no": "SUB20260615001393",
+      "clinic_id": 142,
+      "doctor_id": 2207,
+      "company_id": 4,
+      "template_id": 401,
+      "template_version": "V1",
+      "patient_name": "譚志明 Tam Chi Ming",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "譚志明",
+        "patient_id_no": "K012345(6)",
+        "accident_date": "2026-06-14",
+        "accident_description": "羽毛球運動時扭傷左膝。",
+        "injury_type": "軟組織挫傷",
+        "visit_date": "2026-06-15",
+        "total_fee": "1240"
+      },
+      "ai_token_usage": 441,
+      "ai_process_time_ms": 1611,
+      "generated_pdf_url": "/local-storage/generated/SUB20260615001393.pdf",
+      "status": "PRINTED",
+      "created_at": "2026-06-15T07:35:00Z"
+    },
+    {
+      "id": 5012,
+      "submission_no": "SUB20260612001394",
+      "clinic_id": 142,
+      "doctor_id": 2207,
+      "company_id": 1,
+      "template_id": 102,
+      "template_version": "V1",
+      "patient_name": "蘇慧敏 So Wai Man",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "蘇慧敏",
+        "patient_id_no": "L123450(7)",
+        "hospital_name": "港怡醫院 Gleneagles Hospital",
+        "admission_date": "2026-06-08",
+        "discharge_date": "2026-06-10",
+        "ward_class": "半私家房",
+        "diagnosis": "膽石症",
+        "total_fee": "65400"
+      },
+      "ai_token_usage": 442,
+      "ai_process_time_ms": 1612,
+      "generated_pdf_url": "/local-storage/generated/SUB20260612001394.pdf",
+      "status": "PRINTED",
+      "created_at": "2026-06-12T09:00:00Z"
+    },
+    {
+      "id": 5015,
+      "submission_no": "SUB20260709001397",
+      "clinic_id": 142,
+      "doctor_id": 2188,
+      "company_id": 1,
+      "template_id": 101,
+      "template_version": "V2",
+      "patient_name": "葉建華 Yip Kin Wah",
+      "ai_raw_result": {
+        "patient_name_cn": {
+          "value": "葉建華",
+          "confidence": 0.98
+        },
+        "patient_name_en": {
+          "value": "Yip Kin Wah",
+          "confidence": 0.95
+        },
+        "patient_id_no": {
+          "value": "P456783(0)",
+          "confidence": 0.9
+        },
+        "visit_date": {
+          "value": "2026-07-09",
+          "confidence": 0.94
+        },
+        "diagnosis": {
+          "value": "高血壓覆診",
+          "confidence": 0.91
+        },
+        "policy_no": {
+          "value": "POL-2026-000674",
+          "confidence": 0.8
+        },
+        "consultation_fee": {
+          "value": "405",
+          "confidence": 0.86
+        },
+        "medication_fee": {
+          "value": "135",
+          "confidence": 0.84
+        },
+        "total_fee": {
+          "value": "540",
+          "confidence": 0.88
+        }
+      },
+      "final_field_values": {
+        "patient_name_cn": "葉建華",
+        "patient_name_en": "Yip Kin Wah",
+        "patient_id_no": "P456783(0)",
+        "visit_date": "2026-07-09",
+        "diagnosis": "高血壓覆診",
+        "policy_no": "POL-2026-000674",
+        "consultation_fee": "405",
+        "medication_fee": "135",
+        "total_fee": "540"
+      },
+      "ai_token_usage": 445,
+      "ai_process_time_ms": 1615,
+      "generated_pdf_url": null,
+      "status": "AI_FILLED",
+      "created_at": "2026-07-09T07:30:00Z"
+    },
+    {
+      "id": 5016,
+      "submission_no": "SUB20260704001398",
+      "clinic_id": 142,
+      "doctor_id": 2188,
+      "company_id": 1,
+      "template_id": 101,
+      "template_version": "V2",
+      "patient_name": "謝安琪 Tse On Kei",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "謝安琪",
+        "patient_name_en": "Tse On Kei",
+        "patient_id_no": "R567894(1)",
+        "visit_date": "2026-07-04",
+        "diagnosis": "濕疹",
+        "policy_no": "POL-2026-000354",
+        "consultation_fee": "375",
+        "medication_fee": "125",
+        "total_fee": "500"
+      },
+      "ai_token_usage": 446,
+      "ai_process_time_ms": 1616,
+      "generated_pdf_url": "/local-storage/generated/SUB20260704001398.pdf",
+      "status": "PRINTED",
+      "created_at": "2026-07-04T05:15:00Z"
+    },
+    {
+      "id": 5017,
+      "submission_no": "SUB20260626001399",
+      "clinic_id": 142,
+      "doctor_id": 2188,
+      "company_id": 2,
+      "template_id": 201,
+      "template_version": "V1",
+      "patient_name": "葉建華 Yip Kin Wah",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "葉建華",
+        "patient_birth_date": "1975-11-02",
+        "smoking_status": "非吸煙",
+        "declaration": "高血壓病史五年，服藥控制穩定。",
+        "declaration_date": "2026-06-26"
+      },
+      "ai_token_usage": 447,
+      "ai_process_time_ms": 1617,
+      "generated_pdf_url": "/local-storage/generated/SUB20260626001399.pdf",
+      "status": "PRINTED",
+      "created_at": "2026-06-26T03:00:00Z"
+    },
+    {
+      "id": 5018,
+      "submission_no": "SUB2026071000139A",
+      "clinic_id": 142,
+      "doctor_id": 2188,
+      "company_id": 1,
+      "template_id": 101,
+      "template_version": "V2",
+      "patient_name": "謝安琪 Tse On Kei",
+      "ai_raw_result": null,
+      "final_field_values": null,
+      "ai_token_usage": null,
+      "ai_process_time_ms": null,
+      "generated_pdf_url": null,
+      "status": "DRAFT",
+      "created_at": "2026-07-10T02:20:00Z"
+    },
+    {
+      "id": 5019,
+      "submission_no": "SUB2026070800139B",
+      "clinic_id": 138,
+      "doctor_id": 2301,
+      "company_id": 1,
+      "template_id": 101,
+      "template_version": "V2",
+      "patient_name": "林淑芬 Lam Suk Fan",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "林淑芬",
+        "patient_name_en": "Lam Suk Fan",
+        "patient_id_no": "E567890(1)",
+        "visit_date": "2026-07-08",
+        "diagnosis": "心悸檢查",
+        "policy_no": "POL-2026-000214",
+        "consultation_fee": "675",
+        "medication_fee": "225",
+        "total_fee": "900"
+      },
+      "ai_token_usage": 449,
+      "ai_process_time_ms": 1619,
+      "generated_pdf_url": "/local-storage/generated/SUB2026070800139B.pdf",
+      "status": "PRINTED",
+      "created_at": "2026-07-08T04:00:00Z"
+    },
+    {
+      "id": 5020,
+      "submission_no": "SUB2026070600139C",
+      "clinic_id": 138,
+      "doctor_id": 2301,
+      "company_id": 1,
+      "template_id": 102,
+      "template_version": "V1",
+      "patient_name": "張偉強 Cheung Wai Keung",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "張偉強",
+        "patient_id_no": "C345678(9)",
+        "hospital_name": "港怡醫院 Gleneagles Hospital",
+        "admission_date": "2026-07-01",
+        "discharge_date": "2026-07-04",
+        "ward_class": "半私家房",
+        "diagnosis": "心房顫動",
+        "total_fee": "88800"
+      },
+      "ai_token_usage": 450,
+      "ai_process_time_ms": 1620,
+      "generated_pdf_url": null,
+      "status": "CONFIRMED",
+      "created_at": "2026-07-06T06:40:00Z"
+    },
+    {
+      "id": 5021,
+      "submission_no": "SUB2026063000139D",
+      "clinic_id": 138,
+      "doctor_id": 2301,
+      "company_id": 2,
+      "template_id": 201,
+      "template_version": "V1",
+      "patient_name": "陳嘉欣 Chan Ka Yan",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "陳嘉欣",
+        "patient_birth_date": "1975-11-02",
+        "smoking_status": "非吸煙",
+        "declaration": "無已知心臟病史。",
+        "declaration_date": "2026-06-30"
+      },
+      "ai_token_usage": 451,
+      "ai_process_time_ms": 1621,
+      "generated_pdf_url": "/local-storage/generated/SUB2026063000139D.pdf",
+      "status": "PRINTED",
+      "created_at": "2026-06-30T02:10:00Z"
+    },
+    {
+      "id": 5022,
+      "submission_no": "SUB2026070900139E",
+      "clinic_id": 138,
+      "doctor_id": 2301,
+      "company_id": 1,
+      "template_id": 101,
+      "template_version": "V2",
+      "patient_name": "何俊賢 Ho Chun Yin",
+      "ai_raw_result": {
+        "patient_name_cn": {
+          "value": "何俊賢",
+          "confidence": 0.98
+        },
+        "patient_name_en": {
+          "value": "Ho Chun Yin",
+          "confidence": 0.95
+        },
+        "patient_id_no": {
+          "value": "D456789(0)",
+          "confidence": 0.9
+        },
+        "visit_date": {
+          "value": "2026-07-09",
+          "confidence": 0.94
+        },
+        "diagnosis": {
+          "value": "胸口不適",
+          "confidence": 0.91
+        },
+        "policy_no": {
+          "value": "POL-2026-000721",
+          "confidence": 0.8
+        },
+        "consultation_fee": {
+          "value": "585",
+          "confidence": 0.86
+        },
+        "medication_fee": {
+          "value": "195",
+          "confidence": 0.84
+        },
+        "total_fee": {
+          "value": "780",
+          "confidence": 0.88
+        }
+      },
+      "final_field_values": {
+        "patient_name_cn": "何俊賢",
+        "patient_name_en": "Ho Chun Yin",
+        "patient_id_no": "D456789(0)",
+        "visit_date": "2026-07-09",
+        "diagnosis": "胸口不適",
+        "policy_no": "POL-2026-000721",
+        "consultation_fee": "585",
+        "medication_fee": "195",
+        "total_fee": "780"
+      },
+      "ai_token_usage": 452,
+      "ai_process_time_ms": 1622,
+      "generated_pdf_url": null,
+      "status": "AI_FILLED",
+      "created_at": "2026-07-09T09:50:00Z"
+    },
+    {
+      "id": 5023,
+      "submission_no": "SUB2026070500139F",
+      "clinic_id": 103,
+      "doctor_id": 2044,
+      "company_id": 1,
+      "template_id": 101,
+      "template_version": "V2",
+      "patient_name": "蘇慧敏 So Wai Man",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "蘇慧敏",
+        "patient_name_en": "So Wai Man",
+        "patient_id_no": "L123450(7)",
+        "visit_date": "2026-07-05",
+        "diagnosis": "糖尿病覆診",
+        "policy_no": "POL-2026-000691",
+        "consultation_fee": "420",
+        "medication_fee": "140",
+        "total_fee": "560"
+      },
+      "ai_token_usage": 453,
+      "ai_process_time_ms": 1623,
+      "generated_pdf_url": "/local-storage/generated/SUB2026070500139F.pdf",
+      "status": "PRINTED",
+      "created_at": "2026-07-05T08:25:00Z"
+    },
+    {
+      "id": 5024,
+      "submission_no": "SUB202606290013A0",
+      "clinic_id": 103,
+      "doctor_id": 2044,
+      "company_id": 4,
+      "template_id": 401,
+      "template_version": "V1",
+      "patient_name": "馮子軒 Fung Tsz Hin",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "馮子軒",
+        "patient_id_no": "H890123(4)",
+        "accident_date": "2026-06-28",
+        "accident_description": "家居滑倒，右腕挫傷。",
+        "injury_type": "軟組織挫傷",
+        "visit_date": "2026-06-29",
+        "total_fee": "690"
+      },
+      "ai_token_usage": 454,
+      "ai_process_time_ms": 1624,
+      "generated_pdf_url": "/local-storage/generated/SUB202606290013A0.pdf",
+      "status": "PRINTED",
+      "created_at": "2026-06-29T07:00:00Z"
+    },
+    {
+      "id": 5025,
+      "submission_no": "SUB202607070013A1",
+      "clinic_id": 151,
+      "doctor_id": 2410,
+      "company_id": 1,
+      "template_id": 101,
+      "template_version": "V2",
+      "patient_name": "許家欣 Hui Ka Yan",
+      "ai_raw_result": null,
+      "final_field_values": {
+        "patient_name_cn": "許家欣",
+        "patient_name_en": "Hui Ka Yan",
+        "patient_id_no": "J901234(5)",
+        "visit_date": "2026-07-07",
+        "diagnosis": "接觸性皮膚炎",
+        "policy_no": "POL-2026-000642",
+        "consultation_fee": "465",
+        "medication_fee": "155",
+        "total_fee": "620"
+      },
+      "ai_token_usage": 455,
+      "ai_process_time_ms": 1625,
+      "generated_pdf_url": "/local-storage/generated/SUB202607070013A1.pdf",
+      "status": "PRINTED",
+      "created_at": "2026-07-07T03:45:00Z"
+    },
+    {
+      "id": 5026,
+      "submission_no": "SUB202607090013A2",
+      "clinic_id": 151,
+      "doctor_id": 2410,
+      "company_id": 2,
+      "template_id": 201,
+      "template_version": "V1",
+      "patient_name": "譚志明 Tam Chi Ming",
+      "ai_raw_result": null,
+      "final_field_values": null,
+      "ai_token_usage": null,
+      "ai_process_time_ms": null,
+      "generated_pdf_url": null,
+      "status": "DRAFT",
+      "created_at": "2026-07-09T05:30:00Z"
+    }
+  ],
+  "intake_records": {
+    "5001": "病人：李小明 Lee Siu Ming（男）\nHKID: A123456(7)\n出生日期：1980 年 3 月 12 日\n就診日期：2026 年 7 月 5 日\n主訴：發燒、喉嚨痛、咳嗽三天\n診斷：急性上呼吸道感染 (ICD-10 J06.9)\n診金：港幣 $380，藥費：港幣 $100\n收費：港幣 $480",
+    "5002": "病人：王美娟 Wong Mei Kuen（女）\nHKID: B234567(8)\n入住港怡醫院，2026 年 7 月 1 日至 7 月 4 日\n診斷：待補充",
+    "5014": "病人：潘曉琳 Poon Hiu Lam（女）\n就診日期：2026 年 7 月 9 日\n主訴：腰背痛兩星期，久坐後加劇\n診斷：腰背痛（機械性）\n收費：港幣 $620",
+    "5015": "病人：葉建華 Yip Kin Wah（男）\n高血壓覆診，血壓 132/84\n就診日期：2026 年 7 月 9 日\n收費：港幣 $540",
+    "5022": "病人：何俊賢 Ho Chun Yin（男）\n主訴：胸口不適一天\n就診日期：2026 年 7 月 9 日\n收費：港幣 $780"
+  },
+  "auth": {
+    "totp_valid_code": "246810",
+    "backup_code": "AAAA-BBBB-CCCC",
+    "accounts": [
+      {
+        "login_account": "dr2207",
+        "password": "acuity-demo",
+        "role": "DOCTOR",
+        "user_id": 2207,
+        "display_name": "陳美玲 Chan Mei Ling",
+        "clinic_ids": [
+          142,
+          103
+        ],
+        "mfa_method": "totp",
+        "locked": false
+      },
+      {
+        "login_account": "dr2188",
+        "password": "acuity-demo",
+        "role": "DOCTOR",
+        "user_id": 2188,
+        "display_name": "李美娟 Lee Mei Kuen",
+        "clinic_ids": [
+          142
+        ],
+        "mfa_method": "totp",
+        "locked": false
+      },
+      {
+        "login_account": "dr2301",
+        "password": "acuity-demo",
+        "role": "DOCTOR",
+        "user_id": 2301,
+        "display_name": "王志強 Wong Chi Keung",
+        "clinic_ids": [
+          138
+        ],
+        "mfa_method": "totp",
+        "locked": false
+      },
+      {
+        "login_account": "dr2520",
+        "password": "acuity-demo",
+        "role": "DOCTOR",
+        "user_id": 2520,
+        "display_name": "何俊彥 Ho Chun Yin",
+        "clinic_ids": [
+          138,
+          151
+        ],
+        "mfa_method": "totp",
+        "locked": false
+      },
+      {
+        "login_account": "dr.locked",
+        "password": "acuity-demo",
+        "role": "DOCTOR",
+        "user_id": 2999,
+        "display_name": "測試帳戶 Locked Account",
+        "clinic_ids": [
+          142
+        ],
+        "mfa_method": "totp",
+        "locked": true
+      },
+      {
+        "login_account": "mcheng",
+        "password": "acuity-demo",
+        "role": "OPERATOR",
+        "user_id": 9002,
+        "display_name": "M. Cheng",
+        "clinic_ids": [],
+        "mfa_method": "hardware-key",
+        "locked": false
+      },
+      {
+        "login_account": "afounder",
+        "password": "acuity-demo",
+        "role": "SUPER_ADMIN",
+        "user_id": 9001,
+        "display_name": "A. Founder",
+        "clinic_ids": [],
+        "mfa_method": "hardware-key",
+        "locked": false
+      }
+    ],
+    "return_target_allowlist": [
+      "/",
+      "/forms",
+      "/history",
+      "/patients",
+      "/settings",
+      "/clinics",
+      "/doctors",
+      "/templates",
+      "/insurers",
+      "/audit",
+      "/claims",
+      "/standard-fields"
+    ]
+  },
+  "session": {
+    "doctor": {
+      "user_id": 2207,
+      "role": "DOCTOR",
+      "clinic_id": 142,
+      "display_name": "陳美玲 Chan Mei Ling"
+    },
+    "operator": {
+      "user_id": 9002,
+      "role": "OPERATOR",
+      "clinic_id": null,
+      "display_name": "M. Cheng"
+    },
+    "greeting_name": "陳美玲醫生",
+    "clinic_name": "中環家庭醫療中心 Central Family Medical"
+  },
+  "frontend_only": {
+    "print_captures": [
+      {
+        "id": "cap-1",
+        "filename": "李小明-就診記錄-20260705.pdf",
+        "captured_at": "2026-07-05T10:12:00Z",
+        "size_kb": 348,
+        "status": "imported"
+      },
+      {
+        "id": "cap-2",
+        "filename": "王美娟-覆診記錄-20260704.pdf",
+        "captured_at": "2026-07-04T15:40:00Z",
+        "size_kb": 512,
+        "status": "new"
+      },
+      {
+        "id": "cap-3",
+        "filename": "潘曉琳-診症摘要-20260709.pdf",
+        "captured_at": "2026-07-09T08:02:00Z",
+        "size_kb": 276,
+        "status": "new"
+      },
+      {
+        "id": "cap-4",
+        "filename": "葉建華-覆診記錄-20260709.pdf",
+        "captured_at": "2026-07-09T09:15:00Z",
+        "size_kb": 431,
+        "status": "new"
+      }
+    ],
+    "handoffs": [
+      {
+        "id": "ho-1",
+        "claim_id": 5014,
+        "prepared_by": "診所職員 阿玲 Ah Ling",
+        "note_zh": "已輸入病人資料及病歷，請醫生核對後簽署。",
+        "note_en": "Patient details and record entered; please review and sign.",
+        "created_at": "2026-07-10T00:45:00Z",
+        "status": "pending"
+      },
+      {
+        "id": "ho-2",
+        "claim_id": 5015,
+        "prepared_by": "診所職員 阿玲 Ah Ling",
+        "note_zh": "覆診理賠，藥單已附。",
+        "note_en": "Follow-up claim; prescription attached.",
+        "created_at": "2026-07-09T07:35:00Z",
+        "status": "pending"
+      }
+    ],
+    "notifications": [
+      {
+        "id": "nt-1",
+        "kind": "handoff",
+        "title_zh": "職員已備妥一份表格待簽署",
+        "title_en": "A staff-prepared form is ready to sign",
+        "body_zh": "潘曉琳的門診理賠申請表已由職員備妥。",
+        "body_en": "Outpatient claim for Poon Hiu Lam was prepared by staff.",
+        "claim_id": 5014,
+        "created_at": "2026-07-10T00:46:00Z",
+        "read": false
+      },
+      {
+        "id": "nt-2",
+        "kind": "claim-ready",
+        "title_zh": "AI 草稿已完成",
+        "title_en": "AI draft ready for review",
+        "body_zh": "李小明的門診理賠申請表已完成草擬。",
+        "body_en": "The outpatient claim for Lee Siu Ming has been drafted.",
+        "claim_id": 5001,
+        "created_at": "2026-07-09T02:15:00Z",
+        "read": false
+      },
+      {
+        "id": "nt-3",
+        "kind": "system",
+        "title_zh": "系統維護通知",
+        "title_en": "Scheduled maintenance notice",
+        "body_zh": "系統將於 7 月 13 日 02:00–03:00 進行維護。",
+        "body_en": "Maintenance window: 13 Jul 02:00-03:00 HKT.",
+        "claim_id": null,
+        "created_at": "2026-07-08T01:00:00Z",
+        "read": true
+      },
+      {
+        "id": "nt-4",
+        "kind": "template",
+        "title_zh": "新表格已上線",
+        "title_en": "New form published",
+        "body_zh": "港安人壽「意外醫療理賠表」現已可用。",
+        "body_en": "Harbour Trust Life 'Accident Medical Claim' is now available.",
+        "claim_id": null,
+        "created_at": "2026-06-05T02:00:00Z",
+        "read": true
+      }
+    ],
+    "doctor_settings": {
+      "doctor_id": 2207,
+      "signature_image_url": null,
+      "language": "zh-Hant-HK",
+      "idle_lock_minutes": 10,
+      "delivery_default": "download",
+      "trusted_devices": [
+        {
+          "id": "dev-1",
+          "label": "診所 iMac Clinic iMac",
+          "last_seen_at": "2026-07-10T01:00:00Z"
+        },
+        {
+          "id": "dev-2",
+          "label": "iPhone 15",
+          "last_seen_at": "2026-07-09T12:20:00Z"
+        }
+      ]
+    },
+    "support_access": {
+      "active": false,
+      "grants": [
+        {
+          "id": "sa-1",
+          "operator": "M. Cheng",
+          "mode": "view-as",
+          "started_at": "2026-07-06T12:00:00Z",
+          "expires_at": "2026-07-06T13:00:00Z",
+          "status": "expired"
+        }
+      ]
+    },
+    "tickets": [
+      {
+        "id": "TK-1041",
+        "clinic_id": 166,
+        "subject_zh": "新診所開通進度查詢",
+        "subject_en": "Provisioning progress enquiry",
+        "status": "open",
+        "owner": "M. Cheng",
+        "updated_at": "2026-07-09T08:00:00Z",
+        "notes": [
+          "等待診所提供醫生註冊編號。 Awaiting doctor registration numbers."
+        ]
+      },
+      {
+        "id": "TK-1040",
+        "clinic_id": 197,
+        "subject_zh": "帳戶啟用前設定",
+        "subject_en": "Pre-activation setup",
+        "status": "in-progress",
+        "owner": "A. Founder",
+        "updated_at": "2026-07-09T05:30:00Z",
+        "notes": []
+      },
+      {
+        "id": "TK-1039",
+        "clinic_id": 142,
+        "subject_zh": "簽名圖片上載失敗",
+        "subject_en": "Signature image upload failing",
+        "status": "open",
+        "owner": null,
+        "updated_at": "2026-07-08T09:10:00Z",
+        "notes": [
+          "用戶報告 PNG 上載後未有顯示。 User reports PNG not appearing after upload."
+        ]
+      },
+      {
+        "id": "TK-1036",
+        "clinic_id": 138,
+        "subject_zh": "範本欄位對應問題",
+        "subject_en": "Template field-mapping question",
+        "status": "resolved",
+        "owner": "M. Cheng",
+        "updated_at": "2026-07-05T04:20:00Z",
+        "notes": [
+          "已重新對應欄位並發佈 V2。 Re-mapped and published V2."
+        ]
+      },
+      {
+        "id": "TK-1032",
+        "clinic_id": 151,
+        "subject_zh": "更改診所聯絡電話",
+        "subject_en": "Update clinic phone number",
+        "status": "resolved",
+        "owner": "M. Cheng",
+        "updated_at": "2026-07-02T03:00:00Z",
+        "notes": []
+      }
+    ],
+    "onboarding_queue": [
+      {
+        "clinic_id": 166,
+        "next_step_zh": "建立醫生帳戶",
+        "next_step_en": "Create doctor accounts",
+        "progress_step": 4,
+        "progress_total": 8,
+        "updated_at": "2026-07-09T08:00:00Z"
+      },
+      {
+        "clinic_id": 197,
+        "next_step_zh": "確認保險公司名單",
+        "next_step_en": "Confirm insurer list",
+        "progress_step": 2,
+        "progress_total": 8,
+        "updated_at": "2026-07-09T05:30:00Z"
+      }
+    ],
+    "tags": [
+      {
+        "id": 1,
+        "kind": "type",
+        "label_zh": "門診",
+        "label_en": "Outpatient",
+        "parent_id": null,
+        "sort_order": 1,
+        "retired": false
+      },
+      {
+        "id": 2,
+        "kind": "type",
+        "label_zh": "住院",
+        "label_en": "Inpatient",
+        "parent_id": null,
+        "sort_order": 2,
+        "retired": false
+      },
+      {
+        "id": 3,
+        "kind": "type",
+        "label_zh": "意外",
+        "label_en": "Accident",
+        "parent_id": null,
+        "sort_order": 3,
+        "retired": false
+      },
+      {
+        "id": 4,
+        "kind": "type",
+        "label_zh": "聲明",
+        "label_en": "Declaration",
+        "parent_id": null,
+        "sort_order": 4,
+        "retired": false
+      },
+      {
+        "id": 10,
+        "kind": "insurer",
+        "label_zh": "示例保險",
+        "label_en": "Demo Insurance",
+        "parent_id": null,
+        "sort_order": 1,
+        "retired": false
+      },
+      {
+        "id": 11,
+        "kind": "insurer",
+        "label_zh": "維港健康",
+        "label_en": "Victoria Harbour",
+        "parent_id": null,
+        "sort_order": 2,
+        "retired": false
+      },
+      {
+        "id": 12,
+        "kind": "insurer",
+        "label_zh": "港安人壽",
+        "label_en": "Harbour Trust",
+        "parent_id": null,
+        "sort_order": 3,
+        "retired": false
+      },
+      {
+        "id": 20,
+        "kind": "specialty",
+        "label_zh": "全科",
+        "label_en": "General practice",
+        "parent_id": null,
+        "sort_order": 1,
+        "retired": false
+      },
+      {
+        "id": 21,
+        "kind": "specialty",
+        "label_zh": "心臟科",
+        "label_en": "Cardiology",
+        "parent_id": null,
+        "sort_order": 2,
+        "retired": false
+      },
+      {
+        "id": 22,
+        "kind": "specialty",
+        "label_zh": "皮膚科",
+        "label_en": "Dermatology",
+        "parent_id": null,
+        "sort_order": 3,
+        "retired": true
+      }
+    ],
+    "tag_visibility": [
+      {
+        "doctor_id": 2207,
+        "tag_id": 1,
+        "visible": true
+      },
+      {
+        "doctor_id": 2207,
+        "tag_id": 2,
+        "visible": true
+      },
+      {
+        "doctor_id": 2207,
+        "tag_id": 3,
+        "visible": true
+      },
+      {
+        "doctor_id": 2301,
+        "tag_id": 21,
+        "visible": true
+      },
+      {
+        "doctor_id": 2410,
+        "tag_id": 22,
+        "visible": false
+      }
+    ],
+    "saved_views": [
+      {
+        "id": "sv-1",
+        "grid": "clinics",
+        "name": "Active clinics",
+        "filters": {
+          "status": "1"
+        },
+        "sort": "clinic_name",
+        "is_default": true,
+        "starred": true
+      },
+      {
+        "id": "sv-2",
+        "grid": "doctors",
+        "name": "MFA pending",
+        "filters": {
+          "status": "0"
+        },
+        "sort": "-created_at",
+        "is_default": false,
+        "starred": false
+      },
+      {
+        "id": "sv-3",
+        "grid": "claims",
+        "name": "Awaiting confirmation",
+        "filters": {
+          "status": "AI_FILLED"
+        },
+        "sort": "-created_at",
+        "is_default": false,
+        "starred": true
+      }
+    ],
+    "audit_events": [
+      {
+        "id": "EV-9016",
+        "ts": "2026-07-10 at 09.02.11",
+        "operator": "A. Founder",
+        "action": "bulk-operation",
+        "target": "templates · re-tag ×4",
+        "mode": null
+      },
+      {
+        "id": "EV-9015",
+        "ts": "2026-07-10 at 08.44.03",
+        "operator": "M. Cheng",
+        "action": "tag-change",
+        "target": "specialty · 皮膚科 retired",
+        "mode": null
+      },
+      {
+        "id": "EV-9014",
+        "ts": "2026-07-09 at 15.10.48",
+        "operator": "M. Cheng",
+        "action": "template-archive",
+        "target": "TPL3304G7H8 V1",
+        "mode": null
+      },
+      {
+        "id": "EV-9013",
+        "ts": "2026-07-06 at 14.32.06",
+        "operator": "A. Founder",
+        "action": "impersonation-start",
+        "target": "CL-0142 · dr2207",
+        "mode": "view-as"
+      },
+      {
+        "id": "EV-9012",
+        "ts": "2026-07-06 at 14.21.55",
+        "operator": "A. Founder",
+        "action": "template-publish",
+        "target": "TPL3301A1B2 V2",
+        "mode": null
+      },
+      {
+        "id": "EV-9011",
+        "ts": "2026-07-06 at 13.58.12",
+        "operator": "M. Cheng",
+        "action": "crm-edit",
+        "target": "CL-0138",
+        "mode": null
+      },
+      {
+        "id": "EV-9010",
+        "ts": "2026-07-06 at 13.40.31",
+        "operator": "A. Founder",
+        "action": "account-created",
+        "target": "CL-0188 · dr2688",
+        "mode": null
+      },
+      {
+        "id": "EV-9009",
+        "ts": "2026-07-06 at 12.15.09",
+        "operator": "M. Cheng",
+        "action": "impersonation-end",
+        "target": "CL-0103 · dr2044",
+        "mode": "act-as"
+      },
+      {
+        "id": "EV-9008",
+        "ts": "2026-07-06 at 12.02.44",
+        "operator": "M. Cheng",
+        "action": "act-as-edit",
+        "target": "CL-0103 · dr2044",
+        "mode": "act-as"
+      },
+      {
+        "id": "EV-9007",
+        "ts": "2026-07-05 at 17.51.02",
+        "operator": "A. Founder",
+        "action": "retention-override",
+        "target": "CL-0110",
+        "mode": null
+      },
+      {
+        "id": "EV-9006",
+        "ts": "2026-07-05 at 16.20.40",
+        "operator": "M. Cheng",
+        "action": "export",
+        "target": "Analytics · usage 30d",
+        "mode": null
+      },
+      {
+        "id": "EV-9005",
+        "ts": "2026-07-04 at 11.05.19",
+        "operator": "M. Cheng",
+        "action": "impersonation-abandoned",
+        "target": "CL-0151 · dr2410",
+        "mode": "view-as"
+      }
+    ],
+    "analytics": {
+      "overview": {
+        "forms_processed_today": 6,
+        "forms_processed_7d": 31,
+        "verify_pass_7d": 27,
+        "verify_fail_7d": 4,
+        "window_days": 7
+      },
+      "usage": [
+        {
+          "date": "2026-06-27",
+          "count": 3
+        },
+        {
+          "date": "2026-06-28",
+          "count": 4
+        },
+        {
+          "date": "2026-06-29",
+          "count": 2
+        },
+        {
+          "date": "2026-06-30",
+          "count": 5
+        },
+        {
+          "date": "2026-07-01",
+          "count": 4
+        },
+        {
+          "date": "2026-07-02",
+          "count": 6
+        },
+        {
+          "date": "2026-07-03",
+          "count": 5
+        },
+        {
+          "date": "2026-07-04",
+          "count": 3
+        },
+        {
+          "date": "2026-07-05",
+          "count": 4
+        },
+        {
+          "date": "2026-07-06",
+          "count": 5
+        },
+        {
+          "date": "2026-07-07",
+          "count": 4
+        },
+        {
+          "date": "2026-07-08",
+          "count": 3
+        },
+        {
+          "date": "2026-07-09",
+          "count": 7
+        },
+        {
+          "date": "2026-07-10",
+          "count": 6
+        }
+      ],
+      "funnel": {
+        "provisioning": 2,
+        "onboarding": 1,
+        "active": 5
+      },
+      "verification": {
+        "pass": 27,
+        "fail": 4,
+        "window_days": 7
+      },
+      "quality": {
+        "avg_confidence": 0.89,
+        "correction_rate": 0.12,
+        "trend": [
+          {
+            "date": "2026-07-04",
+            "avg_confidence": 0.87,
+            "correction_rate": 0.15
+          },
+          {
+            "date": "2026-07-06",
+            "avg_confidence": 0.88,
+            "correction_rate": 0.13
+          },
+          {
+            "date": "2026-07-08",
+            "avg_confidence": 0.9,
+            "correction_rate": 0.11
+          },
+          {
+            "date": "2026-07-10",
+            "avg_confidence": 0.89,
+            "correction_rate": 0.12
+          }
+        ]
+      },
+      "errors": [
+        {
+          "date": "2026-07-04",
+          "count": 2
+        },
+        {
+          "date": "2026-07-06",
+          "count": 1
+        },
+        {
+          "date": "2026-07-08",
+          "count": 0
+        },
+        {
+          "date": "2026-07-10",
+          "count": 1
+        }
+      ]
+    }
+  }
+}
