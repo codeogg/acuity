@@ -349,7 +349,7 @@ export async function listDoctorRows(
     }),
     listClinics({ page_size: PAGE_ALL }),
   ]);
-  return doctorPage.items.map((raw) => {
+  const rows = doctorPage.items.map((raw) => {
     const doctor = doctorAccount(raw);
     const linkedClinics = doctor.clinic_ids
       .map((id) => clinicPage.items.find((c) => c.id === id))
@@ -361,14 +361,17 @@ export async function listDoctorRows(
       clinics: linkedClinics,
     };
   });
+  // Defensive client filter: older backends may ignore `linked`.
+  if (linked === "clinic") return rows.filter((r) => r.clinics.length > 0);
+  if (linked === "individual") return rows.filter((r) => r.clinics.length === 0);
+  return rows;
 }
 
-export type DoctorTab = "mfa-pending" | "active" | "all";
-export const DOCTOR_TABS: DoctorTab[] = ["mfa-pending", "active", "all"];
+export type DoctorTab = "active" | "all";
+export const DOCTOR_TABS: DoctorTab[] = ["active", "all"];
 
 export function doctorMatchesTab(row: DoctorRow, tab: DoctorTab): boolean {
   if (tab === "all") return true;
-  if (tab === "mfa-pending") return row.ops.mfa !== "enrolled";
   return row.ops.activation === "active";
 }
 
@@ -383,8 +386,6 @@ export function sortDoctorRows(rows: DoctorRow[], sort: SortState | null): Docto
           return r.doctor.login_account;
         case "clinic":
           return r.clinic?.clinic_name_en ?? r.clinic?.clinic_name ?? "";
-        case "mfa":
-          return r.ops.mfa;
         case "last":
           return r.ops.last_activity;
         default:

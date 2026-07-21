@@ -119,7 +119,8 @@
       ],
       "notes": "Multi-clinic pilot doctor. Prefers **WhatsApp** contact; bilingual forms.\n\n- Piloting since W6\n- Interested in the Bupa pre-auth flow",
       "workspace_separation": "separated",
-      "mfa_enabled": false
+      "mfa_enabled": false,
+      "email": "dr2207@clinic.example"
     },
     {
       "id": 2188,
@@ -136,7 +137,8 @@
       ],
       "notes": "Single-clinic; onboarded in person at Central Family Medical.",
       "workspace_separation": "separated",
-      "mfa_enabled": false
+      "mfa_enabled": false,
+      "email": "dr2188@clinic.example"
     },
     {
       "id": 2255,
@@ -153,7 +155,8 @@
       ],
       "notes": "",
       "workspace_separation": "separated",
-      "mfa_enabled": false
+      "mfa_enabled": false,
+      "email": "dr2255@clinic.example"
     },
     {
       "id": 2301,
@@ -170,7 +173,8 @@
       ],
       "notes": "",
       "workspace_separation": "separated",
-      "mfa_enabled": false
+      "mfa_enabled": false,
+      "email": "dr2301@clinic.example"
     },
     {
       "id": 2320,
@@ -187,7 +191,8 @@
       ],
       "notes": "",
       "workspace_separation": "separated",
-      "mfa_enabled": false
+      "mfa_enabled": false,
+      "email": "dr2320@clinic.example"
     },
     {
       "id": 2520,
@@ -205,7 +210,8 @@
       ],
       "notes": "Cross-clinic cardiology cover. **Merged workspace** agreed at onboarding – works both sites in one list.",
       "workspace_separation": "merged",
-      "mfa_enabled": false
+      "mfa_enabled": false,
+      "email": "dr2520@clinic.example"
     },
     {
       "id": 2410,
@@ -222,7 +228,8 @@
       ],
       "notes": "",
       "workspace_separation": "separated",
-      "mfa_enabled": false
+      "mfa_enabled": false,
+      "email": "dr2410@clinic.example"
     },
     {
       "id": 2450,
@@ -239,7 +246,8 @@
       ],
       "notes": "",
       "workspace_separation": "separated",
-      "mfa_enabled": false
+      "mfa_enabled": false,
+      "email": "dr2450@clinic.example"
     },
     {
       "id": 2511,
@@ -256,7 +264,8 @@
       ],
       "notes": "",
       "workspace_separation": "separated",
-      "mfa_enabled": false
+      "mfa_enabled": false,
+      "email": "dr2511@clinic.example"
     },
     {
       "id": 2044,
@@ -273,7 +282,8 @@
       ],
       "notes": "",
       "workspace_separation": "separated",
-      "mfa_enabled": false
+      "mfa_enabled": false,
+      "email": "dr2044@clinic.example"
     },
     {
       "id": 2077,
@@ -290,7 +300,8 @@
       ],
       "notes": "",
       "workspace_separation": "separated",
-      "mfa_enabled": false
+      "mfa_enabled": false,
+      "email": "dr2077@clinic.example"
     },
     {
       "id": 2688,
@@ -307,7 +318,8 @@
       ],
       "notes": "",
       "workspace_separation": "separated",
-      "mfa_enabled": false
+      "mfa_enabled": false,
+      "email": "dr2688@clinic.example"
     },
     {
       "id": 2690,
@@ -324,7 +336,8 @@
       ],
       "notes": "",
       "workspace_separation": "separated",
-      "mfa_enabled": false
+      "mfa_enabled": false,
+      "email": "dr2690@clinic.example"
     },
     {
       "id": 2701,
@@ -341,7 +354,8 @@
       ],
       "notes": "",
       "workspace_separation": "separated",
-      "mfa_enabled": false
+      "mfa_enabled": false,
+      "email": "dr2701@clinic.example"
     },
     {
       "id": 2712,
@@ -358,7 +372,24 @@
       ],
       "notes": "",
       "workspace_separation": "separated",
-      "mfa_enabled": false
+      "mfa_enabled": false,
+      "email": "dr2712@clinic.example"
+    },
+    {
+      "id": 2801,
+      "clinic_id": null,
+      "doctor_name": "林獨立",
+      "doctor_name_en": "Lam Duk Lap",
+      "reg_no": "M12801",
+      "signature_url": null,
+      "login_account": "dr2801",
+      "status": 1,
+      "created_at": "2026-06-12T03:00:00Z",
+      "clinic_ids": [],
+      "notes": "Individual account — not linked to any clinic.",
+      "workspace_separation": "separated",
+      "mfa_enabled": false,
+      "email": "dr2801@clinic.example"
     }
   ],
   "companies": [

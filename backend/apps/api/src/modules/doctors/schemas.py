@@ -9,6 +9,7 @@ class DoctorCreate(BaseModel):
     doctor_name: str
     doctor_name_en: str | None = None
     reg_no: str | None = None
+    email: str | None = None
     login_account: str
     password: str
     signature_url: str | None = None
@@ -18,6 +19,7 @@ class DoctorUpdate(BaseModel):
     doctor_name: str | None = None
     doctor_name_en: str | None = None
     reg_no: str | None = None
+    email: str | None = None
     login_account: str | None = None
     signature_url: str | None = None
     status: int | None = None
@@ -61,6 +63,7 @@ class DoctorOut(BaseModel):
     doctor_name: str
     doctor_name_en: str | None
     reg_no: str | None
+    email: str | None
     signature_url: str | None
     login_account: str
     status: int

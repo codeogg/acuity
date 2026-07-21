@@ -18,7 +18,7 @@ export type ListDoctorsQuery = {
   page_size?: number;
   clinic_id?: number;
   keyword?: string;
-  /** Mock-first filter (dev ADR 0041): clinic-linked vs individual accounts. */
+  /** Filter by clinic-linked vs individual accounts (ADR 0041). */
   linked?: "clinic" | "individual";
 };
 

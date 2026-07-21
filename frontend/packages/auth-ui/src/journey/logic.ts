@@ -16,8 +16,8 @@ import type { AuthErrorContext, AuthNote } from "./types";
 //   from=<internal-path>           — a raw internal path to preserve; the
 //                                     journey exchanges it for a deep-link
 //                                     token server-side (allowlist-validated)
-//   demo-account=<login>           — mock-mode identity the OIDC button
-//                                     asserts (demo review surface)
+//   demo-account=<login>           — mock-mode prefill identity for password
+//                                     sign-in (demo review surface)
 //   demo-mfa=fail|expired          — mock-mode one-shot factor outcome
 //   demo-scenario=<name>[,...]     — mock scenario names applied at bootstrap
 //                                     (slow-network, network-error, ...)

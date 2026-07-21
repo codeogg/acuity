@@ -1,6 +1,6 @@
-// Doctors portfolio — cross-clinic grid: saved-view tabs (MFA pending /
-// Active / All), keyword + clinic filters, URL-driven sort, bulk re-tag /
-// deactivate, and the doctor detail drawer over the grid.
+// Doctors portfolio — cross-clinic grid: saved-view tabs (Active / All),
+// keyword + clinic filters, URL-driven sort, bulk re-tag / deactivate, and
+// the doctor detail drawer over the grid.
 
 import { Suspense } from "react";
 import { pickName } from "@acuity/i18n/names";
@@ -26,7 +26,7 @@ import {
   type DoctorRow,
   type DoctorTab,
 } from "@/lib/data";
-import { activationStatus, mfaStatus } from "@/lib/status";
+import { activationStatus } from "@/lib/status";
 import { columnSort, parseSort } from "@/lib/table";
 import { formatRelative } from "@acuity/i18n/format";
 
@@ -71,7 +71,7 @@ export default async function DoctorsPage({
 }
 
 async function DoctorsGrid({ locale, sp }: { locale: string; sp: Search }) {
-  const tab: DoctorTab = (DOCTOR_TABS as string[]).includes(sp.tab ?? "") ? (sp.tab as DoctorTab) : "mfa-pending";
+  const tab: DoctorTab = (DOCTOR_TABS as string[]).includes(sp.tab ?? "") ? (sp.tab as DoctorTab) : "all";
   const pathname = `/${locale}/doctors`;
   const urlParams = new URLSearchParams();
   for (const [k, v] of Object.entries(sp)) if (v) urlParams.set(k, v);
@@ -108,7 +108,6 @@ async function DoctorsGrid({ locale, sp }: { locale: string; sp: Search }) {
     href: tabHref(tb),
     active: tb === tab,
     count: counts[tb],
-    starred: tb === "mfa-pending",
   }));
 
   const openHref = (r: DoctorRow) => {
@@ -123,7 +122,6 @@ async function DoctorsGrid({ locale, sp }: { locale: string; sp: Search }) {
     { header: t("col.name"), sort: colSort("name") },
     { header: t("col.id"), width: "7rem", sort: colSort("doctor") },
     { header: t("col.clinic"), sort: colSort("clinic") },
-    { header: t("col.mfa"), sort: colSort("mfa") },
     { header: t("col.activation") },
     { header: t("col.last-activity"), width: "9rem", sort: colSort("last") },
     { header: t("col.tags") },
@@ -159,7 +157,6 @@ async function DoctorsGrid({ locale, sp }: { locale: string; sp: Search }) {
           </>
         )}
       </div>,
-      <MetaBadge key="mfa" meta={mfaStatus(r.ops.mfa)} label={tRoot(mfaStatus(r.ops.mfa).key)} />,
       <MetaBadge
         key="activation"
         meta={activationStatus(r.ops.activation)}

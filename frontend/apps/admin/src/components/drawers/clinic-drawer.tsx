@@ -22,7 +22,7 @@ import { StatusBadge } from "@/components/ui/ui-client";
 import { deleteClinicAction } from "@/lib/actions";
 import { clinicAccount, getClinic, getClinicConfigOverview, listDoctorRows } from "@/lib/data";
 import { clinicOps } from "@/lib/ops-model";
-import { clinicOpsStatus, mfaStatus } from "@/lib/status";
+import { clinicOpsStatus } from "@/lib/status";
 import { formatRelative } from "@acuity/i18n/format";
 
 const FACETS = ["overview", "provisioning", "usage", "account", "onboarding", "impersonate"] as const;
@@ -191,7 +191,6 @@ export async function ClinicDrawer({
                         label={t("also-elsewhere", { count: doctorClinics.length - 1 })}
                       />
                     ) : null}
-                    <MetaBadge meta={mfaStatus(dOps.mfa)} label={tRoot(mfaStatus(dOps.mfa).key)} />
                   </div>
                 </Link>
               ))

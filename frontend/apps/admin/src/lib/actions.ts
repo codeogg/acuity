@@ -19,14 +19,14 @@ import type {
   CompanyUpdate,
   DoctorAccountOut,
   DoctorCreate,
+  DoctorUpdate,
   FieldMappingSave,
   StandardFieldCreate,
+  TemplateFieldCreate,
   TemplateFieldOut,
   TemplateFieldUpdate,
 } from "@acuity/types";
 import {
-  enrolMfaDevice,
-  removeMfaDevice,
   updateClinicOps,
   updateDoctorOps,
   updateOperatorProfile,
@@ -185,24 +185,17 @@ export async function createDoctorAction(body: DoctorCreate) {
   }, ["/"]);
 }
 
+export async function updateDoctorAction(doctorId: number, body: DoctorUpdate) {
+  return run(async () => {
+    const doctor = await doctors.updateDoctor(doctorId, body);
+    await audit("crm-edit", `${doctor.login_account} · email`);
+    return doctor;
+  }, ["/"]);
+}
+
 export async function updateDoctorOpsAction(doctorId: number, patch: Partial<DoctorOps>) {
   return run(async () => {
     updateDoctorOps(doctorId, patch);
-  }, ["/"]);
-}
-
-export async function triggerMfaAction(doctorId: number, login: string) {
-  return run(async () => {
-    updateDoctorOps(doctorId, { mfa: "mfa-pending" });
-    await audit("account-created", `${login} · MFA enrolment triggered`);
-  }, ["/"]);
-}
-
-export async function resetMfaAction(doctorId: number, login: string) {
-  return run(async () => {
-    await accountManagement.resetDoctorMfa(doctorId);
-    updateDoctorOps(doctorId, { mfa: "mfa-pending" });
-    await audit("bulk-operation", `${login} · MFA reset`);
   }, ["/"]);
 }
 
@@ -292,25 +285,68 @@ export async function bulkDoctorsAction(
 
 // --- forms / templates ------------------------------------------------------------
 
+async function liveRequestOptions() {
+  const target = process.env.API_PROXY_TARGET;
+  const base =
+    process.env.NEXT_PUBLIC_API_MOCKING === "disabled" && target
+      ? `${target.replace(/\/$/, "")}/api`
+      : undefined;
+  return { headers: await sessionHeaders(), base };
+}
+
 export async function uploadTemplateAction(formData: FormData) {
   return run(async () => {
     const file = formData.get("file");
     const companyId = Number(formData.get("company_id"));
     const name = String(formData.get("template_name") ?? "");
-    if (!(file instanceof Blob) || !companyId || !name) {
+    if (!(file instanceof Blob) || !Number.isFinite(companyId) || companyId <= 0 || !name) {
       throw new ApiError({ kind: "validation", status: 422, message: "missing upload fields" });
     }
-    return templates.createTemplate({
-      company_id: companyId,
-      template_name: name,
-      file,
-      filename: file instanceof File ? file.name : "template.pdf",
-    });
+
+    // Multipart POST /api/admin/templates — same contract as the legacy
+    // template admin. Forward the session cookie and hit FastAPI directly in
+    // live mode (mirrors clinicMutation); otherwise the Server Action would
+    // call without auth and the upload never lands.
+    const form = new FormData();
+    form.append("company_id", String(companyId));
+    form.append("template_name", name);
+    form.append("file", file, file instanceof File ? file.name : "template.pdf");
+
+    return api.postForm<{ id: number; parse_status: string }>(
+      "/admin/templates",
+      form,
+      await liveRequestOptions(),
+    );
   }, ["/"]);
 }
 
 export async function reparseTemplateAction(templateId: number) {
-  return run(() => templates.reparseTemplate(templateId), ["/"]);
+  return run(async () => {
+    return api.post<{ id: number; parse_status: string }>(
+      `/admin/templates/${templateId}/reparse`,
+      undefined,
+      await liveRequestOptions(),
+    );
+  }, ["/"]);
+}
+
+export async function createTemplateFieldAction(
+  templateId: number,
+  body: TemplateFieldCreate,
+): Promise<ActionResult<TemplateFieldOut>> {
+  return run(async () => {
+    return api.post<TemplateFieldOut>(
+      `/admin/templates/${templateId}/fields`,
+      body,
+      await liveRequestOptions(),
+    );
+  }, []);
+}
+
+export async function deleteTemplateFieldAction(templateId: number, fieldId: number) {
+  return run(async () => {
+    await api.delete<void>(`/admin/templates/${templateId}/fields/${fieldId}`, await liveRequestOptions());
+  }, []);
 }
 
 export async function updateTemplateFieldAction(
@@ -318,28 +354,59 @@ export async function updateTemplateFieldAction(
   fieldId: number,
   body: TemplateFieldUpdate,
 ): Promise<ActionResult<TemplateFieldOut>> {
-  return run(() => templates.updateTemplateField(templateId, fieldId, body), []);
+  return run(async () => {
+    return api.put<TemplateFieldOut>(
+      `/admin/templates/${templateId}/fields/${fieldId}`,
+      body,
+      await liveRequestOptions(),
+    );
+  }, []);
 }
 
 export async function saveFieldMappingAction(templateId: number, fieldId: number, body: FieldMappingSave) {
-  return run(() => templates.saveFieldMapping(templateId, fieldId, body), []);
+  return run(async () => {
+    return api.post(
+      `/admin/templates/${templateId}/fields/${fieldId}/mapping`,
+      body,
+      await liveRequestOptions(),
+    );
+  }, []);
 }
 
 export async function ignoreFieldAction(templateId: number, fieldId: number, rowVersion: number, reason?: string) {
-  return run(() => templates.ignoreTemplateField(templateId, fieldId, { row_version: rowVersion, reason }), []);
+  return run(async () => {
+    return api.patch<TemplateFieldOut>(
+      `/admin/templates/${templateId}/fields/${fieldId}/ignore`,
+      { row_version: rowVersion, reason },
+      await liveRequestOptions(),
+    );
+  }, []);
 }
 
 export async function restoreFieldAction(templateId: number, fieldId: number, rowVersion: number) {
-  return run(() => templates.restoreTemplateField(templateId, fieldId, { row_version: rowVersion }), []);
+  return run(async () => {
+    return api.patch<TemplateFieldOut>(
+      `/admin/templates/${templateId}/fields/${fieldId}/restore`,
+      { row_version: rowVersion },
+      await liveRequestOptions(),
+    );
+  }, []);
 }
 
 export async function refreshTemplateFieldsAction(templateId: number): Promise<ActionResult<TemplateFieldOut[]>> {
-  return run(() => templates.listTemplateFields(templateId), []);
+  return run(async () => {
+    return api.get<TemplateFieldOut[]>(
+      `/admin/templates/${templateId}/fields`,
+      await liveRequestOptions(),
+    );
+  }, []);
 }
 
 export async function publishTemplateAction(templateId: number) {
   // The mock handler records the template-publish audit event itself.
-  return run(() => templates.publishTemplate(templateId), ["/"]);
+  return run(async () => {
+    return api.post(`/admin/templates/${templateId}/publish`, undefined, await liveRequestOptions());
+  }, ["/"]);
 }
 
 export async function archiveTemplateAction(templateId: number, code: string) {
@@ -478,19 +545,6 @@ export async function createStandardFieldAction(body: StandardFieldCreate) {
 export async function updateProfileAction(patch: { name?: string; email?: string }) {
   return run(async () => {
     updateOperatorProfile(patch);
-  }, ["/"]);
-}
-
-export async function enrolMfaDeviceAction(label: string) {
-  return run(async () => {
-    enrolMfaDevice(label);
-  }, ["/"]);
-}
-
-export async function removeMfaDeviceAction(id: string, label: string) {
-  return run(async () => {
-    removeMfaDevice(id);
-    await audit("bulk-operation", `mfa-device · ${label} removed`);
   }, ["/"]);
 }
 

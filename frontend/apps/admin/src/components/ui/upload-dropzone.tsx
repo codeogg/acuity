@@ -58,6 +58,7 @@ export function UploadDropzone({
       if (result.ok) {
         showToast(t("started", { name: name.trim() }));
         setFile(null);
+        setName("");
         router.refresh();
       } else {
         showToast(result.message, "error");

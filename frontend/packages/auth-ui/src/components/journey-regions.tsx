@@ -15,7 +15,6 @@ import {
   CenteredLoading,
   CheckCircleIcon,
   CheckIcon,
-  GoogleGlyph,
   Input,
   ScanFaceIcon,
   Spinner,
@@ -68,37 +67,8 @@ export function LandedRegion({ text }: { text: string }) {
   );
 }
 
-// The OIDC provider button — full-width, hairline, 48px min target, and a
-// single-tone monochrome glyph (never the provider's own colours).
-export function OidcButton({
-  label,
-  onClick,
-  disabled,
-  busy,
-}: {
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
-  busy?: boolean;
-}) {
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      onClick={onClick}
-      disabled={disabled || busy}
-      aria-live="polite"
-      className="h-11 w-full justify-center gap-2 border-border text-base font-medium text-foreground"
-    >
-      {busy ? <Spinner size={16} /> : <GoogleGlyph size={18} />}
-      <span>{label}</span>
-    </Button>
-  );
-}
-
-// Identity credentials — email + password with the OIDC path above and a
-// quiet divider between the two first-factor methods (ADR 0040: password is
-// first-class; MFA is a separate, optional step).
+// Identity credentials — email + password (ADR 0040: password is first-class;
+// hosted OIDC / Google is deferred and not shown on this surface).
 export function IdentityRegion({
   email,
   password,
@@ -106,10 +76,6 @@ export function IdentityRegion({
   onPasswordChange,
   emailLabel,
   passwordLabel,
-  dividerLabel,
-  oidcLabel,
-  onOidc,
-  oidcBusy,
   disabled,
 }: {
   email: string;
@@ -118,20 +84,10 @@ export function IdentityRegion({
   onPasswordChange: (value: string) => void;
   emailLabel: string;
   passwordLabel: string;
-  dividerLabel: string;
-  oidcLabel: string;
-  onOidc: () => void;
-  oidcBusy?: boolean;
   disabled?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-4">
-      <OidcButton label={oidcLabel} onClick={onOidc} disabled={disabled} busy={oidcBusy} />
-      <div className="flex items-center gap-3" aria-hidden>
-        <span className="h-px flex-1 bg-border" />
-        <span className="text-xs text-muted-foreground">{dividerLabel}</span>
-        <span className="h-px flex-1 bg-border" />
-      </div>
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-foreground">{emailLabel}</span>
         <Input

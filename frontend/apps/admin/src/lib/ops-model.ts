@@ -49,7 +49,6 @@ export interface DoctorOps {
   tags: string[];
   forms_processed: number;
   pass_rate: number;
-  contact_email: string;
 }
 
 export interface TemplateOps {
@@ -145,7 +144,6 @@ const doctorSeed = new Map<number, DoctorOps>(
       tags: [sen],
       forms_processed: forms,
       pass_rate: rate,
-      contact_email: `dr${id}@clinic.example`,
     },
   ]),
 );
@@ -239,7 +237,6 @@ export function doctorOps(doctor: Pick<DoctorOut, "id" | "status">): DoctorOps {
       tags: ["General practice"],
       forms_processed: 0,
       pass_rate: 0,
-      contact_email: `dr${doctor.id}@clinic.example`,
     };
     doctorSeed.set(doctor.id, ops);
   }

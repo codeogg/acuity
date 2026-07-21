@@ -1,8 +1,5 @@
-// Confirmation field-map editor route (the keystone surface) — the split-pane
-// editor over a processed template: original PDF with detected-field overlays
-// on the left, the editable field map on the right, publish/archive in the
-// action footer. Full-width managed exception to the drawer pattern; the
-// active nav destination stays Forms.
+// Annotate route — three-column workspace ported from
+// backend/apps/web/admin/templates/[id]/annotate, styled with the admin console.
 
 import Link from "next/link";
 import { pickName } from "@acuity/i18n/names";
@@ -12,12 +9,12 @@ import { ApiError } from "@acuity/api-client";
 import { StatusBadge } from "@/components/ui/ui-client";
 import { AcuityIcon } from "@acuity/ui";
 import { MetaBadge } from "@/components/ui/status-badge";
-import { FieldMapEditor } from "./field-map-editor";
-import { getTemplate, listCompanies, listStandardFields, listTags, listTemplateFields } from "@/lib/data";
-import { templateOps, templateOpsStatus } from "@/lib/ops-model";
+import { AnnotateWorkspace } from "./annotate-workspace";
+import { getTemplate, listCompanies, listStandardFields, listTemplateFields } from "@/lib/data";
+import { templateOpsStatus } from "@/lib/ops-model";
 import { templateOpsStatusMeta } from "@/lib/status";
 
-export default async function FieldMapEditorPage({
+export default async function AnnotatePage({
   params,
 }: {
   params: Promise<{ locale: string; id: string }>;
@@ -37,17 +34,14 @@ export default async function FieldMapEditorPage({
     throw err;
   }
 
-  const [fields, standardFields, companiesPage, typeTags] = await Promise.all([
+  const [fields, standardFields, companiesPage] = await Promise.all([
     listTemplateFields(templateId).catch(() => []),
     listStandardFields(),
     listCompanies({ page_size: 100 }),
-    listTags("type"),
   ]);
-  const ops = templateOps(template);
   const opsStatus = templateOpsStatus(template);
   const reversion = opsStatus === "confirmed" || opsStatus === "archived";
   const company = companiesPage.items.find((c) => c.id === template.company_id);
-  const typeTag = typeTags.find((x) => x.id === ops.type_tag_id);
   const statusMeta = templateOpsStatusMeta(opsStatus);
 
   return (
@@ -68,45 +62,41 @@ export default async function FieldMapEditorPage({
             {template.template_name}
           </h1>
         </div>
-        {/* Metadata badges yield below md so the back + title + status row
-            never overflows a phone viewport; insurer and type stay readable
-            inside the editor's field panel. */}
         <div className="hidden shrink-0 items-center gap-4 md:flex">
           {company ? (
-            <StatusBadge tone="info" appearance="outline" label={pickName(locale, company.company_name, company.company_name_en)} />
-          ) : null}
-          {typeTag ? (
             <StatusBadge
-              tone="accent"
+              tone="info"
               appearance="outline"
-              label={locale.startsWith("zh") ? typeTag.label_zh : typeTag.label_en}
+              label={pickName(locale, company.company_name, company.company_name_en)}
             />
           ) : null}
-          <StatusBadge tone="neutral" appearance="outline" label={template.version} icon={<AcuityIcon name="layers" size={13} />} />
+          <StatusBadge
+            tone="neutral"
+            appearance="outline"
+            label={template.version}
+            icon={<AcuityIcon name="layers" size={13} />}
+          />
         </div>
         <MetaBadge meta={statusMeta} label={tRoot(statusMeta.key)} />
       </div>
-      <FieldMapEditor
+      <AnnotateWorkspace
         template={{
           id: template.id,
           code: template.template_code,
           name: template.template_name,
           version: template.version,
-          page_count: template.page_count,
-          page_width: template.page_width ?? 595,
-          page_height: template.page_height ?? 842,
+          page_count: Math.max(template.page_count || 1, 1),
           insurer: pickName(locale, company?.company_name, company?.company_name_en),
-          type_label: typeTag ? (locale.startsWith("zh") ? typeTag.label_zh : typeTag.label_en) : "",
+          pdf_url: template.original_pdf_url,
         }}
         initialFields={fields}
         standardFields={standardFields.map((f) => ({
           id: f.id,
-          label: locale.startsWith("zh") ? f.field_name : (f.field_name_en ?? f.field_code),
-          code: f.field_code,
+          field_code: f.field_code,
+          field_name: locale.startsWith("zh") ? f.field_name : (f.field_name_en ?? f.field_name),
+          data_type: f.data_type,
+          is_required: f.is_required,
         }))}
-        conflicts={ops.field_conflicts}
-        usageCount={ops.usage_count}
-        reversion={reversion}
       />
     </div>
   );

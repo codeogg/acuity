@@ -16,6 +16,7 @@ import { Empty } from "@/components/ui/empty";
 import { GridSkeleton } from "@/components/ui/skeletons";
 import { FormsBulkBar } from "@/components/grid/bulk-bars";
 import { UploadDropzone } from "@/components/ui/upload-dropzone";
+import { FormsParsePoller } from "@/components/forms/forms-parse-poller";
 import { ActionButton } from "@/components/ui/action-button";
 import { reparseTemplateAction } from "@/lib/actions";
 import {
@@ -219,6 +220,9 @@ async function FormsGrid({ locale, sp }: { locale: string; sp: Search }) {
 
   return (
     <>
+      <FormsParsePoller
+        active={allRows.some((r) => r.ops_status === "uploaded" || r.ops_status === "processing")}
+      />
       <SectionTopBar
         eyebrow={t("eyebrow")}
         title={t("title")}

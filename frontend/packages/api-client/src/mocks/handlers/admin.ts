@@ -391,7 +391,7 @@ export const adminHandlers = [
     }
     if (linked === "clinic") rows = rows.filter((d) => doctorClinicIds(d).length > 0);
     if (linked === "individual") rows = rows.filter((d) => doctorClinicIds(d).length === 0);
-    rows = rows.filter((d) => matches(k, d.doctor_name, d.doctor_name_en, d.login_account));
+    rows = rows.filter((d) => matches(k, d.doctor_name, d.doctor_name_en, d.login_account, d.email));
     const { pageNo, pageSize } = pageQuery(request);
     return HttpResponse.json(page(listItems(scenario, rows), pageNo, pageSize));
   }),
@@ -406,6 +406,7 @@ export const adminHandlers = [
       doctor_name: body.doctor_name,
       doctor_name_en: body.doctor_name_en ?? null,
       reg_no: body.reg_no ?? null,
+      email: body.email ?? null,
       signature_url: body.signature_url ?? null,
       login_account: body.login_account,
       status: 1,
@@ -434,6 +435,7 @@ export const adminHandlers = [
     if (body.doctor_name != null) doctor.doctor_name = body.doctor_name;
     if (body.doctor_name_en !== undefined) doctor.doctor_name_en = body.doctor_name_en;
     if (body.reg_no !== undefined) doctor.reg_no = body.reg_no;
+    if (body.email !== undefined) doctor.email = body.email;
     if (body.login_account != null) doctor.login_account = body.login_account;
     if (body.signature_url !== undefined) doctor.signature_url = body.signature_url;
     if (body.status != null) doctor.status = body.status;

@@ -7813,6 +7813,17 @@
             ],
             "title": "Reg No"
           },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
           "login_account": {
             "type": "string",
             "title": "Login Account"
@@ -7879,6 +7890,17 @@
             ],
             "title": "Reg No"
           },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
           "signature_url": {
             "anyOf": [
               {
@@ -7913,6 +7935,7 @@
           "doctor_name",
           "doctor_name_en",
           "reg_no",
+          "email",
           "signature_url",
           "login_account",
           "status",
@@ -7967,6 +7990,17 @@
               }
             ],
             "title": "Reg No"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
           },
           "login_account": {
             "anyOf": [
@@ -8266,6 +8300,28 @@
               }
             ],
             "title": "Checkbox Map Value"
+          },
+          "template_specific_field_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Specific Field Code"
+          },
+          "template_specific_ai_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Specific Ai Hint"
           }
         },
         "type": "object",
@@ -8274,7 +8330,9 @@
           "standard_field_id",
           "transform_rule_id",
           "fixed_value",
-          "checkbox_map_value"
+          "checkbox_map_value",
+          "template_specific_field_code",
+          "template_specific_ai_hint"
         ],
         "title": "FieldMappingOut"
       },
@@ -8323,6 +8381,28 @@
               }
             ],
             "title": "Transform Rule Id"
+          },
+          "template_specific_field_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Specific Field Code"
+          },
+          "template_specific_ai_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Specific Ai Hint"
           },
           "confirm": {
             "type": "boolean",

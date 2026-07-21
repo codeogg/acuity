@@ -34,12 +34,11 @@ export interface AuthMountConfig {
   // Footer legal links (the site owns the pages; defaults below).
   privacyHref?: string;
   termsHref?: string;
-  // Mock-mode identity the OIDC button asserts (the hosted-OIDC ceremony is
-  // simulated against the demo account roster). Overridable per entry via
-  // ?demo-account= so every credential outcome is demo-reachable.
+  // Mock-mode identity used when ?demo-account= is not provided. Overridable
+  // per entry so every credential outcome is demo-reachable.
   demoAccount?: string;
   // Mock-first switch: start the MSW worker and use demo identities. Flip to
-  // false when the app runs against a live identity provider.
+  // false when the app runs against a live backend.
   mocks?: boolean;
   // Local integration escape hatch while a real MFA provider is not available.
   // Consumers must only set this in non-production environments.

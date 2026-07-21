@@ -30,6 +30,7 @@ async def to_doctor_account_out(
         "doctor_name": doctor.doctor_name,
         "doctor_name_en": doctor.doctor_name_en,
         "reg_no": doctor.reg_no,
+        "email": doctor.email,
         "signature_url": doctor.signature_url,
         "login_account": doctor.login_account,
         "status": doctor.status,
@@ -61,6 +62,7 @@ async def list_doctor_accounts(
     page_size: int,
     clinic_id: int | None,
     keyword: str | None = None,
+    linked: str | None = None,
 ) -> tuple[list, int]:
     from src.modules.doctors.schemas import DoctorAccountOut
 
@@ -70,6 +72,7 @@ async def list_doctor_accounts(
         page_size=page_size,
         clinic_id=clinic_id,
         keyword=keyword,
+        linked=linked,
     )
     link_map = await clinic_link_service.map_linked_clinic_ids(
         db, [doctor.id for doctor in items]
@@ -148,6 +151,7 @@ async def create_doctor(db: AsyncSession, data: DoctorCreate) -> Doctor:
         doctor_name=data.doctor_name,
         doctor_name_en=data.doctor_name_en,
         reg_no=data.reg_no,
+        email=data.email,
         login_account=data.login_account,
         password_hash=hash_password(data.password),
         signature_url=data.signature_url,
@@ -214,17 +218,30 @@ async def list_doctors(
     page_size: int,
     clinic_id: int | None,
     keyword: str | None = None,
+    linked: str | None = None,
 ) -> tuple[list[Doctor], int]:
     stmt = select(Doctor)
     count_stmt = select(func.count()).select_from(Doctor)
     if clinic_id:
-        linked = (
+        by_clinic = (
             select(DoctorClinicLink.doctor_id)
             .where(DoctorClinicLink.clinic_id == clinic_id)
             .scalar_subquery()
         )
-        stmt = stmt.where(Doctor.id.in_(linked))
-        count_stmt = count_stmt.where(Doctor.id.in_(linked))
+        stmt = stmt.where(Doctor.id.in_(by_clinic))
+        count_stmt = count_stmt.where(Doctor.id.in_(by_clinic))
+    if linked in ("clinic", "individual"):
+        has_link = (
+            select(DoctorClinicLink.id)
+            .where(DoctorClinicLink.doctor_id == Doctor.id)
+            .exists()
+        )
+        if linked == "clinic":
+            stmt = stmt.where(has_link)
+            count_stmt = count_stmt.where(has_link)
+        else:
+            stmt = stmt.where(~has_link)
+            count_stmt = count_stmt.where(~has_link)
     if keyword:
         like = f"%{keyword}%"
         stmt = stmt.outerjoin(Clinic, Doctor.clinic_id == Clinic.id)
@@ -234,6 +251,7 @@ async def list_doctors(
             Doctor.doctor_name_en.ilike(like),
             Doctor.login_account.ilike(like),
             Doctor.reg_no.ilike(like),
+            Doctor.email.ilike(like),
             Clinic.clinic_name.ilike(like),
             Clinic.clinic_name_en.ilike(like),
         )

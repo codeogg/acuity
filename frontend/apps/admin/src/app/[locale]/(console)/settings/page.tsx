@@ -1,7 +1,6 @@
-// Preferences — operator self-service: editable profile, hardware-key MFA
-// device management (enrol / remove behind gates, last-device destructive
-// warning), the internal RBAC panel (super-admin only), locale display, and
-// sign out. Reached from the sidebar identity block.
+// Preferences — operator self-service: editable profile, the internal RBAC
+// panel (super-admin only), locale display, and sign out. Reached from the
+// sidebar identity block.
 
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { StatusBadge } from "@/components/ui/ui-client";
@@ -9,15 +8,14 @@ import { SectionTopBar } from "@/components/shell/section-top-bar";
 import { Avatar } from "@acuity/ui";
 import { AcuityIcon } from "@acuity/ui";
 import { KeyVal } from "@/components/ui/detail";
-import { ProfileFields, MfaDevices, RbacPanel, SettingsSignOut } from "./settings-view";
-import { getOperatorProfile, listMfaDevices, listOperators } from "@/lib/ops-model";
+import { ProfileFields, RbacPanel, SettingsSignOut } from "./settings-view";
+import { getOperatorProfile, listOperators } from "@/lib/ops-model";
 
 export default async function SettingsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("settings");
   const profile = getOperatorProfile();
-  const devices = listMfaDevices();
   const operators = listOperators();
 
   return (
@@ -41,13 +39,6 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
             </div>
             <ProfileFields name={profile.name} email={profile.email} />
             <KeyVal label={t("locale")}>{locale === "zh-Hant-HK" ? "繁體中文（香港）" : "English (Hong Kong)"}</KeyVal>
-          </section>
-
-          <section className="rounded-lg border border-border bg-card p-6">
-            <h2 className="mb-4 font-mono text-xs font-medium uppercase tracking-eyebrow text-muted-foreground">
-              {t("mfa-devices")}
-            </h2>
-            <MfaDevices devices={devices} />
           </section>
 
           {profile.role === "super-admin" ? (

@@ -6,9 +6,10 @@
  * centered-card shell (doctor warm / operator hardened deltas) and wired end
  * to end over the swappable @acuity/api-client auth adapter:
  *
- *   - identity (OIDC) -> MFA challenge/verify -> optional clinic selection ->
- *     quiet landed confirm -> REAL redirect to the destination (deep-link
- *     return target when preserved, else the surface's landing path);
+ *   - identity (email + password) -> optional MFA challenge/verify ->
+ *     optional clinic selection -> quiet landed confirm -> REAL redirect to
+ *     the destination (deep-link return target when preserved, else the
+ *     surface's landing path);
  *   - session-expired re-entry (?reason=expired [&dl=|&from=]) rendering the
  *     calm info note and returning to the exact preserved path after re-auth;
  *   - per-app session isolation: a session whose role this surface does not
@@ -123,11 +124,9 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
   const [selectedClinic, setSelectedClinic] = useState<number | null>(null);
   const [recoveryStarted, setRecoveryStarted] = useState(false);
   const [landedReturn, setLandedReturn] = useState(false);
-  // ADR 0040: email + password is a first-class first factor; the OIDC button
-  // carries its own busy state (the busy wait belongs to the button pressed).
+  // ADR 0040: email + password is the first-class first factor on this surface.
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [oidcBusy, setOidcBusy] = useState(false);
 
   // Sequence guard so a superseded async flow can't commit stale state.
   const seq = useRef(0);
@@ -227,21 +226,8 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
 
   // ---- flow steps -----------------------------------------------------------
 
-  function buildCredentials(method: "password" | "oidc"): LoginRequest {
-    if (method === "password") {
-      return { username: email.trim(), password } as LoginRequest;
-    }
-    if (mocksActive && credentialsRef.current.size > 0) {
-      const login =
-        entryRef.current?.demoAccount ?? config.demoAccount ?? `oidc:${surface}`;
-      return {
-        username: login,
-        password: credentialsRef.current.get(login) ?? "",
-      } as LoginRequest;
-    }
-    // Live identity is a hosted OIDC ceremony: the adapter redirects and the
-    // credential never touches this UI. The marker carries no secret.
-    return { username: `oidc:${surface}`, password: "" } as LoginRequest;
+  function buildCredentials(): LoginRequest {
+    return { username: email.trim(), password } as LoginRequest;
   }
 
   // Post-first-factor (or post-MFA) continuation: separated multi-clinic
@@ -267,15 +253,14 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
     }
   }
 
-  function submitIdentity(method: "password" | "oidc" = "password") {
+  function submitIdentity() {
     const my = ++seq.current;
     const alive = () => my === seq.current;
-    const setBusy = method === "oidc" ? setOidcBusy : setBtnBusy;
     void (async () => {
       setNote(null);
-      setBusy(true);
+      setBtnBusy(true);
       try {
-        const response = await auth.login(buildCredentials(method));
+        const response = await auth.login(buildCredentials());
         if (!alive()) return;
         // Per-app session isolation: reject a wrong-role session outright.
         if (!roleAllowed(response.role, config.allowedRoles)) {
@@ -285,13 +270,13 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
             // The rejection stands even if the logout call fails.
           }
           if (!alive()) return;
-          setBusy(false);
+          setBtnBusy(false);
           setScreen("permission");
           return;
         }
         await delay(T.press);
         if (!alive()) return;
-        setBusy(false);
+        setBtnBusy(false);
         setLoadingKey("loading");
         setScreen("loading");
         // ADR 0040: the second factor is OPT-IN for doctors (mfa_enabled body
@@ -328,7 +313,7 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
         }
       } catch (cause) {
         if (!alive()) return;
-        setBusy(false);
+        setBtnBusy(false);
         const next = resolveErrorNote(cause, "identity", surface);
         if (next.messageKey === "states.permissionDenied") {
           setNote(null);
@@ -606,7 +591,7 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
   } | null {
     switch (screen) {
       case "identity":
-        return { label: common("signIn"), onClick: () => submitIdentity("password") };
+        return { label: common("signIn"), onClick: () => submitIdentity() };
       case "factor":
         return isOperator
           ? {
@@ -681,10 +666,6 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
         onPasswordChange={setPassword}
         emailLabel={common("emailLabel")}
         passwordLabel={common("passwordLabel")}
-        dividerLabel={common("orDivider")}
-        oidcLabel={s("oidc")}
-        onOidc={() => submitIdentity("oidc")}
-        oidcBusy={oidcBusy}
         disabled={!ready}
       />
     );
@@ -749,10 +730,7 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
               {region}
             </div>
             {primary && (
-              // The identity screen's region is just the OIDC button, so the
-              // primary action stacks tight beneath it as one action group;
-              // form screens keep the full separation.
-              <div className={cn(screen === "identity" ? "mt-3" : "mt-8")}>
+              <div className="mt-8">
                 <PrimaryButton
                   label={primary.label}
                   busy={btnBusy}

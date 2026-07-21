@@ -26,10 +26,10 @@ import { useToast } from "@acuity/ui";
 import {
   linkDoctorClinicAction,
   resendInviteAction,
-  resetMfaAction,
   unlinkDoctorClinicAction,
   unlockDoctorAccountAction,
   updateDoctorAccountAction,
+  updateDoctorAction,
   updateDoctorOpsAction,
 } from "@/lib/actions";
 import type { DoctorOps } from "@/lib/ops-model";
@@ -44,19 +44,19 @@ export interface LinkedClinicItem {
 export function DoctorAccountFacet({
   doctorId,
   login,
+  email,
   ops,
   notes,
   workspaceSeparation,
-  mfaEnabled,
   linkedClinics,
   linkableClinics,
 }: {
   doctorId: number;
   login: string;
+  email: string | null;
   ops: DoctorOps;
   notes: string;
   workspaceSeparation: WorkspaceSeparation;
-  mfaEnabled: boolean;
   linkedClinics: LinkedClinicItem[];
   linkableClinics: LinkedClinicItem[];
 }) {
@@ -94,25 +94,7 @@ export function DoctorAccountFacet({
       ) : null}
 
       <FacetSection title={t("sign-in-security")}>
-        <CrmFieldRow
-          label={t("mfa-opt-in")}
-          value={mfaEnabled ? "on" : "off"}
-          options={[
-            { value: "off", label: t("mfa-off") },
-            { value: "on", label: t("mfa-on") },
-          ]}
-          commit={(next) =>
-            updateDoctorAccountAction(doctorId, login, { mfa_enabled: next === "on" })
-          }
-          successMessage={t("mfa-opt-in-saved")}
-        />
         <div className="flex flex-wrap gap-2">
-          <ActionButton
-            label={t("reset-mfa")}
-            icon="retry"
-            action={resetMfaAction.bind(null, doctorId, login)}
-            successMessage={t("reset-mfa-done")}
-          />
           <ActionButton
             label={t("unlock")}
             icon="key"
@@ -131,8 +113,9 @@ export function DoctorAccountFacet({
       <FacetSection title={t("operational-record")}>
         <CrmFieldRow
           label={t("contact-email")}
-          value={ops.contact_email}
-          commit={(next) => updateDoctorOpsAction(doctorId, { contact_email: next })}
+          value={email ?? ""}
+          commit={(next) => updateDoctorAction(doctorId, { email: next.trim() || null })}
+          successMessage={t("email-saved")}
         />
         <CrmFieldRow
           label={t("tags")}

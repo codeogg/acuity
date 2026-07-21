@@ -2822,6 +2822,7 @@ Responses:
 | `doctor_name` | string | yes |  |
 | `doctor_name_en` | string \| null | no |  |
 | `reg_no` | string \| null | no |  |
+| `email` | string \| null | no |  |
 | `login_account` | string | yes |  |
 | `password` | string | yes |  |
 | `signature_url` | string \| null | no | Opaque URL string. Production values are signed or public asset URLs (branding/asset class - long TTL acceptable). |
@@ -2835,6 +2836,7 @@ Responses:
 | `doctor_name` | string | yes |  |
 | `doctor_name_en` | string \| null | yes |  |
 | `reg_no` | string \| null | yes |  |
+| `email` | string \| null | yes |  |
 | `signature_url` | string \| null | yes | Opaque URL string. Production values are signed or public asset URLs (branding/asset class - long TTL acceptable). |
 | `login_account` | string | yes |  |
 | `status` | integer | yes | Organisation-entity status: 0 = disabled, 1 = enabled. |
@@ -2853,6 +2855,7 @@ Responses:
 | `doctor_name` | string \| null | no |  |
 | `doctor_name_en` | string \| null | no |  |
 | `reg_no` | string \| null | no |  |
+| `email` | string \| null | no |  |
 | `login_account` | string \| null | no |  |
 | `signature_url` | string \| null | no | Opaque URL string. Production values are signed or public asset URLs (branding/asset class - long TTL acceptable). |
 | `status` | integer \| null | no | **Deprecated.** Deprecated: use PATCH .../status. Kept for compatibility; servers keep accepting it. |

@@ -18,14 +18,12 @@ import { ActionButton } from "@/components/ui/action-button";
 import { ImpersonateControl } from "@/components/system/impersonate-control";
 import {
   resetDoctorPasswordAction,
-  resetMfaAction,
   setDoctorEnabledAction,
-  triggerMfaAction,
 } from "@/lib/actions";
 import { DoctorAccountFacet, type LinkedClinicItem } from "@/components/drawers/doctor-facets";
 import { doctorAccount, getDoctor, listClinics } from "@/lib/data";
 import { doctorOps } from "@/lib/ops-model";
-import { activationStatus, mfaStatus } from "@/lib/status";
+import { activationStatus } from "@/lib/status";
 import { formatRelative } from "@acuity/i18n/format";
 
 const FACETS = ["overview", "usage", "account", "impersonate"] as const;
@@ -137,7 +135,6 @@ export async function DoctorDrawer({
         {!enabled ? (
           <MetaBadge meta={{ tone: "danger", icon: "alert", key: "" }} label={t("disabled-badge")} />
         ) : null}
-        <MetaBadge meta={mfaStatus(ops.mfa)} label={tRoot(mfaStatus(ops.mfa).key)} />
         <MetaBadge
           meta={
             doctor.signature_url
@@ -165,31 +162,15 @@ export async function DoctorDrawer({
           <KeyVal label={t("account")}>
             <span className="font-mono">{doctor.login_account}</span>
           </KeyVal>
+          <KeyVal label={t("contact-email")}>{doctor.email ?? "—"}</KeyVal>
           <KeyVal label={t("reg-no")}>
             <span className="font-mono">{doctor.reg_no ?? "—"}</span>
-          </KeyVal>
-          <KeyVal label={t("mfa")}>
-            <MetaBadge meta={mfaStatus(ops.mfa)} label={tRoot(mfaStatus(ops.mfa).key)} />
           </KeyVal>
           <KeyVal label={t("activation")}>
             <MetaBadge meta={activationStatus(ops.activation)} label={tRoot(activationStatus(ops.activation).key)} />
           </KeyVal>
           <KeyVal label={t("last-activity")}>{formatRelative(ops.last_activity, locale, Date.now())}</KeyVal>
           <div className="mt-4 flex flex-wrap gap-2">
-            {ops.mfa !== "enrolled" ? (
-              <ActionButton
-                label={t("trigger-mfa")}
-                icon="key"
-                action={triggerMfaAction.bind(null, doctor.id, doctor.login_account)}
-                successMessage={t("trigger-mfa-done")}
-              />
-            ) : null}
-            <ActionButton
-              label={t("reset-mfa")}
-              icon="retry"
-              action={resetMfaAction.bind(null, doctor.id, doctor.login_account)}
-              successMessage={t("reset-mfa-done")}
-            />
             <ActionButton
               label={t("reset-password")}
               icon="key"
@@ -219,10 +200,10 @@ export async function DoctorDrawer({
         <DoctorAccountFacet
           doctorId={doctor.id}
           login={doctor.login_account}
+          email={doctor.email}
           ops={ops}
           notes={account.notes}
           workspaceSeparation={account.workspace_separation}
-          mfaEnabled={account.mfa_enabled}
           linkedClinics={linkedClinics}
           linkableClinics={linkableClinics}
         />

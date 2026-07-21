@@ -1,7 +1,8 @@
 "use client";
 
-// New doctor account — dialog form (clinic + name + login) creating through
-// the contract endpoint; replaces the reference's inert New-doctor control.
+// New doctor account — dialog form (clinic + name + login + email) creating
+// through the contract endpoint; replaces the reference's inert New-doctor
+// control.
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
@@ -30,6 +31,7 @@ export function NewDoctorButton({ clinics }: { clinics: { id: number; label: str
   const [clinicId, setClinicId] = useState(clinics[0] ? String(clinics[0].id) : "");
   const [name, setName] = useState("");
   const [login, setLogin] = useState("");
+  const [email, setEmail] = useState("");
   const [pending, startTransition] = useTransition();
   const router = useRouter();
   const { showToast } = useToast();
@@ -45,12 +47,14 @@ export function NewDoctorButton({ clinics }: { clinics: { id: number; label: str
           doctor_name: name.trim(),
           doctor_name_en: name.trim(),
           login_account: login.trim(),
+          email: email.trim() || null,
           password: "changeme-on-first-signin",
         });
         showToast(t("created", { login: login.trim() }));
         setOpen(false);
         setName("");
         setLogin("");
+        setEmail("");
         router.refresh();
       } catch (error) {
         showToast(error instanceof Error ? error.message : "Unable to create doctor", "error");
@@ -103,7 +107,17 @@ export function NewDoctorButton({ clinics }: { clinics: { id: number; label: str
                 className="h-10 rounded-lg bg-background"
               />
             </div>
-            <p className="max-w-[17rem] text-xs leading-5 text-muted-foreground">{t("mfa-note")}</p>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("email")}</label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                aria-label={t("email")}
+                autoComplete="email"
+                className="h-10 rounded-lg bg-background"
+              />
+            </div>
           </div>
           <DialogFooter className="border-t border-border pt-4 sm:justify-end">
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>

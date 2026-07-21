@@ -47,6 +47,7 @@ class Doctor(Base, TimestampMixin):
     doctor_name: Mapped[str] = mapped_column(String(100))
     doctor_name_en: Mapped[str | None] = mapped_column(String(100))
     reg_no: Mapped[str | None] = mapped_column(String(50))
+    email: Mapped[str | None] = mapped_column(String(255))
     signature_url: Mapped[str | None] = mapped_column(String(255))
     login_account: Mapped[str] = mapped_column(String(100), unique=True)
     password_hash: Mapped[str] = mapped_column(String(255))

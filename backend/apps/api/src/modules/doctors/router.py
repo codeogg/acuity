@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, Query
 
 from src.deps import AdminDep, DbSession
@@ -33,9 +35,15 @@ async def list_doctors(
     page_size: int = Query(20, ge=1, le=100),
     clinic_id: int | None = None,
     keyword: str | None = None,
+    linked: Literal["clinic", "individual"] | None = None,
 ) -> Page[DoctorAccountOut]:
     items, total = await service.list_doctor_accounts(
-        db, page=page, page_size=page_size, clinic_id=clinic_id, keyword=keyword
+        db,
+        page=page,
+        page_size=page_size,
+        clinic_id=clinic_id,
+        keyword=keyword,
+        linked=linked,
     )
     return Page(
         items=items,

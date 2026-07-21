@@ -42,6 +42,7 @@ import {
   saveFieldMappingAction,
   updateTemplateFieldAction,
 } from "@/lib/actions";
+import { PdfPageCanvas, resolveTemplatePdfUrl } from "@/components/forms/pdf-page-canvas";
 
 type FieldState = "resolved" | "low" | "conflict" | "pending" | "ignored";
 
@@ -74,6 +75,8 @@ interface TemplateInfo {
   page_height: number;
   insurer: string;
   type_label: string;
+  /** Same-origin /local-storage/... URL for the uploaded PDF. */
+  pdf_url: string;
 }
 
 export function FieldMapEditor({
@@ -438,19 +441,24 @@ export function FieldMapEditor({
           </div>
           <div ref={paneRef} className="slim-scroll min-h-0 flex-1 overflow-auto bg-muted p-6">
             <div
-              className="relative mx-auto rounded-sm border border-border bg-background shadow-sm"
+              className="relative mx-auto overflow-hidden rounded-sm border border-border bg-background shadow-sm"
               style={{
                 width: pageWidthPx,
                 maxWidth: zoom === "fit-page" ? undefined : "100%",
                 aspectRatio: `${template.page_width} / ${template.page_height}`,
               }}
             >
-              <div className="absolute" style={{ left: "8%", right: "8%", top: "4%" }}>
-                <div className="font-title text-sm font-semibold text-foreground">
-                  {template.insurer} — {template.name}
+              {template.pdf_url ? (
+                <PdfPageCanvas
+                  pdfUrl={resolveTemplatePdfUrl(template.pdf_url)}
+                  pageNo={page}
+                  widthPx={pageWidthPx}
+                />
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+                  {t("pdf-missing")}
                 </div>
-                <div className="mt-1.5 h-px bg-border-strong" />
-              </div>
+              )}
               {pageFields.map((f) => {
                 const s = stateOf(f);
                 const isSelected = selected === f.id;
@@ -464,7 +472,7 @@ export function FieldMapEditor({
                     onClick={() => selectField(f.id)}
                     aria-pressed={isSelected}
                     aria-label={f.field_label_raw ?? String(f.id)}
-                    className="absolute flex items-center gap-1 overflow-hidden rounded-sm px-1 text-left"
+                    className="absolute z-10 flex items-center gap-1 overflow-hidden rounded-sm px-1 text-left"
                     style={{
                       top: `${(f.pos_y / template.page_height) * 100}%`,
                       left: `${(f.pos_x / template.page_width) * 100}%`,

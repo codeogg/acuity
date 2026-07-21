@@ -54,7 +54,6 @@ export function ProvisioningFacet({
     { label: t("check-basics"), done: Boolean(clinic.name && clinic.address) },
     { label: t("check-residency"), done: true },
     { label: t("check-doctor"), done: doctorCount >= 1 },
-    { label: t("check-mfa"), done: ops.ops_status !== "provisioning" },
     { label: t("check-defaults"), done: insurers.length > 0 },
   ];
 
@@ -163,6 +162,7 @@ function AddDoctorForm({ clinicId }: { clinicId: number }) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [login, setLogin] = useState("");
+  const [email, setEmail] = useState("");
   const [pending, startTransition] = useTransition();
   const router = useRouter();
   const { showToast } = useToast();
@@ -184,6 +184,7 @@ function AddDoctorForm({ clinicId }: { clinicId: number }) {
         doctor_name: name,
         doctor_name_en: name,
         login_account: login,
+        email: email.trim() || null,
         password: "changeme-on-first-signin",
       });
       if (result.ok) {
@@ -191,6 +192,7 @@ function AddDoctorForm({ clinicId }: { clinicId: number }) {
         setOpen(false);
         setName("");
         setLogin("");
+        setEmail("");
         router.refresh();
       } else {
         showToast(result.message, "error");
@@ -214,6 +216,15 @@ function AddDoctorForm({ clinicId }: { clinicId: number }) {
           placeholder={t("doctor-login")}
           aria-label={t("doctor-login")}
           className="h-9"
+        />
+        <Input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder={t("doctor-email")}
+          aria-label={t("doctor-email")}
+          autoComplete="email"
+          className="h-9 col-span-2"
         />
       </div>
       <div className="flex justify-end gap-2">
