@@ -1,7 +1,7 @@
-// Clinic detail drawer (server component) — six facets over the grid:
-// Overview / Provisioning / Usage & settings / Account / Onboarding /
-// Impersonate, plus the delete + resume-onboarding footer. Opens via
-// ?open=<id>&facet=<facet> so the grid context underneath survives.
+// Clinic detail drawer (server component) — facets over the grid:
+// Overview / Provisioning / Insurers & forms / Usage & settings / Account /
+// Onboarding / Impersonate, plus the delete + resume-onboarding footer. Opens
+// via ?open=<id>&facet=<facet> so the grid context underneath survives.
 
 import { Link } from "@acuity/i18n/navigation";
 import { pickName } from "@acuity/i18n/names";
@@ -17,7 +17,7 @@ import { KeyVal, FacetSection } from "@/components/ui/detail";
 import { Sparkline } from "@/components/ui/charts";
 import { GateButton } from "@/components/ui/confirm-gate";
 import { ImpersonateControl } from "@/components/system/impersonate-control";
-import { AccountFacet, NewClinicForm, OnboardingFacet, ProvisioningFacet } from "@/components/drawers/clinic-facets";
+import { AccountFacet, InsurersFacet, NewClinicForm, OnboardingFacet, ProvisioningFacet } from "@/components/drawers/clinic-facets";
 import { StatusBadge } from "@/components/ui/ui-client";
 import { deleteClinicAction } from "@/lib/actions";
 import { clinicAccount, getClinic, getClinicConfigOverview, listDoctorRows } from "@/lib/data";
@@ -25,7 +25,7 @@ import { clinicOps } from "@/lib/ops-model";
 import { clinicOpsStatus } from "@/lib/status";
 import { formatRelative } from "@acuity/i18n/format";
 
-const FACETS = ["overview", "provisioning", "usage", "account", "onboarding", "impersonate"] as const;
+const FACETS = ["overview", "provisioning", "insurers", "usage", "account", "onboarding", "impersonate"] as const;
 export type ClinicFacet = (typeof FACETS)[number];
 
 export async function ClinicDrawer({
@@ -89,7 +89,10 @@ export async function ClinicDrawer({
     params.set("facet", f);
     return `/clinics?${params.toString()}`;
   };
-  const wide = activeFacet === "provisioning" || activeFacet === "onboarding";
+  const wide =
+    activeFacet === "provisioning" ||
+    activeFacet === "onboarding" ||
+    activeFacet === "insurers";
   const signatureUploaded = doctorRows.some((d) => d.doctor.signature_url);
 
   const summary = {
@@ -205,6 +208,12 @@ export async function ClinicDrawer({
                 </Link>
               </Button>
               <Button asChild variant="outline" size="sm">
+                <Link href={facetHref("insurers")} replace scroll={false}>
+                  <AcuityIcon name="layers" size={16} />
+                  {t("facet.insurers")}
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="sm">
                 <Link href={facetHref("impersonate")} replace scroll={false}>
                   <AcuityIcon name="eye" size={16} />
                   {t("facet.impersonate")}
@@ -229,6 +238,10 @@ export async function ClinicDrawer({
           insurers={enabledInsurers}
           signatureUploaded={signatureUploaded}
         />
+      ) : null}
+
+      {activeFacet === "insurers" ? (
+        <InsurersFacet clinicId={clinic.id} initialConfig={config} />
       ) : null}
 
       {activeFacet === "usage" ? (

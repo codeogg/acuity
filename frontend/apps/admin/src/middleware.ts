@@ -1,29 +1,40 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createLocaleMiddleware } from "@acuity/i18n/middleware";
-import { authGateDecision, hasSessionCookie } from "@acuity/auth-ui/middleware";
+import {
+  MOCK_SESSION_COOKIE,
+  operatorAuthMount,
+} from "@acuity/auth-ui";
+import {
+  authGateDecision,
+  hasEffectiveSession,
+  hasSessionCookie,
+} from "@acuity/auth-ui/middleware";
 
-// Session gate + locale routing, composed exactly as the auth-ui mount
-// contract prescribes (presence-only cookie check, redirect to sign-in with
-// the requested path as from= before any protected route renders; locale
-// resolution for allowed requests).
-//
-// Mock-first presence rule: the mock backend boots signed in (the auth
-// store's default session), so a visitor with no cookies at all is treated
-// as carrying that boot session until an explicit sign-out sets the
-// signed-out marker. After sign-out — or in live mode — presence is the
-// cookie check alone, which is the exact behaviour of createAuthMiddleware.
+// Session gate + locale routing. Presence-only cookie check, plus role
+// isolation: a doctor JWT on shared localhost must not unlock this console.
 const MOCKING = process.env.NEXT_PUBLIC_API_MOCKING !== "disabled";
 const SIGNED_OUT_COOKIE = "acuity_signed_out";
 
-const gateConfig = { signInPath: "/sign-in", publicPaths: [] as string[] };
+const gateConfig = {
+  signInPath: "/sign-in",
+  publicPaths: [] as string[],
+  allowedRoles: operatorAuthMount.allowedRoles,
+};
 const handleLocale = createLocaleMiddleware();
 
 export default function middleware(request: NextRequest) {
   const signedOut = Boolean(request.cookies.get(SIGNED_OUT_COOKIE)?.value);
-  const present = hasSessionCookie(request) || (MOCKING && !signedOut);
+  const cookiePresent = hasSessionCookie(request);
+  const roleOk = hasEffectiveSession(request, gateConfig);
+  const present = roleOk || (MOCKING && !signedOut && !cookiePresent);
   const decision = authGateDecision(request.nextUrl.pathname, present, gateConfig);
   if (decision.action === "redirect") {
-    return NextResponse.redirect(new URL(decision.to, request.url));
+    const response = NextResponse.redirect(new URL(decision.to, request.url));
+    if (cookiePresent && !roleOk) {
+      response.cookies.set("access_token", "", { path: "/", maxAge: 0 });
+      response.cookies.set(MOCK_SESSION_COOKIE, "", { path: "/", maxAge: 0 });
+    }
+    return response;
   }
   return handleLocale(request);
 }

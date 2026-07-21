@@ -1,13 +1,17 @@
 import { createAuthMiddleware } from "@acuity/auth-ui/middleware";
+import { doctorAuthMount } from "@acuity/auth-ui";
 
 // Session gate + locale routing in one middleware: unauthenticated requests
 // to protected routes redirect to sign-in (carrying the requested path as
 // `from=` for the deep-link return) BEFORE any page renders; authenticated
 // requests fall through to the shared locale middleware, which
 // createAuthMiddleware composes internally (never stack both).
+//
+// allowedRoles isolates this surface from an operator JWT on shared localhost.
 export default createAuthMiddleware({
   signInPath: "/sign-in",
   publicPaths: [],
+  allowedRoles: doctorAuthMount.allowedRoles,
 });
 
 export const config = {

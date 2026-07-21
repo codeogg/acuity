@@ -22,7 +22,7 @@ from src.db.models import (
     TemplateFieldMapping,
 )
 from src.db.session import async_session_factory
-from src.modules.doctors.clinic_links import ensure_primary_clinic_link
+from src.modules.doctors.clinic_links import ensure_primary_clinic_link, link_clinic
 
 logger = get_logger(__name__)
 
@@ -241,19 +241,47 @@ async def seed() -> None:
                 db, doctor_id=doctor.id, clinic_id=clinic.id
             )
 
-        # 诊所-保司关联
-        rel = (
+        # 第二家演示诊所：用于联调「登录时选择本次诊所」
+        clinic_b = (
+            await db.execute(select(Clinic).where(Clinic.clinic_code == "DEMO_CLINIC_B"))
+        ).scalar_one_or_none()
+        if not clinic_b:
+            clinic_b = Clinic(
+                clinic_code="DEMO_CLINIC_B",
+                clinic_name="示例诊所（尖沙咀）",
+                clinic_name_en="Demo Clinic (TST)",
+                address="香港尖沙咀",
+            )
+            db.add(clinic_b)
+            await db.flush()
+
+        clinic_b_link = (
             await db.execute(
-                select(ClinicInsuranceCompany).where(
-                    ClinicInsuranceCompany.clinic_id == clinic.id,
-                    ClinicInsuranceCompany.company_id == company.id,
+                select(DoctorClinicLink).where(
+                    DoctorClinicLink.doctor_id == doctor.id,
+                    DoctorClinicLink.clinic_id == clinic_b.id,
                 )
             )
         ).scalar_one_or_none()
-        if not rel:
-            db.add(
-                ClinicInsuranceCompany(clinic_id=clinic.id, company_id=company.id)
-            )
+        if not clinic_b_link:
+            await link_clinic(db, doctor_id=doctor.id, clinic_id=clinic_b.id)
+
+        # 诊所-保司关联
+        for linked_clinic in (clinic, clinic_b):
+            rel = (
+                await db.execute(
+                    select(ClinicInsuranceCompany).where(
+                        ClinicInsuranceCompany.clinic_id == linked_clinic.id,
+                        ClinicInsuranceCompany.company_id == company.id,
+                    )
+                )
+            ).scalar_one_or_none()
+            if not rel:
+                db.add(
+                    ClinicInsuranceCompany(
+                        clinic_id=linked_clinic.id, company_id=company.id
+                    )
+                )
 
         await db.commit()
         logger.info("seed_done")

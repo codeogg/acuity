@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import { useTranslations } from "next-intl";
-import { useSessionGuard, type SessionGuard } from "@acuity/auth-ui";
+import { doctorAuthMount, useSessionGuard, type SessionGuard } from "@acuity/auth-ui";
 
 // The one page-level session gate for every protected surface: the (app)
 // route-group layout wraps its children here, so each signed-in page renders
@@ -40,6 +40,7 @@ export function AuthGuard({
     locale,
     signInPath: "/sign-in",
     mocks: MOCKING_ENABLED,
+    allowedRoles: doctorAuthMount.allowedRoles,
   });
 
   if (guard.state !== "authenticated") {

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { authGateDecision, splitLocalePath } from "../src/mount/gate";
+import {
+  authGateDecision,
+  readAccessTokenRole,
+  rolePermittedForGate,
+  splitLocalePath,
+} from "../src/mount/gate";
 
 const config = { signInPath: "/sign-in", publicPaths: ["/"] as const };
 
@@ -56,5 +61,29 @@ describe("authGateDecision", () => {
       action: "allow",
     });
     expect(authGateDecision("/en-HK/helpers", false, cfg).action).toBe("redirect");
+  });
+});
+
+describe("rolePermittedForGate", () => {
+  it("allows any role when the allow-list is empty", () => {
+    expect(rolePermittedForGate("DOCTOR", undefined)).toBe(true);
+    expect(rolePermittedForGate("DOCTOR", [])).toBe(true);
+  });
+
+  it("rejects missing roles and roles outside the allow-list", () => {
+    expect(rolePermittedForGate(null, ["OPERATOR"])).toBe(false);
+    expect(rolePermittedForGate("DOCTOR", ["OPERATOR", "SUPER_ADMIN"])).toBe(false);
+    expect(rolePermittedForGate("operator", ["OPERATOR"])).toBe(true);
+  });
+});
+
+describe("readAccessTokenRole", () => {
+  it("reads the role claim from a JWT payload segment", () => {
+    const payload = Buffer.from(
+      JSON.stringify({ sub: "1", role: "DOCTOR" }),
+      "utf8",
+    ).toString("base64url");
+    expect(readAccessTokenRole(`x.${payload}.y`)).toBe("DOCTOR");
+    expect(readAccessTokenRole("not-a-jwt")).toBeNull();
   });
 });

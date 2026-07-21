@@ -58,6 +58,15 @@ def _local_download(key: str) -> bytes:
     return local.read_bytes()
 
 
+def local_file_bytes(key_or_url: str) -> bytes | None:
+    """若本地降级目录已有该对象则直接返回，否则 None（不访问 MinIO）。"""
+    key = _url_to_key(key_or_url)
+    local = _local_storage_dir() / key
+    if local.is_file():
+        return local.read_bytes()
+    return None
+
+
 # ── 公开 API ──────────────────────────────────────────────────
 
 

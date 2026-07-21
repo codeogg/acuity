@@ -3,21 +3,26 @@
 // own literal `config.matcher` (Next.js requires it to be statically
 // analyzable) and export `createAuthMiddleware(...)` as their middleware.
 //
-// The gate is presence-only (edge middleware cannot validate a session);
-// role checks and session validity live in the journey + the page-level
-// session guard. Unauthenticated requests redirect to the sign-in page
-// BEFORE any protected route renders, carrying the requested internal path
-// as `from=` so the journey can exchange it for a single-use,
-// allowlist-validated deep-link token. Decision logic lives in ./gate
-// (pure, unit-tested); this module adds only the Next.js wiring.
+// The gate is presence-only at the cookie layer (edge middleware cannot fully
+// validate a session). When `allowedRoles` is set, a JWT whose role is outside
+// that list is treated as no session and cleared — so a doctor cookie on
+// localhost cannot unlock the operator console (and vice versa). Full session
+// validity still lives in the journey + page-level session guard.
 
 import { NextResponse, type NextRequest } from "next/server";
 import { createLocaleMiddleware } from "@acuity/i18n/middleware";
 import { MOCK_SESSION_COOKIE } from "./config";
-import { authGateDecision, type AuthGateConfig } from "./gate";
+import {
+  authGateDecision,
+  readAccessTokenRole,
+  rolePermittedForGate,
+  type AuthGateConfig,
+} from "./gate";
 
 export {
   authGateDecision,
+  readAccessTokenRole,
+  rolePermittedForGate,
   splitLocalePath,
   type AuthGateConfig,
   type AuthGateDecision,
@@ -32,16 +37,40 @@ export function hasSessionCookie(request: NextRequest): boolean {
   );
 }
 
+/** Cookie present and (if configured) JWT role allowed for this surface. */
+export function hasEffectiveSession(
+  request: NextRequest,
+  config: AuthGateConfig,
+): boolean {
+  if (!hasSessionCookie(request)) return false;
+  const token = request.cookies.get("access_token")?.value;
+  if (!token) {
+    // Mock marker only — page guard validates the mock session further.
+    return Boolean(request.cookies.get(MOCK_SESSION_COOKIE)?.value);
+  }
+  return rolePermittedForGate(readAccessTokenRole(token), config.allowedRoles);
+}
+
+function clearSessionCookies(response: NextResponse): void {
+  response.cookies.set("access_token", "", { path: "/", maxAge: 0 });
+  response.cookies.set(MOCK_SESSION_COOKIE, "", { path: "/", maxAge: 0 });
+}
+
 export function createAuthMiddleware(config: AuthGateConfig) {
   const handleLocale = createLocaleMiddleware();
   return function authMiddleware(request: NextRequest) {
+    const cookiePresent = hasSessionCookie(request);
+    const present = hasEffectiveSession(request, config);
     const decision = authGateDecision(
       request.nextUrl.pathname,
-      hasSessionCookie(request),
+      present,
       config,
     );
     if (decision.action === "redirect") {
-      return NextResponse.redirect(new URL(decision.to, request.url));
+      const response = NextResponse.redirect(new URL(decision.to, request.url));
+      // Drop a wrong-surface JWT so the sign-in page can issue a fresh cookie.
+      if (cookiePresent && !present) clearSessionCookies(response);
+      return response;
     }
     return handleLocale(request);
   };

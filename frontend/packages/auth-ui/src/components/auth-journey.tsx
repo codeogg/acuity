@@ -301,15 +301,10 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
         } else {
           await delay(T.redirect);
           if (!alive()) return;
-          // The local FastAPI integration currently implements the base JWT
-          // session only; its FUTURE-AUTH clinic-selection API is not present.
-          // skipMfa is an explicit non-production integration escape hatch,
-          // so bypass that extension group and enter the mounted surface.
-          if (config.skipMfa) {
-            await land(alive);
-          } else {
-            await proceedToClinicOrLand(alive);
-          }
+          // skipMfa only bypasses the second factor. Multi-clinic identities
+          // still pick a session clinic so subsequent doctor queries scope
+          // to the selected JWT clinic_id.
+          await proceedToClinicOrLand(alive);
         }
       } catch (cause) {
         if (!alive()) return;

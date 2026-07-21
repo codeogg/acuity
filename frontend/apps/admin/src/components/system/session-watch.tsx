@@ -14,7 +14,7 @@
 // re-authentication.
 
 import { useEffect, useState } from "react";
-import { useSessionGuard } from "@acuity/auth-ui";
+import { operatorAuthMount, useSessionGuard } from "@acuity/auth-ui";
 
 const MOCKING_ENABLED = process.env.NEXT_PUBLIC_API_MOCKING !== "disabled";
 
@@ -60,6 +60,7 @@ function Guard({ locale }: { locale: string }) {
     locale,
     signInPath: "/sign-in",
     mocks: MOCKING_ENABLED,
+    allowedRoles: operatorAuthMount.allowedRoles,
   });
   return null;
 }

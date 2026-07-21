@@ -4,20 +4,24 @@
 // onboarding walkthrough, new-clinic create) — client islands importing the
 // server actions directly; the data arrives serialised from the server page.
 
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Button, Input } from "@acuity/ui";
+import { Button, Input, cn } from "@acuity/ui";
 import { AcuityIcon } from "@acuity/ui";
 import { CrmFieldRow } from "@/components/ui/crm-field";
 import { ActionButton } from "@/components/ui/action-button";
 import { GateButton } from "@/components/ui/confirm-gate";
 import { useToast } from "@acuity/ui";
 import { clinics } from "@acuity/api-client";
+import type { ClinicConfigOverview, CompanyConfigItem } from "@acuity/types";
 import { MetaBadge } from "@/components/ui/status-badge";
 import { MarkdownNotes } from "@/components/ui/markdown-notes";
 import {
   createDoctorAction,
+  setClinicCompanyEnablementAction,
+  setClinicCompanyTemplatesAction,
+  setClinicTemplateEnablementAction,
   updateClinicAction,
   updateClinicNotesAction,
   updateClinicOpsAction,
@@ -473,5 +477,341 @@ function FacetHeading({ children, className }: { children: React.ReactNode; clas
     <h3 className={`mb-3 font-mono text-xs font-medium uppercase tracking-eyebrow text-muted-foreground ${className ?? ""}`}>
       {children}
     </h3>
+  );
+}
+
+// --- insurers / templates facet (clinic config) -----------------------------------
+
+function patchCompanyLocal(
+  companies: CompanyConfigItem[],
+  companyId: number,
+  updater: (c: CompanyConfigItem) => CompanyConfigItem,
+): CompanyConfigItem[] {
+  return companies.map((c) => (c.company_id === companyId ? updater(c) : c));
+}
+
+export function InsurersFacet({
+  clinicId,
+  initialConfig,
+}: {
+  clinicId: number;
+  initialConfig: ClinicConfigOverview | null;
+}) {
+  const t = useTranslations("clinic-drawer.insurers");
+  const { showToast } = useToast();
+  const [companies, setCompanies] = useState<CompanyConfigItem[]>(
+    initialConfig?.companies ?? [],
+  );
+  const [search, setSearch] = useState("");
+  const [selectedCompanyId, setSelectedCompanyId] = useState<number | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    setCompanies(initialConfig?.companies ?? []);
+  }, [initialConfig]);
+
+  useEffect(() => {
+    if (selectedCompanyId !== null || companies.length === 0) return;
+    const first = companies.find((c) => c.enabled) ?? companies[0];
+    if (first) setSelectedCompanyId(first.company_id);
+  }, [companies, selectedCompanyId]);
+
+  const filtered = useMemo(() => {
+    const kw = search.trim().toLowerCase();
+    if (!kw) return companies;
+    return companies.filter((c) => c.company_name.toLowerCase().includes(kw));
+  }, [companies, search]);
+
+  const selected = companies.find((c) => c.company_id === selectedCompanyId) ?? null;
+
+  function companyLabel(c: CompanyConfigItem): string {
+    return c.company_name;
+  }
+
+  function toggleCompany(company: CompanyConfigItem) {
+    const next = !company.enabled;
+    setCompanies((prev) =>
+      patchCompanyLocal(prev, company.company_id, (c) => ({ ...c, enabled: next })),
+    );
+    startTransition(async () => {
+      const result = await setClinicCompanyEnablementAction(
+        clinicId,
+        company.company_id,
+        next,
+      );
+      if (!result.ok) {
+        setCompanies((prev) =>
+          patchCompanyLocal(prev, company.company_id, (c) => ({ ...c, enabled: !next })),
+        );
+        showToast(result.message, "error");
+        return;
+      }
+      showToast(next ? t("company-enabled") : t("company-disabled"));
+    });
+  }
+
+  function toggleTemplate(company: CompanyConfigItem, templateId: number, current: boolean) {
+    const next = !current;
+    setCompanies((prev) =>
+      patchCompanyLocal(prev, company.company_id, (c) => {
+        const templates = c.templates.map((tpl) =>
+          tpl.template_id === templateId ? { ...tpl, enabled: next } : tpl,
+        );
+        return {
+          ...c,
+          templates,
+          enabled_template_count: templates.filter((tpl) => tpl.enabled).length,
+        };
+      }),
+    );
+    startTransition(async () => {
+      const result = await setClinicTemplateEnablementAction(clinicId, templateId, next);
+      if (!result.ok) {
+        setCompanies((prev) =>
+          patchCompanyLocal(prev, company.company_id, (c) => {
+            const templates = c.templates.map((tpl) =>
+              tpl.template_id === templateId ? { ...tpl, enabled: !next } : tpl,
+            );
+            return {
+              ...c,
+              templates,
+              enabled_template_count: templates.filter((tpl) => tpl.enabled).length,
+            };
+          }),
+        );
+        showToast(result.message, "error");
+        return;
+      }
+      showToast(next ? t("template-enabled") : t("template-disabled"));
+    });
+  }
+
+  function selectAll(company: CompanyConfigItem, all: boolean) {
+    const ids = all
+      ? company.templates.filter((tpl) => tpl.is_active).map((tpl) => tpl.template_id)
+      : [];
+    const idSet = new Set(ids);
+    const previous = company.templates.map((tpl) => ({ ...tpl }));
+    setCompanies((prev) =>
+      patchCompanyLocal(prev, company.company_id, (c) => {
+        const templates = c.templates.map((tpl) => ({
+          ...tpl,
+          enabled: idSet.has(tpl.template_id),
+        }));
+        return {
+          ...c,
+          templates,
+          enabled_template_count: templates.filter((tpl) => tpl.enabled).length,
+        };
+      }),
+    );
+    startTransition(async () => {
+      const result = await setClinicCompanyTemplatesAction(
+        clinicId,
+        company.company_id,
+        ids,
+      );
+      if (!result.ok) {
+        setCompanies((prev) =>
+          patchCompanyLocal(prev, company.company_id, (c) => ({
+            ...c,
+            templates: previous,
+            enabled_template_count: previous.filter((tpl) => tpl.enabled).length,
+          })),
+        );
+        showToast(result.message, "error");
+        return;
+      }
+      const enabledSet = new Set(result.data?.enabled_template_ids ?? ids);
+      setCompanies((prev) =>
+        patchCompanyLocal(prev, company.company_id, (c) => {
+          const templates = c.templates.map((tpl) => ({
+            ...tpl,
+            enabled: enabledSet.has(tpl.template_id),
+          }));
+          return {
+            ...c,
+            templates,
+            enabled_template_count: templates.filter((tpl) => tpl.enabled).length,
+          };
+        }),
+      );
+      showToast(t("bulk-saved"));
+    });
+  }
+
+  if (!initialConfig) {
+    return (
+      <p className="text-sm text-muted-foreground" data-testid="insurers-load-error">
+        {t("load-error")}
+      </p>
+    );
+  }
+
+  if (companies.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">{t("empty-companies")}</p>
+    );
+  }
+
+  return (
+    <div>
+      <p className="mb-4 text-sm text-muted-foreground">{t("description")}</p>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)]">
+        <div className="rounded-lg border border-border bg-card p-3">
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t("search-company")}
+            aria-label={t("search-company")}
+            className="mb-3 h-9"
+          />
+          <div className="flex max-h-[28rem] flex-col gap-1.5 overflow-y-auto">
+            {filtered.map((company) => {
+              const active = company.company_id === selectedCompanyId;
+              return (
+                <button
+                  key={company.company_id}
+                  type="button"
+                  onClick={() => setSelectedCompanyId(company.company_id)}
+                  className={cn(
+                    "flex items-center justify-between gap-2 rounded-md border px-3 py-2.5 text-left transition-colors",
+                    active
+                      ? "border-primary bg-muted/60"
+                      : "border-transparent hover:bg-muted/40",
+                    company.enabled ? "" : "opacity-60",
+                  )}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-foreground">
+                      {companyLabel(company)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {company.enabled
+                        ? t("selected-templates", {
+                            enabled: company.enabled_template_count,
+                            total: company.template_count,
+                          })
+                        : t("not-enabled")}
+                    </div>
+                  </div>
+                  <span
+                    role="switch"
+                    aria-checked={company.enabled}
+                    aria-label={t("toggle-company")}
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleCompany(company);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleCompany(company);
+                      }
+                    }}
+                    className={cn(
+                      "relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full transition-colors",
+                      company.enabled ? "bg-primary" : "bg-muted",
+                      pending ? "pointer-events-none opacity-70" : "",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "inline-block size-4 rounded-full bg-background shadow transition-transform",
+                        company.enabled ? "translate-x-4" : "translate-x-0.5",
+                      )}
+                    />
+                  </span>
+                </button>
+              );
+            })}
+            {filtered.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">{t("no-company-matches")}</p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-border bg-card p-4">
+          {!selected ? (
+            <p className="text-sm text-muted-foreground">{t("pick-company")}</p>
+          ) : (
+            <>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="text-sm font-medium text-foreground">{companyLabel(selected)}</div>
+                  <div className="text-xs text-muted-foreground">{t("templates-heading")}</div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={!selected.enabled || pending}
+                    onClick={() => selectAll(selected, true)}
+                  >
+                    {t("select-all")}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={!selected.enabled || pending}
+                    onClick={() => selectAll(selected, false)}
+                  >
+                    {t("clear-all")}
+                  </Button>
+                </div>
+              </div>
+
+              {!selected.enabled ? (
+                <p className="mb-3 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                  {t("enable-company-first")}
+                </p>
+              ) : null}
+
+              {selected.templates.length === 0 ? (
+                <p className="text-sm text-muted-foreground">{t("no-templates")}</p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {selected.templates.map((tpl) => {
+                    const disabled = !selected.enabled || !tpl.is_active || pending;
+                    return (
+                      <li key={tpl.template_id} className="flex items-start gap-3 py-3">
+                        <input
+                          type="checkbox"
+                          className="mt-1 size-4 accent-primary"
+                          checked={tpl.enabled}
+                          disabled={disabled}
+                          onChange={() => toggleTemplate(selected, tpl.template_id, tpl.enabled)}
+                          aria-label={tpl.template_name}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium text-foreground">
+                            {tpl.template_name}
+                          </div>
+                          <div className="mt-0.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            <span>{t("template-meta", { version: tpl.version })}</span>
+                            <MetaBadge
+                              meta={
+                                tpl.is_active
+                                  ? { tone: "success", icon: "check", key: "" }
+                                  : { tone: "neutral", icon: "dot", key: "" }
+                              }
+                              label={tpl.is_active ? t("published") : t("unpublished")}
+                            />
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

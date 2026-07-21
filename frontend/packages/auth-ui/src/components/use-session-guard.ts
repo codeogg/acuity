@@ -16,7 +16,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { auth, frontendOnly } from "@acuity/api-client";
-import { isInternalPath } from "../journey/logic";
+import { isInternalPath, roleAllowed } from "../journey/logic";
 
 export type SessionGuardState = "checking" | "authenticated" | "redirecting";
 
@@ -25,6 +25,9 @@ export interface SessionGuardOptions {
   signInPath: string;
   // Start the MSW worker before checking (mock-first default).
   mocks?: boolean;
+  // When set, a session whose role is outside this list is treated as
+  // unauthenticated (wrong-surface JWT on shared localhost).
+  allowedRoles?: readonly string[];
 }
 
 export interface SessionGuard {
@@ -45,7 +48,7 @@ function currentInternalPath(locale: string): string {
 }
 
 export function useSessionGuard(options: SessionGuardOptions): SessionGuard {
-  const { locale, signInPath, mocks = true } = options;
+  const { locale, signInPath, mocks = true, allowedRoles } = options;
   const [state, setState] = useState<SessionGuardState>("checking");
   const [nonce, setNonce] = useState(0);
 
@@ -71,11 +74,20 @@ export function useSessionGuard(options: SessionGuardOptions): SessionGuard {
       try {
         if (mocks) {
           const session = await frontendOnly.authFlow.getSession();
-          authenticated = session.authenticated;
+          authenticated =
+            session.authenticated &&
+            (!allowedRoles || roleAllowed(session.role, allowedRoles));
         } else {
-          // In live mode there is no frontend-only session endpoint. Validate
-          // the httpOnly access_token cookie through the real FastAPI route.
-          authenticated = (await auth.currentUser()) !== null;
+          const me = await auth.currentUser();
+          authenticated =
+            me !== null && (!allowedRoles || roleAllowed(me.role, allowedRoles));
+          if (me && allowedRoles && !roleAllowed(me.role, allowedRoles)) {
+            try {
+              await auth.logout();
+            } catch {
+              // Best-effort clear of the wrong-surface cookie.
+            }
+          }
         }
       } catch {
         authenticated = false;
@@ -94,7 +106,7 @@ export function useSessionGuard(options: SessionGuardOptions): SessionGuard {
     return () => {
       cancelled = true;
     };
-  }, [locale, signInPath, mocks, nonce]);
+  }, [locale, signInPath, mocks, allowedRoles, nonce]);
 
   return { state, recheck };
 }

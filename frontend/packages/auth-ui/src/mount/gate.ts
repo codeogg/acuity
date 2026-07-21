@@ -9,6 +9,10 @@ export interface AuthGateConfig {
   signInPath: string;
   // Additional public path prefixes ("/" matches the root exactly).
   publicPaths?: readonly string[];
+  // When set, an access_token whose JWT role is outside this list is treated
+  // as no session (doctor cookie must not unlock the operator console, and
+  // vice versa). Mock-only markers without a JWT still pass presence.
+  allowedRoles?: readonly string[];
 }
 
 export type AuthGateDecision =
@@ -42,8 +46,8 @@ function isPublicPath(rest: string, config: AuthGateConfig): boolean {
 }
 
 // Presence-only decision: unauthenticated requests to protected paths
-// redirect to sign-in BEFORE the route renders, preserving the requested
-// internal path as `from=` for the deep-link exchange.
+// redirect to sign-in BEFORE any protected route renders, preserving the
+// requested internal path as `from=` for the deep-link exchange.
 export function authGateDecision(
   pathname: string,
   hasSession: boolean,
@@ -57,4 +61,34 @@ export function authGateDecision(
     action: "redirect",
     to: `/${locale}${config.signInPath}?${query.toString()}`,
   };
+}
+
+/** Read `role` from a JWT payload without verifying the signature (routing only). */
+export function readAccessTokenRole(token: string | undefined): string | null {
+  if (!token) return null;
+  const parts = token.split(".");
+  const payloadSegment = parts[1];
+  if (!payloadSegment) return null;
+  try {
+    const normalized = payloadSegment.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const json =
+      typeof atob === "function"
+        ? atob(padded)
+        : Buffer.from(padded, "base64").toString("utf8");
+    const payload = JSON.parse(json) as { role?: unknown };
+    return typeof payload.role === "string" ? payload.role : null;
+  } catch {
+    return null;
+  }
+}
+
+export function rolePermittedForGate(
+  role: string | null,
+  allowedRoles: readonly string[] | undefined,
+): boolean {
+  if (!allowedRoles || allowedRoles.length === 0) return true;
+  if (!role) return false;
+  const allowed = new Set(allowedRoles.map((r) => r.toUpperCase()));
+  return allowed.has(role.toUpperCase());
 }

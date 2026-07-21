@@ -9,5 +9,9 @@ export default createAuthPage({
   ...doctorAuthMount,
   landingPath: "/",
   peerSignInHref: process.env.NEXT_PUBLIC_CONSOLE_SIGN_IN_URL ?? "/sign-in",
+  // Keep the shared journey's Mock bootstrap in sync with this app's API
+  // mode. Without this, AuthJourney defaults to MSW even when the doctor
+  // app is configured for the live FastAPI backend.
+  mocks: process.env.NEXT_PUBLIC_API_MOCKING !== "disabled",
   skipMfa: true,
 });

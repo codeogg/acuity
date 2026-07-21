@@ -3,6 +3,9 @@
 // PDF page canvas with field overlays + draw-to-create (ported from
 // backend/apps/web annotator PdfCanvas). Coordinates are PDF points,
 // top-left origin, stored at 100% scale.
+//
+// Performance: the PDFDocumentProxy is cached per URL. Page flips and zoom
+// only call getPage + render — they must not re-fetch / re-parse the whole PDF.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
@@ -20,6 +23,12 @@ export interface NewBox {
 }
 
 const MIN_BOX_PT = 5;
+
+type PdfjsModule = typeof import("pdfjs-dist");
+type PdfDocument = Awaited<ReturnType<PdfjsModule["getDocument"]>["promise"]>;
+type RenderTask = ReturnType<
+  Awaited<ReturnType<PdfDocument["getPage"]>>["render"]
+>;
 
 function clampBox(x: number, y: number, w: number, h: number, pageW: number, pageH: number) {
   let pos_x = x;
@@ -72,6 +81,9 @@ export function PdfAnnotatorCanvas({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const docRef = useRef<PdfDocument | null>(null);
+  const docUrlRef = useRef<string | null>(null);
+  const renderTaskRef = useRef<RenderTask | null>(null);
   const [scale, setScale] = useState(1.25);
   const [renderScale, setRenderScale] = useState(1.25);
   const [pageSize, setPageSize] = useState({ width: 0, height: 0 });
@@ -90,35 +102,85 @@ export function PdfAnnotatorCanvas({
 
   useEffect(() => {
     let cancelled = false;
-    async function render() {
+
+    async function renderPage() {
       if (!resolvedUrl) return;
       setRendering(true);
       try {
         const pdfjs = await import("pdfjs-dist");
         pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
-        const doc = await pdfjs.getDocument(resolvedUrl).promise;
+
+        let doc = docRef.current;
+        if (!doc || docUrlRef.current !== resolvedUrl) {
+          if (doc) {
+            try {
+              await doc.destroy();
+            } catch {
+              /* ignore */
+            }
+            docRef.current = null;
+            docUrlRef.current = null;
+          }
+          doc = await pdfjs.getDocument(resolvedUrl).promise;
+          if (cancelled) {
+            try {
+              await doc.destroy();
+            } catch {
+              /* ignore */
+            }
+            return;
+          }
+          docRef.current = doc;
+          docUrlRef.current = resolvedUrl;
+        }
+
         const page = await doc.getPage(Math.min(Math.max(1, pageNo), doc.numPages));
+        if (cancelled) return;
+
         const viewport = page.getViewport({ scale });
         const baseViewport = page.getViewport({ scale: 1 });
         const canvas = canvasRef.current;
         if (!canvas || cancelled) return;
         const ctx = canvas.getContext("2d");
         if (!ctx) return;
+
+        renderTaskRef.current?.cancel();
         canvas.width = viewport.width;
         canvas.height = viewport.height;
         setPageSize({ width: baseViewport.width, height: baseViewport.height });
         setRenderScale(canvas.width / baseViewport.width);
-        await page.render({ canvasContext: ctx, viewport }).promise;
+
+        const task = page.render({ canvasContext: ctx, viewport });
+        renderTaskRef.current = task;
+        await task.promise;
         if (!cancelled) setRendering(false);
-      } catch {
+      } catch (err) {
+        const name = err && typeof err === "object" && "name" in err ? String(err.name) : "";
+        if (name === "RenderingCancelledException" || cancelled) return;
         if (!cancelled) setRendering(false);
+      } finally {
+        if (!cancelled) renderTaskRef.current = null;
       }
     }
-    void render();
+
+    void renderPage();
     return () => {
       cancelled = true;
+      renderTaskRef.current?.cancel();
+      renderTaskRef.current = null;
     };
   }, [resolvedUrl, pageNo, scale]);
+
+  useEffect(() => {
+    return () => {
+      renderTaskRef.current?.cancel();
+      renderTaskRef.current = null;
+      const doc = docRef.current;
+      docRef.current = null;
+      docUrlRef.current = null;
+      if (doc) void doc.destroy().catch(() => undefined);
+    };
+  }, []);
 
   const cancelDrag = useCallback(() => {
     drag.current = null;

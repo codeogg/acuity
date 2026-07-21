@@ -143,6 +143,54 @@ export async function setClinicInsurersAction(clinicId: number, companyIds: numb
   );
 }
 
+export async function setClinicCompanyEnablementAction(
+  clinicId: number,
+  companyId: number,
+  enabled: boolean,
+) {
+  return run(
+    () =>
+      clinicMutation<{ company_id: number; enabled: boolean }>(
+        "patch",
+        `/admin/clinics/${clinicId}/insurance-companies/${companyId}`,
+        { enabled },
+      ),
+    ["/"],
+  );
+}
+
+export async function setClinicTemplateEnablementAction(
+  clinicId: number,
+  templateId: number,
+  enabled: boolean,
+) {
+  return run(
+    () =>
+      clinicMutation<{ template_id: number; enabled: boolean }>(
+        "patch",
+        `/admin/clinics/${clinicId}/templates/${templateId}`,
+        { enabled },
+      ),
+    ["/"],
+  );
+}
+
+export async function setClinicCompanyTemplatesAction(
+  clinicId: number,
+  companyId: number,
+  templateIds: number[],
+) {
+  return run(
+    () =>
+      clinicMutation<{ enabled_template_ids: number[] }>(
+        "put",
+        `/admin/clinics/${clinicId}/insurance-companies/${companyId}/templates`,
+        { template_ids: templateIds },
+      ),
+    ["/"],
+  );
+}
+
 export async function updateClinicOpsAction(clinicId: number, code: string, patch: Partial<ClinicOps>) {
   return run(async () => {
     updateClinicOps(clinicId, patch);
