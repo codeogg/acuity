@@ -15,12 +15,14 @@ from src.db.models import (
     Clinic,
     ClinicInsuranceCompany,
     Doctor,
+    DoctorClinicLink,
     FieldDomain,
     InsuranceCompany,
     StandardField,
     TemplateFieldMapping,
 )
 from src.db.session import async_session_factory
+from src.modules.doctors.clinic_links import ensure_primary_clinic_link
 
 logger = get_logger(__name__)
 
@@ -212,18 +214,32 @@ async def seed() -> None:
             await db.execute(select(Doctor).where(Doctor.login_account == "doctor"))
         ).scalar_one_or_none()
         if not doctor:
-            db.add(
-                Doctor(
-                    clinic_id=clinic.id,
-                    doctor_name="陈大文",
-                    doctor_name_en="Chan Tai Man",
-                    login_account="doctor",
-                    password_hash=hash_password("doctor123"),
-                )
+            doctor = Doctor(
+                clinic_id=clinic.id,
+                doctor_name="陈大文",
+                doctor_name_en="Chan Tai Man",
+                login_account="doctor",
+                password_hash=hash_password("doctor123"),
             )
+            db.add(doctor)
+            await db.flush()
         elif not verify_password("doctor123", doctor.password_hash):
             # 开发环境：bcrypt 库升级后旧哈希可能失效，自动修复演示账号
             doctor.password_hash = hash_password("doctor123")
+
+        # 确保演示医生拥有主诊所关联（兼容迁移前后）
+        existing_link = (
+            await db.execute(
+                select(DoctorClinicLink).where(
+                    DoctorClinicLink.doctor_id == doctor.id,
+                    DoctorClinicLink.clinic_id == clinic.id,
+                )
+            )
+        ).scalar_one_or_none()
+        if not existing_link or not existing_link.is_primary or doctor.clinic_id != clinic.id:
+            await ensure_primary_clinic_link(
+                db, doctor_id=doctor.id, clinic_id=clinic.id
+            )
 
         # 诊所-保司关联
         rel = (

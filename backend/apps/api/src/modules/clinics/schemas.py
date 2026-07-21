@@ -18,6 +18,7 @@ class ClinicUpdate(BaseModel):
     address: str | None = None
     phone: str | None = None
     chop_image_url: str | None = None
+    idle_lock_minutes: int | None = None
 
 
 class ClinicStatusUpdate(BaseModel):
@@ -35,6 +36,7 @@ class ClinicOut(BaseModel):
     phone: str | None
     chop_image_url: str | None
     status: int
+    idle_lock_minutes: int
     created_at: datetime
 
 

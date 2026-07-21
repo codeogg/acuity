@@ -17,6 +17,7 @@ from src.db.models.org import (
     Clinic,
     ClinicInsuranceCompany,
     Doctor,
+    DoctorClinicLink,
     InsuranceCompany,
 )
 from src.db.models.standard_fields import (
@@ -49,6 +50,7 @@ __all__ = [
     "ExtractionReviewOutput",
     "Clinic",
     "Doctor",
+    "DoctorClinicLink",
     "InsuranceCompany",
     "ClinicInsuranceCompany",
     "FieldDomain",

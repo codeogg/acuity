@@ -68,19 +68,23 @@ async function clinicMutation<T>(
   // Server Actions do not need the browser-facing Next rewrite. Going straight
   // to FastAPI avoids the action-to-Next proxy hop where the session context
   // can be lost, while the explicit Cookie header keeps the call authenticated.
+  //
+  // api.post/put/patch signature is (path, json?, options?) — the body must be
+  // the second argument. Passing an options bag as json silently no-ops updates
+  // (extra keys ignored by the backend), which broke logo_url and other fields.
   const target = process.env.API_PROXY_TARGET;
   const base =
     process.env.NEXT_PUBLIC_API_MOCKING === "disabled" && target
       ? `${target}/api`
       : undefined;
-  const options = { headers: await sessionHeaders(), json: body, base };
+  const options = { headers: await sessionHeaders(), base };
   switch (method) {
     case "post":
-      return api.post<T>(path, options);
+      return api.post<T>(path, body, options);
     case "put":
-      return api.put<T>(path, options);
+      return api.put<T>(path, body, options);
     case "patch":
-      return api.patch<T>(path, options);
+      return api.patch<T>(path, body, options);
     case "delete":
       return api.delete<T>(path, options);
   }
@@ -436,12 +440,20 @@ export async function createCompanyAction(body: CompanyCreate) {
 export async function updateCompanyAction(companyId: number, body: CompanyUpdate) {
   return run(
     () => clinicMutation<import("@acuity/types").CompanyOut>("put", `/admin/insurance-companies/${companyId}`, body),
-    ["/"],
+    ["/", "/insurers", `/insurers/${companyId}`],
   );
 }
 
 export async function setCompanyStatusAction(companyId: number, status: number) {
-  return run(() => companies.setCompanyStatus(companyId, { status }), ["/"]);
+  return run(
+    () =>
+      clinicMutation<import("@acuity/types").CompanyOut>(
+        "patch",
+        `/admin/insurance-companies/${companyId}/status`,
+        { status },
+      ),
+    ["/", "/insurers", `/insurers/${companyId}`],
+  );
 }
 
 export async function createStandardFieldAction(body: StandardFieldCreate) {

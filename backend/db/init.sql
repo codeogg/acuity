@@ -75,17 +75,19 @@ CREATE TABLE IF NOT EXISTS clinic (
     phone           VARCHAR(50),
     chop_image_url  VARCHAR(255),
     status          SMALLINT NOT NULL DEFAULT 1,
+    idle_lock_minutes SMALLINT NOT NULL DEFAULT 10,
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
 COMMENT ON TABLE clinic IS '诊所信息表';
+COMMENT ON COLUMN clinic.idle_lock_minutes IS '诊所默认闲置锁屏时间（分钟）';
 DROP TRIGGER IF EXISTS set_updated_at ON clinic;
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON clinic
     FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
 
 CREATE TABLE IF NOT EXISTS doctor (
     id              BIGSERIAL PRIMARY KEY,
-    clinic_id       BIGINT NOT NULL REFERENCES clinic(id),
+    clinic_id       BIGINT REFERENCES clinic(id),
     doctor_name     VARCHAR(100) NOT NULL,
     doctor_name_en  VARCHAR(100),
     reg_no          VARCHAR(50),
@@ -93,14 +95,29 @@ CREATE TABLE IF NOT EXISTS doctor (
     login_account   VARCHAR(100) NOT NULL UNIQUE,
     password_hash   VARCHAR(255) NOT NULL,
     status          SMALLINT NOT NULL DEFAULT 1,
+    workspace_mode  VARCHAR(20) NOT NULL DEFAULT 'separated',
+    account_notes   TEXT,
+    idle_lock_minutes SMALLINT,
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
-COMMENT ON TABLE doctor IS '医生信息表';
+COMMENT ON TABLE doctor IS '医生信息表；clinic_id 镜像主诊所（doctor_clinic_link.is_primary），无关联时为 NULL';
 CREATE INDEX IF NOT EXISTS idx_doctor_clinic ON doctor(clinic_id);
 DROP TRIGGER IF EXISTS set_updated_at ON doctor;
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON doctor
     FOR EACH ROW EXECUTE FUNCTION trigger_set_updated_at();
+
+CREATE TABLE IF NOT EXISTS doctor_clinic_link (
+    id              BIGSERIAL PRIMARY KEY,
+    doctor_id       BIGINT NOT NULL REFERENCES doctor(id),
+    clinic_id       BIGINT NOT NULL REFERENCES clinic(id),
+    is_primary      BOOLEAN NOT NULL DEFAULT FALSE,
+    linked_at       TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (doctor_id, clinic_id)
+);
+COMMENT ON TABLE doctor_clinic_link IS '医生-诊所多对多关联；同一医生至多一个 is_primary=true（应用层保证）';
+CREATE INDEX IF NOT EXISTS idx_doctor_clinic_link_doctor ON doctor_clinic_link(doctor_id);
+CREATE INDEX IF NOT EXISTS idx_doctor_clinic_link_clinic ON doctor_clinic_link(clinic_id);
 
 CREATE TABLE IF NOT EXISTS insurance_company (
     id              BIGSERIAL PRIMARY KEY,

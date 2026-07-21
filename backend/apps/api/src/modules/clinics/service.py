@@ -26,6 +26,7 @@ from src.modules.clinics.schemas import (
     CompanyConfigItem,
     TemplateConfigItem,
 )
+from src.core.idle_lock import validate_idle_lock_minutes
 
 
 def _gen_code(prefix: str = "CL") -> str:
@@ -98,6 +99,10 @@ async def update_clinic(db: AsyncSession, clinic_id: int, data: ClinicUpdate) ->
     if updates.get("clinic_name") is not None:
         updates["clinic_name"] = await _ensure_clinic_name_unique(
             db, updates["clinic_name"], exclude_id=clinic_id
+        )
+    if updates.get("idle_lock_minutes") is not None:
+        updates["idle_lock_minutes"] = validate_idle_lock_minutes(
+            updates["idle_lock_minutes"]
         )
     for key, value in updates.items():
         setattr(clinic, key, value)

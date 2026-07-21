@@ -63,7 +63,7 @@ export default async function InsurerDetailPage({
               </KeyVal>
             </FacetSection>
             <div className="flex flex-wrap gap-2">
-              <EditInsurerButton company={company} />
+              {company.status === 1 ? <EditInsurerButton company={company} /> : null}
               <ActionButton
                 label={company.status === 1 ? t("disable") : t("enable")}
                 icon={company.status === 1 ? "dash" : "check"}

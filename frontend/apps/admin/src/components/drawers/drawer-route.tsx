@@ -4,7 +4,7 @@
 // open record and facet live in search params (?open=<id>&facet=<facet>), so
 // the grid's filter/sort/selection context survives underneath, the facet
 // switch is a server re-render, and closing simply strips the params
-// (Escape restores focus via the underlying sheet).
+// (close via the header button only — outside click and Escape do not dismiss).
 
 import type { ReactNode } from "react";
 import { useSearchParams } from "next/navigation";

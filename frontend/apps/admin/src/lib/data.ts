@@ -8,6 +8,7 @@
 // tabs, sort, keyword) that belongs to the presentation, not to the contract.
 
 import {
+  ApiError,
   api,
   claims as claimsContract,
   clinics,
@@ -24,11 +25,21 @@ import type {
   DoctorAccountOut,
 } from "@acuity/api-client";
 import type {
+  ActivationFunnel,
+  AnalyticsOverview,
+  AuditEvent as AuditEventOut,
   ClinicConfigOverview,
   ClinicOut,
   DoctorOut,
+  OnboardingQueueItem,
   Page,
+  QualityReport,
+  Tag,
+  TagVisibilityEntry,
   TemplateOut,
+  Ticket,
+  UsagePoint,
+  VerificationReport,
 } from "@acuity/types";
 import {
   type ClinicOps,
@@ -52,6 +63,28 @@ const {
   adminTags,
   adminTickets,
 } = frontendOnly;
+
+// Live FastAPI does not implement the forward-contract / frontend-only admin
+// surfaces yet (tags, tickets, analytics, audit, impersonation, claims
+// oversight). Soft-fail those reads to empty defaults so the console shell
+// and destinations stay usable against a real backend.
+function emptyPage<T>(pageSize = 100): Page<T> {
+  return { items: [], total: 0, page: 1, page_size: pageSize };
+}
+
+async function softFrontendOnly<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (
+      err instanceof ApiError &&
+      (err.kind === "not_found" || err.kind === "network" || err.status === 404)
+    ) {
+      return fallback;
+    }
+    throw err;
+  }
+}
 
 // Contract reads, re-exported as the single import home for pages. Server
 // Components call the Next.js proxy from Node, so forward the incoming cookie
@@ -98,24 +131,91 @@ export const getTemplate = templates.getTemplate;
 export const listTemplateFields = templates.listTemplateFields;
 export const getParseProgress = templates.getParseProgress;
 export const getPublishPreview = templates.getPublishPreview;
-export const listAuditEvents = adminAudit.listAuditEvents;
-export const listTickets = adminTickets.listTickets;
+export function listAuditEvents(
+  query: Parameters<typeof adminAudit.listAuditEvents>[0] = {},
+): Promise<Page<AuditEventOut>> {
+  return softFrontendOnly(
+    () => adminAudit.listAuditEvents(query),
+    emptyPage<AuditEventOut>(query.page_size ?? 25),
+  );
+}
+export function listTickets(
+  query: Parameters<typeof adminTickets.listTickets>[0] = {},
+): Promise<Page<Ticket>> {
+  return softFrontendOnly(
+    () => adminTickets.listTickets(query),
+    emptyPage<Ticket>(query.page_size ?? 100),
+  );
+}
 export const getTicket = adminTickets.getTicket;
-export const listOnboardingQueue = adminTickets.listOnboardingQueue;
-export const listTags = adminTags.listTags;
-export const getTagVisibility = adminTags.getTagVisibility;
-export const getAnalyticsOverview = adminAnalytics.getAnalyticsOverview;
-export const getUsageSeries = adminAnalytics.getUsageSeries;
-export const getActivationFunnel = adminAnalytics.getActivationFunnel;
-export const getVerificationReport = adminAnalytics.getVerificationReport;
-export const getQualityReport = adminAnalytics.getQualityReport;
+export function listOnboardingQueue(): Promise<OnboardingQueueItem[]> {
+  return softFrontendOnly(() => adminTickets.listOnboardingQueue(), []);
+}
+export function listTags(
+  kind?: Parameters<typeof adminTags.listTags>[0],
+): Promise<Tag[]> {
+  return softFrontendOnly(() => adminTags.listTags(kind), []);
+}
+export function getTagVisibility(
+  doctorId?: Parameters<typeof adminTags.getTagVisibility>[0],
+): Promise<TagVisibilityEntry[]> {
+  return softFrontendOnly(() => adminTags.getTagVisibility(doctorId), []);
+}
+export function getAnalyticsOverview(): Promise<AnalyticsOverview> {
+  return softFrontendOnly(
+    () => adminAnalytics.getAnalyticsOverview(),
+    {
+      forms_processed_today: 0,
+      forms_processed_7d: 0,
+      verify_pass_7d: 0,
+      verify_fail_7d: 0,
+      window_days: 7,
+    },
+  );
+}
+export function getUsageSeries(
+  query: Parameters<typeof adminAnalytics.getUsageSeries>[0] = {},
+): Promise<UsagePoint[]> {
+  return softFrontendOnly(() => adminAnalytics.getUsageSeries(query), []);
+}
+export function getActivationFunnel(): Promise<ActivationFunnel> {
+  return softFrontendOnly(
+    () => adminAnalytics.getActivationFunnel(),
+    { provisioning: 0, onboarding: 0, active: 0 },
+  );
+}
+export function getVerificationReport(): Promise<VerificationReport> {
+  return softFrontendOnly(
+    () => adminAnalytics.getVerificationReport(),
+    { pass: 0, fail: 0, window_days: 30 },
+  );
+}
+export function getQualityReport(): Promise<QualityReport> {
+  return softFrontendOnly(
+    () => adminAnalytics.getQualityReport(),
+    { avg_confidence: 0, correction_rate: 0, trend: [] },
+  );
+}
 export const listSavedViews = adminSavedViews.listSavedViews;
-export const getImpersonationSession = adminImpersonation.getImpersonationSession;
-export const listClaimsOversight = adminClaimsOversight.listClaimsOversight;
+export function getImpersonationSession(): Promise<
+  Awaited<ReturnType<typeof adminImpersonation.getImpersonationSession>>
+> {
+  return softFrontendOnly(() => adminImpersonation.getImpersonationSession(), {
+    active: null,
+  });
+}
+export function listClaimsOversight(
+  query: Parameters<typeof adminClaimsOversight.listClaimsOversight>[0] = {},
+): Promise<Awaited<ReturnType<typeof adminClaimsOversight.listClaimsOversight>>> {
+  return softFrontendOnly(
+    () => adminClaimsOversight.listClaimsOversight(query),
+    emptyPage(query.page_size ?? 25),
+  );
+}
 export const getClaimOversight = adminClaimsOversight.getClaimOversight;
 export const listClaimsContract = claimsContract.listClaims;
 
-export type AuditEvent = Awaited<ReturnType<typeof adminAudit.listAuditEvents>>["items"][number];
+export type AuditEvent = AuditEventOut;
 
 // --- account-model normalisers (dev ADR 0041) -----------------------------------
 // The account fields ride DoctorOut/ClinicOut as mock-first body extensions;
@@ -392,7 +492,7 @@ export async function getWorklist(): Promise<WorklistItem[]> {
   const [clinicRows, templateRows, ticketsPage] = await Promise.all([
     listClinicRows(),
     listTemplateRows(),
-    adminTickets.listTickets({ page_size: PAGE_ALL }),
+    listTickets({ page_size: PAGE_ALL }),
   ]);
   const items: WorklistItem[] = [];
   for (const r of clinicRows.filter((r) => r.ops.ops_status === "needs-attention")) {
@@ -480,7 +580,7 @@ export async function getNavCounts(): Promise<NavCounts> {
   const [clinicPage, doctorPage, ticketPage, templateRows] = await Promise.all([
     clinics.listClinics({ page_size: PAGE_ALL }),
     doctors.listDoctors({ page_size: PAGE_ALL }),
-    adminTickets.listTickets({ page_size: PAGE_ALL }),
+    listTickets({ page_size: PAGE_ALL }),
     listTemplateRows(),
   ]);
   return {

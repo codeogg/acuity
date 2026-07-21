@@ -56,7 +56,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         <div
           role="status"
           aria-live="polite"
-          className="fixed bottom-6 left-1/2 z-(--z-toast) flex -translate-x-1/2 items-center gap-2.5 rounded-md border border-border bg-card px-4 py-3 shadow-[var(--elevation-overlay)]"
+          className="fixed bottom-6 left-1/2 z-(--z-toast) flex w-max max-w-[min(28rem,calc(100vw-3rem))] -translate-x-1/2 items-center gap-2.5 rounded-md border border-border bg-card px-4 py-3 shadow-[var(--elevation-overlay)]"
           style={{
             width: "min(calc(100vw - 2rem), 28rem)",
             maxWidth: "calc(100vw - 2rem)",
@@ -65,8 +65,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           <span
             className={
               toast.tone === "error"
-                ? "flex text-destructive"
-                : "flex text-success"
+                ? "flex shrink-0 text-destructive"
+                : "flex shrink-0 text-success"
             }
           >
             {toast.tone === "error" ? (
@@ -75,7 +75,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <CheckIcon size={18} aria-hidden />
             )}
           </span>
-          <span className="min-w-0 flex-1 break-words text-sm text-foreground">
+          <span className="min-w-0 whitespace-nowrap flex-1 break-words text-sm text-foreground">
             {toast.message}
           </span>
         </div>

@@ -13,6 +13,7 @@ from src.modules.ai_extraction.router import router as ai_router
 from src.modules.auth.router import router as auth_router
 from src.modules.claims.router import router as claims_router
 from src.modules.clinics.router import router as clinics_router
+from src.modules.doctor_settings.router import router as doctor_settings_router
 from src.modules.doctors.router import router as doctors_router
 from src.modules.insurance_companies.router import router as insurance_router
 from src.modules.pdf_extraction.document_parser import uses_mineru
@@ -71,6 +72,7 @@ for router in (
     auth_router,
     clinics_router,
     doctors_router,
+    doctor_settings_router,
     insurance_router,
     standard_fields_router,
     templates_router,

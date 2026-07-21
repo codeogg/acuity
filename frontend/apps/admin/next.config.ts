@@ -24,8 +24,16 @@ const nextConfig: NextConfig = {
   ],
   serverExternalPackages: ["msw"],
   env: {
+    // Server Components need an absolute base (Node fetch rejects "/api/...").
+    // Live local mode defaults to the FastAPI proxy target; mock mode loops
+    // back through this app's catch-all mock route.
     NEXT_PUBLIC_API_BASE:
-      process.env.NEXT_PUBLIC_API_BASE ?? (mocking ? "http://localhost:3002/api" : "/api"),
+      process.env.NEXT_PUBLIC_API_BASE ??
+      (mocking
+        ? "http://localhost:3002/api"
+        : process.env.API_PROXY_TARGET
+          ? `${process.env.API_PROXY_TARGET.replace(/\/$/, "")}/api`
+          : "http://localhost:8000/api"),
   },
   // In live integration mode, keep browser requests same-origin so the
   // FastAPI access_token cookie is available to the console middleware.

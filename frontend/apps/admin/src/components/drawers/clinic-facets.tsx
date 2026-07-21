@@ -31,6 +31,7 @@ export interface ClinicSummary {
   name_en: string | null;
   address: string | null;
   phone: string | null;
+  idle_lock_minutes: number;
 }
 
 // --- provisioning facet -----------------------------------------------------------
@@ -77,9 +78,16 @@ export function ProvisioningFacet({
 
       <FacetHeading>{t("basics")}</FacetHeading>
       <CrmFieldRow
-        label={t("clinic-name")}
-        value={clinic.name_en ?? clinic.name}
-        commit={(next) => updateClinicAction(clinic.id, { clinic_name_en: next })}
+        label={t("name-zh")}
+        value={clinic.name}
+        commit={(next) => updateClinicAction(clinic.id, { clinic_name: next.trim() })}
+      />
+      <CrmFieldRow
+        label={t("name-en")}
+        value={clinic.name_en ?? ""}
+        commit={(next) =>
+          updateClinicAction(clinic.id, { clinic_name_en: next.trim() || null })
+        }
       />
       <CrmFieldRow
         label={t("address")}
@@ -128,9 +136,11 @@ export function ProvisioningFacet({
       <div className="mt-3.5">
         <CrmFieldRow
           label={t("idle-lock")}
-          value={String(ops.idle_lock_minutes)}
+          value={String(clinic.idle_lock_minutes)}
           commit={(next) =>
-            updateClinicOpsAction(clinic.id, clinic.code, { idle_lock_minutes: Number(next) || 5 })
+            updateClinicAction(clinic.id, {
+              idle_lock_minutes: Number(next) || 10,
+            })
           }
         />
       </div>

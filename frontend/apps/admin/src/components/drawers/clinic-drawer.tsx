@@ -99,6 +99,7 @@ export async function ClinicDrawer({
     name_en: clinic.clinic_name_en,
     address: clinic.address,
     phone: clinic.phone,
+    idle_lock_minutes: clinic.idle_lock_minutes ?? 10,
   };
 
   return (
@@ -241,7 +242,7 @@ export async function ClinicDrawer({
             <KeyVal label={t("usage.default-forms")}>
               {t("usage.default-forms-value", { count: enabledInsurers.length })}
             </KeyVal>
-            <KeyVal label={t("usage.idle-lock")}>{t("usage.idle-lock-value", { minutes: ops.idle_lock_minutes })}</KeyVal>
+            <KeyVal label={t("usage.idle-lock")}>{t("usage.idle-lock-value", { minutes: clinic.idle_lock_minutes ?? 10 })}</KeyVal>
           </FacetSection>
           <FacetSection title={t("usage.insights")}>
             <div className="mb-3 rounded-lg border border-border bg-card p-4">

@@ -67,6 +67,11 @@ export function EditInsurerButton({ company }: Props) {
     if (inputRef.current) inputRef.current.value = "";
   }
 
+  function openEditor() {
+    reset();
+    setOpen(true);
+  }
+
   function submit() {
     if (!nameZh.trim()) return;
     startTransition(async () => {
@@ -98,53 +103,55 @@ export function EditInsurerButton({ company }: Props) {
   }
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(nextOpen) => {
-        setOpen(nextOpen);
-        if (!nextOpen) reset();
-      }}
-    >
-      <Button type="button" variant="outline" onClick={() => setOpen(true)}>
+    <>
+      <Button type="button" variant="outline" size="sm" onClick={openEditor}>
         <AcuityIcon name="pencil" size={16} />
         {t("edit")}
       </Button>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle className="font-title">{t("edit-title")}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <Field label={t("name-zh")} value={nameZh} setValue={setNameZh} />
-          <Field label={t("name-en")} value={nameEn} setValue={setNameEn} />
-          <Field label={t("contact")} value={contact} setValue={setContact} />
-          <div className="rounded-lg border border-dashed border-border bg-muted/35 p-3">
-            <div className="mb-2 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-medium text-foreground">{t("logo")}</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{t("logo-hint")}</p>
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          setOpen(nextOpen);
+          if (!nextOpen) reset();
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="font-title">{t("edit-title")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <Field label={t("name-zh")} value={nameZh} setValue={setNameZh} />
+            <Field label={t("name-en")} value={nameEn} setValue={setNameEn} />
+            <Field label={t("contact")} value={contact} setValue={setContact} />
+            <div className="rounded-lg border border-dashed border-border bg-muted/35 p-3">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-medium text-foreground">{t("logo")}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{t("logo-hint")}</p>
+                </div>
+                {preview ? <img src={preview} alt="" className="h-10 w-16 rounded-md border border-border bg-background object-contain p-1" /> : null}
               </div>
-              {preview ? <img src={preview} alt="" className="h-10 w-16 rounded-md border border-border bg-background object-contain p-1" /> : null}
-            </div>
-            <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="sr-only" onChange={(event) => chooseLogo(event.target.files?.[0])} />
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
-                <AcuityIcon name="upload" size={16} />
-                {preview ? t("logo-replace") : t("logo-choose")}
-              </Button>
-              {preview ? (
-                <Button type="button" variant="ghost" size="sm" onClick={() => { setFile(null); setRemoveLogo(true); if (inputRef.current) inputRef.current.value = ""; }}>
-                  {t("logo-remove")}
+              <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" className="sr-only" onChange={(event) => chooseLogo(event.target.files?.[0])} />
+              <div className="flex items-center gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={() => inputRef.current?.click()}>
+                  <AcuityIcon name="upload" size={16} />
+                  {preview ? t("logo-replace") : t("logo-choose")}
                 </Button>
-              ) : null}
+                {preview ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => { setFile(null); setRemoveLogo(true); if (inputRef.current) inputRef.current.value = ""; }}>
+                    {t("logo-remove")}
+                  </Button>
+                ) : null}
+              </div>
             </div>
           </div>
-        </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)}>{t("cancel")}</Button>
-          <Button onClick={submit} disabled={pending || !nameZh.trim()}>{t("save")}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(false)}>{t("cancel")}</Button>
+            <Button onClick={submit} disabled={pending || !nameZh.trim()}>{t("save")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

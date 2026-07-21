@@ -4,9 +4,11 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.exceptions import ConflictException, NotFoundException
+from src.core.exceptions import AppException, ConflictException, NotFoundException
 from src.core.security import hash_password
-from src.db.models import ClaimSubmission, Clinic, Doctor, ExtractionReviewOutput, ExtractionTask
+from src.db.models import ClaimSubmission, Clinic, Doctor, DoctorClinicLink, ExtractionReviewOutput, ExtractionTask
+from src.modules.doctors import clinic_links as clinic_link_service
+from src.modules.doctors.clinic_links import ensure_primary_clinic_link
 from src.modules.doctors.schemas import DoctorCreate, DoctorUpdate
 
 
@@ -33,7 +35,17 @@ async def _ensure_unique(
 
 
 async def create_doctor(db: AsyncSession, data: DoctorCreate) -> Doctor:
+    """创建医生。
+
+    - 不传 clinic_id：个人账号（无 link，clinic_id 镜像为 NULL）
+    - 传 clinic_id：自动建立第一条 primary link（与旧行为兼容）
+    """
     await _ensure_unique(db, login_account=data.login_account, reg_no=data.reg_no)
+    if data.clinic_id is not None:
+        clinic = await db.get(Clinic, data.clinic_id)
+        if clinic is None:
+            raise NotFoundException("诊所不存在")
+
     doctor = Doctor(
         clinic_id=data.clinic_id,
         doctor_name=data.doctor_name,
@@ -48,6 +60,53 @@ async def create_doctor(db: AsyncSession, data: DoctorCreate) -> Doctor:
         await db.flush()
     except IntegrityError as exc:
         raise ConflictException("登录账号已存在") from exc
+
+    if data.clinic_id is not None:
+        await ensure_primary_clinic_link(
+            db, doctor_id=doctor.id, clinic_id=data.clinic_id
+        )
+    return doctor
+
+
+async def link_clinic(
+    db: AsyncSession, doctor_id: int, clinic_id: int
+) -> DoctorClinicLink:
+    await get_doctor(db, doctor_id)
+    return await clinic_link_service.link_clinic(
+        db, doctor_id=doctor_id, clinic_id=clinic_id
+    )
+
+
+async def unlink_clinic(db: AsyncSession, doctor_id: int, clinic_id: int) -> None:
+    await get_doctor(db, doctor_id)
+    await clinic_link_service.unlink_clinic(
+        db, doctor_id=doctor_id, clinic_id=clinic_id
+    )
+
+
+async def set_primary_clinic(
+    db: AsyncSession, doctor_id: int, clinic_id: int
+) -> DoctorClinicLink:
+    await get_doctor(db, doctor_id)
+    return await clinic_link_service.set_primary_clinic(
+        db, doctor_id=doctor_id, clinic_id=clinic_id
+    )
+
+
+async def set_workspace_mode(db: AsyncSession, doctor_id: int, mode: str) -> Doctor:
+    doctor = await get_doctor(db, doctor_id)
+    link_count = await clinic_link_service.count_clinic_links(db, doctor_id)
+    if link_count <= 1:
+        raise AppException("仅关联多个诊所时可设置 workspace_mode")
+    doctor.workspace_mode = mode
+    await db.flush()
+    return doctor
+
+
+async def set_account_notes(db: AsyncSession, doctor_id: int, notes: str) -> Doctor:
+    doctor = await get_doctor(db, doctor_id)
+    doctor.account_notes = notes
+    await db.flush()
     return doctor
 
 
@@ -147,6 +206,18 @@ async def delete_doctor(db: AsyncSession, doctor_id: int) -> None:
     ).scalar_one()
     if review_count:
         raise ConflictException("该医生存在关联审核记录，无法删除，可改为停用")
+
+    links = list(
+        (
+            await db.execute(
+                select(DoctorClinicLink).where(DoctorClinicLink.doctor_id == doctor_id)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    for link in links:
+        await db.delete(link)
 
     try:
         await db.delete(doctor)

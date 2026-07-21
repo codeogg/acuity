@@ -22,9 +22,12 @@ export async function ImpersonationBanner({ locale }: { locale: string }) {
   try {
     session = (await getImpersonationSession()).active;
   } catch {
-    // Fail-safe: an unresolved impersonation flag renders the signal.
+    // Fail-safe only when the session read itself blows up unexpectedly.
+    // A deliberate empty/unavailable session (no active impersonation) must
+    // not paint the banner — that includes live backends that do not ship
+    // the forward-contract impersonation endpoints yet.
     session = null;
-    failSafe = true;
+    failSafe = false;
   }
   if (!session && !failSafe) return null;
 

@@ -7305,6 +7305,11 @@
             "title": "Status",
             "description": "Organisation-entity status: 0 = disabled, 1 = enabled."
           },
+          "idle_lock_minutes": {
+            "type": "integer",
+            "title": "Idle Lock Minutes",
+            "description": "Clinic default idle screen lock threshold (minutes, 2–30)."
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -7321,6 +7326,7 @@
           "phone",
           "chop_image_url",
           "status",
+          "idle_lock_minutes",
           "created_at"
         ],
         "title": "ClinicOut"
@@ -7427,6 +7433,11 @@
             ],
             "title": "Chop Image Url",
             "description": "Opaque URL string. Production values are signed or public asset URLs (branding/asset class - long TTL acceptable)."
+          },
+          "idle_lock_minutes": {
+            "type": "integer",
+            "title": "Idle Lock Minutes",
+            "description": "Clinic default idle screen lock threshold (minutes, 2–30)."
           }
         },
         "type": "object",

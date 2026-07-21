@@ -220,6 +220,21 @@
   --font-body: var(--font-noto-sans-tc), var(--font-family-body-tc);
 }
 
+
+/*
+ * Dialog width safety rail: the design-kit DialogContent already intends to be
+ * viewport-bounded on mobile and capped to sm on larger screens, but some
+ * host layouts can still collapse the fixed panel toward an intrinsic narrow
+ * column. Restate the intended inline size on the stable data-slot hooks so
+ * every dialog and alert-dialog gets a reliable readable width.
+ */
+ [data-slot="dialog-content"],
+ [data-slot="alert-dialog-content"] {
+   box-sizing: border-box;
+   inline-size: calc(100vw - 2rem);
+   max-inline-size: 24rem;
+ }
+ 
 /* The Caliber eyebrow register (12px mono uppercase, eyebrow tracking) as one
    class so surfaces never restate its metrics. */
 .t-eyebrow {
