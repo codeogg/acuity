@@ -22,6 +22,7 @@ import { ClinicDrawer } from "@/components/drawers/clinic-drawer";
 import {
   CLINIC_TABS,
   clinicMatchesTab,
+  CLINIC_BACKEND_SORT_KEYS,
   listClinicRows,
   sortClinicRows,
   type ClinicRow,
@@ -105,7 +106,14 @@ async function ClinicsGrid({
   const [t, tRoot, allRows] = await Promise.all([
     getTranslations("clinics"),
     getTranslations(),
-    listClinicRows(sp.keyword),
+    listClinicRows(
+      sp.keyword,
+      (() => {
+        const parsed = parseSort(sp.sort);
+        if (!parsed || !CLINIC_BACKEND_SORT_KEYS.has(parsed.key)) return undefined;
+        return parsed.direction === "desc" ? `-${parsed.key}` : parsed.key;
+      })(),
+    ),
   ]);
 
   const counts = Object.fromEntries(
@@ -114,7 +122,9 @@ async function ClinicsGrid({
   let rows = allRows.filter((r) => clinicMatchesTab(r, tab));
   if (sp.status) rows = rows.filter((r) => r.ops.ops_status === sp.status);
   const sort = parseSort(sp.sort);
-  rows = sortClinicRows(rows, sort, tab === "needs-attention" || tab === "all");
+  const clientSortOnly = sort && !CLINIC_BACKEND_SORT_KEYS.has(sort.key);
+  const applyNeedsFirst = !sort && (tab === "needs-attention" || tab === "all");
+  rows = sortClinicRows(rows, clientSortOnly ? sort : null, applyNeedsFirst);
 
   const tabs: CountTab[] = CLINIC_TABS.map((tb) => ({
     key: tb,

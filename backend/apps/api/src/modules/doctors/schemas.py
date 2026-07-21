@@ -31,6 +31,10 @@ class DoctorClinicLinkCreate(BaseModel):
     clinic_id: int
 
 
+class DoctorClinicsSet(BaseModel):
+    clinic_ids: list[int]
+
+
 class DoctorClinicLinkOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -63,6 +67,15 @@ class DoctorOut(BaseModel):
     workspace_mode: str
     account_notes: str | None
     created_at: datetime
+
+
+class DoctorAccountOut(DoctorOut):
+    """DoctorOut + ADR 0041 account extensions for admin console."""
+
+    clinic_ids: list[int]
+    notes: str
+    workspace_separation: Literal["separated", "merged"]
+    mfa_enabled: bool = False
 
 
 class ResetPasswordResponse(BaseModel):

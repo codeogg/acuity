@@ -12,6 +12,7 @@
 // detail drawer over the grid keeps filter, sort and selection intact.
 
 import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname } from "@acuity/i18n/navigation";
 import { useEffect, useRef, useTransition } from "react";
 import { useTranslations } from "next-intl";
 import { BulkActionBar, Button, useBulkSelection, type DryRunItem } from "@acuity/ui";
@@ -127,6 +128,9 @@ export function DoctorsBulkBar({ rows }: { rows: { id: number; login: string }[]
   const t = useTranslations("doctors.bulk");
   const tc = useTranslations("bulk");
   const { selected, clear } = useBulkSelection();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const picked = rows.filter((r) => selected.has(String(r.id)));
   const items = () => picked.map((r) => ({ id: r.id, login: r.login }));
@@ -134,6 +138,18 @@ export function DoctorsBulkBar({ rows }: { rows: { id: number; login: string }[]
     rows.map((r) => ({ key: String(r.id), label: r.login })),
     selected,
   );
+
+  function closeDrawerIfDeleted() {
+    clear();
+    const openId = searchParams.get("open");
+    if (openId && picked.some((r) => String(r.id) === openId)) {
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("open");
+      params.delete("facet");
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    }
+  }
 
   return (
     <>
@@ -168,6 +184,22 @@ export function DoctorsBulkBar({ rows }: { rows: { id: number; login: string }[]
         action={() => bulkDoctorsAction("deactivate", items())}
         successMessage={t("deactivated", { count: picked.length })}
         onDone={clear}
+      />
+      <GateButton
+        buttonLabel={t("delete")}
+        buttonIcon="trash"
+        buttonVariant="destructive"
+        title={t("delete-title", { count: picked.length })}
+        description={t("delete-feedforward", { count: picked.length })}
+        variant="paste"
+        target={picked[0]?.login.toUpperCase()}
+        destructive
+        confirmLabel={t("delete-confirm")}
+        dryRun={dryRun}
+        dryRunSummary={tc("dry-run-summary", { count: picked.length })}
+        action={() => bulkDoctorsAction("delete", items())}
+        successMessage={t("deleted", { count: picked.length })}
+        onDone={closeDrawerIfDeleted}
       />
       </BulkActionBar>
     </>

@@ -25,6 +25,8 @@ export type ListClinicsQuery = {
   page?: number;
   page_size?: number;
   keyword?: string;
+  /** name | code | status | doctors | created_at; prefix - for descending */
+  sort?: string;
 };
 
 export function listClinics(query: ListClinicsQuery = {}): Promise<Page<ClinicOut>> {

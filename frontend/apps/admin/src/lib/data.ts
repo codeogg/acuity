@@ -275,11 +275,19 @@ async function serverSessionHeaders(): Promise<Record<string, string>> {
   return cookie ? { cookie } : {};
 }
 
-export async function listClinicRows(keyword?: string): Promise<ClinicRow[]> {
+export const CLINIC_BACKEND_SORT_KEYS = new Set([
+  "name",
+  "code",
+  "doctors",
+  "created_at",
+  "id",
+]);
+
+export async function listClinicRows(keyword?: string, sort?: string): Promise<ClinicRow[]> {
   const headers = await serverSessionHeaders();
   const [clinicPage, doctorPage] = await Promise.all([
     api.get<Awaited<ReturnType<typeof clinics.listClinics>>>("/admin/clinics", {
-      query: { keyword, page_size: PAGE_ALL },
+      query: { keyword, sort, page_size: PAGE_ALL },
       headers,
     }),
     api.get<Awaited<ReturnType<typeof doctors.listDoctors>>>("/admin/doctors", {
@@ -308,18 +316,14 @@ export function sortClinicRows(rows: ClinicRow[], sort: SortState | null, needsF
     ? [...rows].sort(
         compareBy<ClinicRow>((r) => {
           switch (sort.key) {
-            case "name":
-              return r.clinic.clinic_name_en ?? r.clinic.clinic_name;
             case "status":
               return r.ops.ops_status;
-            case "doctors":
-              return r.doctor_count;
             case "last":
               return r.ops.last_activity;
             case "payment":
               return r.ops.payment;
             default:
-              return r.clinic.clinic_code;
+              return null;
           }
         }, sort.direction),
       )

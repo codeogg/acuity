@@ -1,6 +1,6 @@
 import secrets
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -41,7 +41,7 @@ async def _ensure_clinic_name_unique(
         raise ValidationException("诊所名称不能为空")
     # 以规范化名称加事务级锁，避免两个并发请求同时通过查重。
     await db.execute(
-        select(func.pg_advisory_xact_lock(func.hashtext(normalized.lower())))
+        select(func.pg_advisory_xact_lock(func.hashtext(f"zh:{normalized.lower()}")))
     )
     stmt = select(Clinic.id).where(
         func.lower(func.btrim(Clinic.clinic_name)) == normalized.lower()
@@ -49,16 +49,75 @@ async def _ensure_clinic_name_unique(
     if exclude_id is not None:
         stmt = stmt.where(Clinic.id != exclude_id)
     if (await db.execute(stmt.limit(1))).scalar_one_or_none() is not None:
-        raise ConflictException("诊所名称已存在")
+        raise ConflictException("诊所中文名称已存在")
     return normalized
+
+
+async def _ensure_clinic_name_en_unique(
+    db: AsyncSession,
+    clinic_name_en: str | None,
+    *,
+    exclude_id: int | None = None,
+) -> str | None:
+    if clinic_name_en is None:
+        return None
+    normalized = clinic_name_en.strip()
+    if not normalized:
+        return None
+    await db.execute(
+        select(func.pg_advisory_xact_lock(func.hashtext(f"en:{normalized.lower()}")))
+    )
+    stmt = select(Clinic.id).where(
+        Clinic.clinic_name_en.is_not(None),
+        func.lower(func.btrim(Clinic.clinic_name_en)) == normalized.lower(),
+    )
+    if exclude_id is not None:
+        stmt = stmt.where(Clinic.id != exclude_id)
+    if (await db.execute(stmt.limit(1))).scalar_one_or_none() is not None:
+        raise ConflictException("诊所英文名称已存在")
+    return normalized
+
+
+def _parse_sort(sort: str | None) -> tuple[str, bool]:
+    """解析 ?sort=name / ?sort=-doctors，返回 (字段, 是否降序)。"""
+    if not sort:
+        return "id", True
+    desc = sort.startswith("-")
+    key = sort[1:] if desc else sort
+    allowed = {"name", "code", "status", "doctors", "created_at", "id"}
+    if key not in allowed:
+        return "id", True
+    return key, desc
+
+
+def _apply_clinic_sort(stmt, sort: str | None):
+    key, desc = _parse_sort(sort)
+    doctor_count = (
+        select(func.count())
+        .select_from(Doctor)
+        .where(Doctor.clinic_id == Clinic.id)
+        .correlate(Clinic)
+        .scalar_subquery()
+    )
+    order_cols = {
+        "id": Clinic.id,
+        "name": func.lower(Clinic.clinic_name),
+        "code": Clinic.clinic_code,
+        "status": Clinic.status,
+        "doctors": doctor_count,
+        "created_at": Clinic.created_at,
+    }
+    col = order_cols[key]
+    return stmt.order_by(col.desc() if desc else col.asc(), Clinic.id.desc())
 
 
 async def create_clinic(db: AsyncSession, data: ClinicCreate) -> Clinic:
     clinic_name = await _ensure_clinic_name_unique(db, data.clinic_name)
+    clinic_name_en = await _ensure_clinic_name_en_unique(db, data.clinic_name_en)
     clinic = Clinic(
         clinic_code=data.clinic_code or _gen_code(),
         clinic_name=clinic_name,
-        clinic_name_en=data.clinic_name_en,
+        clinic_name_en=clinic_name_en,
         address=data.address,
         phone=data.phone,
         chop_image_url=data.chop_image_url,
@@ -72,16 +131,27 @@ async def create_clinic(db: AsyncSession, data: ClinicCreate) -> Clinic:
 
 
 async def list_clinics(
-    db: AsyncSession, *, page: int, page_size: int, keyword: str | None
+    db: AsyncSession,
+    *,
+    page: int,
+    page_size: int,
+    keyword: str | None,
+    sort: str | None = None,
 ) -> tuple[list[Clinic], int]:
     stmt = select(Clinic)
     count_stmt = select(func.count()).select_from(Clinic)
     if keyword:
-        cond = Clinic.clinic_name.ilike(f"%{keyword}%")
+        like = f"%{keyword}%"
+        cond = or_(
+            Clinic.clinic_name.ilike(like),
+            Clinic.clinic_name_en.ilike(like),
+            Clinic.clinic_code.ilike(like),
+        )
         stmt = stmt.where(cond)
         count_stmt = count_stmt.where(cond)
     total = (await db.execute(count_stmt)).scalar_one()
-    stmt = stmt.order_by(Clinic.id.desc()).offset((page - 1) * page_size).limit(page_size)
+    stmt = _apply_clinic_sort(stmt, sort)
+    stmt = stmt.offset((page - 1) * page_size).limit(page_size)
     items = list((await db.execute(stmt)).scalars().all())
     return items, total
 
@@ -99,6 +169,10 @@ async def update_clinic(db: AsyncSession, clinic_id: int, data: ClinicUpdate) ->
     if updates.get("clinic_name") is not None:
         updates["clinic_name"] = await _ensure_clinic_name_unique(
             db, updates["clinic_name"], exclude_id=clinic_id
+        )
+    if "clinic_name_en" in updates:
+        updates["clinic_name_en"] = await _ensure_clinic_name_en_unique(
+            db, updates["clinic_name_en"], exclude_id=clinic_id
         )
     if updates.get("idle_lock_minutes") is not None:
         updates["idle_lock_minutes"] = validate_idle_lock_minutes(

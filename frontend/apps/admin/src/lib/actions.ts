@@ -17,6 +17,7 @@ import type {
   ClinicUpdate,
   CompanyCreate,
   CompanyUpdate,
+  DoctorAccountOut,
   DoctorCreate,
   FieldMappingSave,
   StandardFieldCreate,
@@ -209,7 +210,11 @@ export async function resetMfaAction(doctorId: number, login: string) {
 
 export async function linkDoctorClinicAction(doctorId: number, login: string, clinicId: number) {
   return run(async () => {
-    const out = await accountManagement.linkDoctorClinic(doctorId, clinicId);
+    const out = await clinicMutation<DoctorAccountOut>(
+      "post",
+      `/admin/doctors/${doctorId}/clinics`,
+      { clinic_id: clinicId },
+    );
     await audit("account-link", `${login} · clinic ${clinicId} linked`);
     return out;
   }, ["/"]);
@@ -217,7 +222,10 @@ export async function linkDoctorClinicAction(doctorId: number, login: string, cl
 
 export async function unlinkDoctorClinicAction(doctorId: number, login: string, clinicId: number) {
   return run(async () => {
-    const out = await accountManagement.unlinkDoctorClinic(doctorId, clinicId);
+    const out = await clinicMutation<DoctorAccountOut>(
+      "delete",
+      `/admin/doctors/${doctorId}/clinics/${clinicId}`,
+    );
     await audit("account-unlink", `${login} · clinic ${clinicId} unlinked`);
     return out;
   }, ["/"]);
@@ -266,12 +274,17 @@ export async function setDoctorEnabledAction(doctorId: number, login: string, en
 }
 
 export async function bulkDoctorsAction(
-  op: "retag" | "deactivate",
+  op: "retag" | "deactivate" | "delete",
   items: { id: number; login: string }[],
 ) {
   return run(async () => {
     if (op === "deactivate") {
       for (const item of items) await doctors.setDoctorStatus(item.id, { status: 0 });
+    }
+    if (op === "delete") {
+      for (const item of items) {
+        await clinicMutation<void>("delete", `/admin/doctors/${item.id}`);
+      }
     }
     await audit("bulk-operation", `doctors · ${op} ×${items.length}`);
   }, ["/"]);

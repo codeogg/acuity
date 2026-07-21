@@ -60,7 +60,7 @@ import {
   recordAuditEvent,
 } from "../stores/frontend-only-store";
 import { isConflict, isTenantNotFound, listItems } from "../scenario";
-import { API, conflictZh, gate, notFoundZh, page, pageQuery } from "./shared";
+import { API, conflictZh, errorEnvelope, gate, notFoundZh, page, pageQuery } from "./shared";
 
 function keyword(request: Request): string {
   return (new URL(request.url).searchParams.get("keyword") ?? "").toLowerCase();
@@ -69,6 +69,62 @@ function keyword(request: Request): string {
 function matches(k: string, ...values: (string | null | undefined)[]): boolean {
   if (!k) return true;
   return values.some((v) => (v ?? "").toLowerCase().includes(k));
+}
+
+function clinicNameConflict(
+  clinics: ClinicOut[],
+  name: string,
+  excludeId?: number,
+): boolean {
+  const normalized = name.trim().toLowerCase();
+  if (!normalized) return false;
+  return clinics.some(
+    (c) => c.id !== excludeId && c.clinic_name.trim().toLowerCase() === normalized,
+  );
+}
+
+function clinicNameEnConflict(
+  clinics: ClinicOut[],
+  nameEn: string | null | undefined,
+  excludeId?: number,
+): boolean {
+  const normalized = (nameEn ?? "").trim().toLowerCase();
+  if (!normalized) return false;
+  return clinics.some(
+    (c) =>
+      c.id !== excludeId &&
+      (c.clinic_name_en ?? "").trim().toLowerCase() === normalized,
+  );
+}
+
+function sortClinics(rows: ClinicOut[], sortRaw: string | null, doctorCounts: Map<number, number>): ClinicOut[] {
+  if (!sortRaw) return rows;
+  const desc = sortRaw.startsWith("-");
+  const key = desc ? sortRaw.slice(1) : sortRaw;
+  const dir = desc ? -1 : 1;
+  const accessor = (c: ClinicOut): string | number => {
+    switch (key) {
+      case "name":
+        return (c.clinic_name_en ?? c.clinic_name).toLowerCase();
+      case "code":
+        return c.clinic_code;
+      case "status":
+        return c.status;
+      case "doctors":
+        return doctorCounts.get(c.id) ?? 0;
+      case "created_at":
+        return c.created_at;
+      default:
+        return c.id;
+    }
+  };
+  return [...rows].sort((a, b) => {
+    const va = accessor(a);
+    const vb = accessor(b);
+    if (va < vb) return -1 * dir;
+    if (va > vb) return 1 * dir;
+    return b.id - a.id;
+  });
 }
 
 const nowIso = () => new Date().toISOString();
@@ -101,9 +157,18 @@ export const adminHandlers = [
     const { scenario, deny } = await gate(request);
     if (deny) return deny;
     const k = keyword(request);
-    const rows = adminState().clinics.filter((c) =>
+    const s = adminState();
+    let rows = s.clinics.filter((c) =>
       matches(k, c.clinic_name, c.clinic_name_en, c.clinic_code),
     );
+    const doctorCounts = new Map<number, number>();
+    for (const d of s.doctors) {
+      if (d.clinic_id != null) {
+        doctorCounts.set(d.clinic_id, (doctorCounts.get(d.clinic_id) ?? 0) + 1);
+      }
+    }
+    const sortRaw = new URL(request.url).searchParams.get("sort");
+    rows = sortClinics(rows, sortRaw, doctorCounts);
     const { pageNo, pageSize } = pageQuery(request);
     return HttpResponse.json(page(listItems(scenario, rows), pageNo, pageSize));
   }),
@@ -113,21 +178,30 @@ export const adminHandlers = [
     if (deny) return deny;
     if (isConflict(scenario)) return conflictZh();
     const body = (await request.json()) as ClinicCreate;
+    const s = adminState();
+    if (clinicNameConflict(s.clinics, body.clinic_name)) {
+      return errorEnvelope("CONFLICT", "诊所中文名称已存在", 409);
+    }
+    const nameEn = body.clinic_name_en?.trim() || null;
+    if (clinicNameEnConflict(s.clinics, nameEn)) {
+      return errorEnvelope("CONFLICT", "诊所英文名称已存在", 409);
+    }
     const id = nextAdminId();
     const clinic: ClinicOut = {
       id,
       clinic_code: body.clinic_code ?? `CL-${String(id).padStart(4, "0")}`,
-      clinic_name: body.clinic_name,
-      clinic_name_en: body.clinic_name_en ?? null,
+      clinic_name: body.clinic_name.trim(),
+      clinic_name_en: nameEn,
       address: body.address ?? null,
       phone: body.phone ?? null,
       chop_image_url: body.chop_image_url ?? null,
       status: 1,
+      idle_lock_minutes: 10,
       created_at: nowIso(),
     };
-    adminState().clinics.unshift(clinic);
-    adminState().clinicInsurers.set(id, []);
-    adminState().clinicTemplates.set(id, []);
+    s.clinics.unshift(clinic);
+    s.clinicInsurers.set(id, []);
+    s.clinicTemplates.set(id, []);
     return HttpResponse.json(clinic);
   }),
 
@@ -144,14 +218,28 @@ export const adminHandlers = [
     const { scenario, deny } = await gate(request);
     if (deny) return deny;
     if (isConflict(scenario)) return conflictZh();
-    const clinic = adminState().clinics.find((c) => c.id === Number(params.clinicId));
+    const s = adminState();
+    const clinicId = Number(params.clinicId);
+    const clinic = s.clinics.find((c) => c.id === clinicId);
     if (!clinic) return notFoundZh("診所不存在");
     const body = (await request.json()) as ClinicUpdate;
-    if (body.clinic_name != null) clinic.clinic_name = body.clinic_name;
-    if (body.clinic_name_en !== undefined) clinic.clinic_name_en = body.clinic_name_en;
+    if (body.clinic_name != null) {
+      if (clinicNameConflict(s.clinics, body.clinic_name, clinicId)) {
+        return errorEnvelope("CONFLICT", "诊所中文名称已存在", 409);
+      }
+      clinic.clinic_name = body.clinic_name.trim();
+    }
+    if (body.clinic_name_en !== undefined) {
+      const nameEn = body.clinic_name_en?.trim() || null;
+      if (clinicNameEnConflict(s.clinics, nameEn, clinicId)) {
+        return errorEnvelope("CONFLICT", "诊所英文名称已存在", 409);
+      }
+      clinic.clinic_name_en = nameEn;
+    }
     if (body.address !== undefined) clinic.address = body.address;
     if (body.phone !== undefined) clinic.phone = body.phone;
     if (body.chop_image_url !== undefined) clinic.chop_image_url = body.chop_image_url;
+    if (body.idle_lock_minutes !== undefined) clinic.idle_lock_minutes = body.idle_lock_minutes;
     return HttpResponse.json(clinic);
   }),
 

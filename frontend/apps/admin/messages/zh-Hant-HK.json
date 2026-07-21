@@ -319,7 +319,12 @@
       "deactivate-title": "停用 {count} 位醫生",
       "deactivate-feedforward": "停用會撤銷 {count} 位醫生的應用程式存取權，直至重新啟用。會被記錄。請貼上第一位醫生的識別碼以確認。",
       "deactivate-confirm": "停用",
-      "deactivated": "已停用 {count} 位醫生 · 已記錄"
+      "deactivated": "已停用 {count} 位醫生 · 已記錄",
+      "delete": "刪除",
+      "delete-title": "刪除 {count} 位醫生",
+      "delete-feedforward": "永久刪除 {count} 位醫生帳戶及其診所關聯。若存在關聯理賠單或提取任務將無法刪除。此操作無法復原並會被記錄。請貼上第一位醫生的登入帳戶以確認。",
+      "delete-confirm": "刪除",
+      "deleted": "已刪除 {count} 位醫生 · 已記錄"
     },
     "new": {
       "button": "新增醫生",

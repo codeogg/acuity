@@ -12,6 +12,103 @@ from src.modules.doctors.clinic_links import ensure_primary_clinic_link
 from src.modules.doctors.schemas import DoctorCreate, DoctorUpdate
 
 
+async def list_linked_clinic_ids(db: AsyncSession, doctor_id: int) -> list[int]:
+    return await clinic_link_service.list_linked_clinic_ids(db, doctor_id)
+
+
+async def to_doctor_account_out(
+    db: AsyncSession, doctor: Doctor, *, clinic_ids: list[int] | None = None
+) -> dict:
+    if clinic_ids is None:
+        clinic_ids = await list_linked_clinic_ids(db, doctor.id)
+    separation = doctor.workspace_mode
+    if separation not in ("separated", "merged"):
+        separation = "separated"
+    return {
+        "id": doctor.id,
+        "clinic_id": doctor.clinic_id,
+        "doctor_name": doctor.doctor_name,
+        "doctor_name_en": doctor.doctor_name_en,
+        "reg_no": doctor.reg_no,
+        "signature_url": doctor.signature_url,
+        "login_account": doctor.login_account,
+        "status": doctor.status,
+        "workspace_mode": doctor.workspace_mode,
+        "account_notes": doctor.account_notes,
+        "created_at": doctor.created_at,
+        "clinic_ids": clinic_ids,
+        "notes": doctor.account_notes or "",
+        "workspace_separation": separation,
+        "mfa_enabled": False,
+    }
+
+
+async def get_doctor_account(db: AsyncSession, doctor_id: int):
+    from src.modules.doctors.schemas import DoctorAccountOut
+
+    doctor = await get_doctor(db, doctor_id)
+    return DoctorAccountOut.model_validate(await to_doctor_account_out(db, doctor))
+
+
+# Alias kept for older call sites that still use the private name.
+_doctor_account_out = get_doctor_account
+
+
+async def list_doctor_accounts(
+    db: AsyncSession,
+    *,
+    page: int,
+    page_size: int,
+    clinic_id: int | None,
+    keyword: str | None = None,
+) -> tuple[list, int]:
+    from src.modules.doctors.schemas import DoctorAccountOut
+
+    items, total = await list_doctors(
+        db,
+        page=page,
+        page_size=page_size,
+        clinic_id=clinic_id,
+        keyword=keyword,
+    )
+    link_map = await clinic_link_service.map_linked_clinic_ids(
+        db, [doctor.id for doctor in items]
+    )
+    accounts = [
+        DoctorAccountOut.model_validate(
+            await to_doctor_account_out(
+                db, doctor, clinic_ids=link_map.get(doctor.id, [])
+            )
+        )
+        for doctor in items
+    ]
+    return accounts, total
+
+
+async def link_clinic_account(
+    db: AsyncSession, doctor_id: int, clinic_id: int
+):
+    await link_clinic(db, doctor_id, clinic_id)
+    return await get_doctor_account(db, doctor_id)
+
+
+async def unlink_clinic_account(
+    db: AsyncSession, doctor_id: int, clinic_id: int
+):
+    await unlink_clinic(db, doctor_id, clinic_id)
+    return await get_doctor_account(db, doctor_id)
+
+
+async def set_doctor_clinics_account(
+    db: AsyncSession, doctor_id: int, clinic_ids: list[int]
+):
+    await get_doctor(db, doctor_id)
+    await clinic_link_service.set_doctor_clinics(
+        db, doctor_id=doctor_id, clinic_ids=clinic_ids
+    )
+    return await get_doctor_account(db, doctor_id)
+
+
 async def _ensure_unique(
     db: AsyncSession,
     *,
@@ -121,12 +218,17 @@ async def list_doctors(
     stmt = select(Doctor)
     count_stmt = select(func.count()).select_from(Doctor)
     if clinic_id:
-        stmt = stmt.where(Doctor.clinic_id == clinic_id)
-        count_stmt = count_stmt.where(Doctor.clinic_id == clinic_id)
+        linked = (
+            select(DoctorClinicLink.doctor_id)
+            .where(DoctorClinicLink.clinic_id == clinic_id)
+            .scalar_subquery()
+        )
+        stmt = stmt.where(Doctor.id.in_(linked))
+        count_stmt = count_stmt.where(Doctor.id.in_(linked))
     if keyword:
         like = f"%{keyword}%"
-        stmt = stmt.join(Clinic, Doctor.clinic_id == Clinic.id)
-        count_stmt = count_stmt.join(Clinic, Doctor.clinic_id == Clinic.id)
+        stmt = stmt.outerjoin(Clinic, Doctor.clinic_id == Clinic.id)
+        count_stmt = count_stmt.outerjoin(Clinic, Doctor.clinic_id == Clinic.id)
         cond = or_(
             Doctor.doctor_name.ilike(like),
             Doctor.doctor_name_en.ilike(like),

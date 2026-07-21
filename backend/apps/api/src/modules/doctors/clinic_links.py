@@ -179,3 +179,84 @@ async def set_primary_clinic(
     await db.flush()
     await sync_doctor_primary_clinic(db, doctor_id)
     return target
+
+
+async def list_linked_clinic_ids(db: AsyncSession, doctor_id: int) -> list[int]:
+    """返回关联诊所 id 列表，primary 在前，其余按 linked_at 排序。"""
+    links = list(
+        (
+            await db.execute(
+                select(DoctorClinicLink)
+                .where(DoctorClinicLink.doctor_id == doctor_id)
+                .order_by(
+                    DoctorClinicLink.is_primary.desc(),
+                    DoctorClinicLink.linked_at.asc(),
+                    DoctorClinicLink.id.asc(),
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    return [link.clinic_id for link in links]
+
+
+async def map_linked_clinic_ids(
+    db: AsyncSession, doctor_ids: list[int]
+) -> dict[int, list[int]]:
+    if not doctor_ids:
+        return {}
+    links = list(
+        (
+            await db.execute(
+                select(DoctorClinicLink)
+                .where(DoctorClinicLink.doctor_id.in_(doctor_ids))
+                .order_by(
+                    DoctorClinicLink.doctor_id.asc(),
+                    DoctorClinicLink.is_primary.desc(),
+                    DoctorClinicLink.linked_at.asc(),
+                    DoctorClinicLink.id.asc(),
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+    result: dict[int, list[int]] = {doctor_id: [] for doctor_id in doctor_ids}
+    for link in links:
+        result[link.doctor_id].append(link.clinic_id)
+    return result
+
+
+async def set_doctor_clinics(
+    db: AsyncSession, *, doctor_id: int, clinic_ids: list[int]
+) -> list[int]:
+    """原子替换医生的全部诊所关联；首个为 primary。"""
+    unique_ids = list(dict.fromkeys(clinic_ids))
+    for clinic_id in unique_ids:
+        await _get_clinic_or_404(db, clinic_id)
+
+    existing_links = list(
+        (
+            await db.execute(
+                select(DoctorClinicLink).where(DoctorClinicLink.doctor_id == doctor_id)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    for link in existing_links:
+        await db.delete(link)
+    await db.flush()
+
+    for index, clinic_id in enumerate(unique_ids):
+        db.add(
+            DoctorClinicLink(
+                doctor_id=doctor_id,
+                clinic_id=clinic_id,
+                is_primary=index == 0,
+            )
+        )
+    await db.flush()
+    await sync_doctor_primary_clinic(db, doctor_id)
+    return unique_ids

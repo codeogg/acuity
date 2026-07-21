@@ -319,7 +319,12 @@
       "deactivate-title": "Deactivate {count} doctors",
       "deactivate-feedforward": "Deactivating revokes app access for {count} doctors until reactivated. Logged. Paste the first doctor identifier to confirm.",
       "deactivate-confirm": "Deactivate",
-      "deactivated": "{count} doctors deactivated · logged"
+      "deactivated": "{count} doctors deactivated · logged",
+      "delete": "Delete",
+      "delete-title": "Delete {count} doctors",
+      "delete-feedforward": "Permanently deletes {count} doctor accounts and their clinic links. Doctors with linked claims or extraction tasks cannot be deleted. This cannot be undone and is logged. Paste the first doctor login to confirm.",
+      "delete-confirm": "Delete",
+      "deleted": "{count} doctors deleted · logged"
     },
     "new": {
       "button": "New doctor",

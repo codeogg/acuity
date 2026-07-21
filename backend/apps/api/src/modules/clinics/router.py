@@ -34,9 +34,13 @@ async def list_clinics(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     keyword: str | None = None,
+    sort: str | None = Query(
+        None,
+        description="排序：name、code、status、doctors、created_at；前缀 - 为降序",
+    ),
 ) -> Page[ClinicOut]:
     items, total = await service.list_clinics(
-        db, page=page, page_size=page_size, keyword=keyword
+        db, page=page, page_size=page_size, keyword=keyword, sort=sort
     )
     return Page(
         items=[ClinicOut.model_validate(i) for i in items],

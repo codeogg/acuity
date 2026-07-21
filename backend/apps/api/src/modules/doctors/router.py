@@ -5,8 +5,10 @@ from src.modules.common import Page
 from src.modules.doctors import service
 from src.modules.doctors.schemas import (
     AccountNotesUpdate,
+    DoctorAccountOut,
     DoctorClinicLinkCreate,
     DoctorClinicLinkOut,
+    DoctorClinicsSet,
     DoctorCreate,
     DoctorOut,
     DoctorStatusUpdate,
@@ -23,7 +25,7 @@ async def create_doctor(body: DoctorCreate, db: DbSession, _: AdminDep) -> Docto
     return DoctorOut.model_validate(await service.create_doctor(db, body))
 
 
-@router.get("", response_model=Page[DoctorOut])
+@router.get("", response_model=Page[DoctorAccountOut])
 async def list_doctors(
     db: DbSession,
     _: AdminDep,
@@ -31,21 +33,21 @@ async def list_doctors(
     page_size: int = Query(20, ge=1, le=100),
     clinic_id: int | None = None,
     keyword: str | None = None,
-) -> Page[DoctorOut]:
-    items, total = await service.list_doctors(
+) -> Page[DoctorAccountOut]:
+    items, total = await service.list_doctor_accounts(
         db, page=page, page_size=page_size, clinic_id=clinic_id, keyword=keyword
     )
     return Page(
-        items=[DoctorOut.model_validate(i) for i in items],
+        items=items,
         total=total,
         page=page,
         page_size=page_size,
     )
 
 
-@router.get("/{doctor_id}", response_model=DoctorOut)
-async def get_doctor(doctor_id: int, db: DbSession, _: AdminDep) -> DoctorOut:
-    return DoctorOut.model_validate(await service.get_doctor(db, doctor_id))
+@router.get("/{doctor_id}", response_model=DoctorAccountOut)
+async def get_doctor(doctor_id: int, db: DbSession, _: AdminDep) -> DoctorAccountOut:
+    return await service.get_doctor_account(db, doctor_id)
 
 
 @router.put("/{doctor_id}", response_model=DoctorOut)
@@ -89,11 +91,39 @@ async def link_clinic(
     return DoctorClinicLinkOut.model_validate(link)
 
 
+# OpenAPI / admin console contract (ADR 0041) — returns DoctorAccountOut.
+@router.post("/{doctor_id}/clinics", response_model=DoctorAccountOut)
+async def link_clinic_account(
+    doctor_id: int,
+    body: DoctorClinicLinkCreate,
+    db: DbSession,
+    _: AdminDep,
+) -> DoctorAccountOut:
+    return await service.link_clinic_account(db, doctor_id, body.clinic_id)
+
+
+@router.put("/{doctor_id}/clinics", response_model=DoctorAccountOut)
+async def set_doctor_clinics(
+    doctor_id: int,
+    body: DoctorClinicsSet,
+    db: DbSession,
+    _: AdminDep,
+) -> DoctorAccountOut:
+    return await service.set_doctor_clinics_account(db, doctor_id, body.clinic_ids)
+
+
 @router.delete("/{doctor_id}/clinic-links/{clinic_id}", status_code=204)
 async def unlink_clinic(
     doctor_id: int, clinic_id: int, db: DbSession, _: AdminDep
 ) -> None:
     await service.unlink_clinic(db, doctor_id, clinic_id)
+
+
+@router.delete("/{doctor_id}/clinics/{clinic_id}", response_model=DoctorAccountOut)
+async def unlink_clinic_account(
+    doctor_id: int, clinic_id: int, db: DbSession, _: AdminDep
+) -> DoctorAccountOut:
+    return await service.unlink_clinic_account(db, doctor_id, clinic_id)
 
 
 @router.put(
