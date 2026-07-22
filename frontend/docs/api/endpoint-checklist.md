@@ -10,12 +10,12 @@ Every row is an endpoint the frontend calls. **EXISTS** = implemented by the dem
 
 | Status | Count |
 |---|---|
-| EXISTS | 76 |
+| EXISTS | 79 |
 | DRIFT | 2 |
 | PARTIAL | 4 |
 | MISSING | 46 |
 | FUTURE-AUTH | 9 |
-| **Total frontend endpoints** | **137** |
+| **Total frontend endpoints** | **140** |
 
 ## Doctor app (`apps/app`) — /doctor/*
 
@@ -70,6 +70,9 @@ Every row is an endpoint the frontend calls. **EXISTS** = implemented by the dem
 | EXISTS | PUT | `/api/admin/clinics/{clinic_id}/insurance-companies` | Set Clinic Insurers |
 | EXISTS | PATCH | `/api/admin/clinics/{clinic_id}/insurance-companies/{company_id}` | Toggle Company |
 | EXISTS | PUT | `/api/admin/clinics/{clinic_id}/insurance-companies/{company_id}/templates` | Set Company Templates — Renamed from .../companies/{company_id}/templates for consistency with the sibling insurance-companies routes; the demo backend still serves the old segment - the backend applies the rename (or an alias) at integration. |
+| EXISTS | GET | `/api/admin/clinics/{clinic_id}/retention` | Get Clinic Retention |
+| EXISTS | GET | `/api/admin/clinics/{clinic_id}/retention/history` | List Clinic Retention History |
+| EXISTS | POST | `/api/admin/clinics/{clinic_id}/retention/override` | Override Clinic Retention |
 | EXISTS | PATCH | `/api/admin/clinics/{clinic_id}/status` | Update Status |
 | EXISTS | GET | `/api/admin/clinics/{clinic_id}/subscription` | Get Clinic Subscription |
 | EXISTS | PUT | `/api/admin/clinics/{clinic_id}/subscription` | Update Clinic Subscription |

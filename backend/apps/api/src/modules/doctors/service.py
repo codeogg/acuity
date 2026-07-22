@@ -4,23 +4,70 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.core.exceptions import AppException, ConflictException, NotFoundException
+from src.core.exceptions import AppException, ConflictException, NotFoundException, ValidationException
 from src.core.security import hash_password
-from src.db.models import ClaimSubmission, Clinic, Doctor, DoctorClinicLink, ExtractionReviewOutput, ExtractionTask
+from src.db.models import (
+    ClaimSubmission,
+    Clinic,
+    Doctor,
+    DoctorClinicLink,
+    ExtractionReviewOutput,
+    ExtractionTask,
+    FormTag,
+)
 from src.modules.doctors import clinic_links as clinic_link_service
 from src.modules.doctors.clinic_links import ensure_primary_clinic_link
-from src.modules.doctors.schemas import DoctorCreate, DoctorUpdate
+from src.modules.doctors.schemas import DoctorCreate, DoctorUpdate, NOTE_FORMATS
 
 
-async def list_linked_clinic_ids(db: AsyncSession, doctor_id: int) -> list[int]:
-    return await clinic_link_service.list_linked_clinic_ids(db, doctor_id)
+async def _default_specialty_tag_id(db: AsyncSession) -> int:
+    tag_id = (
+        await db.execute(
+            select(FormTag.id).where(
+                FormTag.kind == "specialty",
+                FormTag.label_en == "General practice",
+                FormTag.retired.is_(False),
+            )
+        )
+    ).scalar_one_or_none()
+    if tag_id is None:
+        raise ValidationException("系统未配置默认专科标签（全科），请先初始化标签")
+    return int(tag_id)
 
 
-async def to_doctor_account_out(
-    db: AsyncSession, doctor: Doctor, *, clinic_ids: list[int] | None = None
-) -> dict:
-    if clinic_ids is None:
-        clinic_ids = await list_linked_clinic_ids(db, doctor.id)
+async def _validate_specialty_tag(db: AsyncSession, tag_id: int) -> int:
+    tag = await db.get(FormTag, tag_id)
+    if tag is None:
+        raise NotFoundException("专科标签不存在")
+    if tag.kind != "specialty":
+        raise ValidationException("所选标签不是专科分类")
+    if tag.retired:
+        raise ValidationException("所选专科已停用，请选择其他专科")
+    return tag.id
+
+
+async def _load_specialty_tags(
+    db: AsyncSession, tag_ids: set[int]
+) -> dict[int, FormTag]:
+    if not tag_ids:
+        return {}
+    rows = (
+        await db.execute(select(FormTag).where(FormTag.id.in_(tag_ids)))
+    ).scalars().all()
+    return {tag.id: tag for tag in rows}
+
+
+def _specialty_labels(tag: FormTag | None) -> tuple[str, str]:
+    if tag is None:
+        return "General practice", "全科"
+    return tag.label_en, tag.label_zh
+
+
+def _doctor_base_out(doctor: Doctor, tag: FormTag | None) -> dict:
+    label_en, label_zh = _specialty_labels(tag)
+    notes_format = doctor.account_notes_format or "markdown"
+    if notes_format not in NOTE_FORMATS:
+        notes_format = "markdown"
     separation = doctor.workspace_mode
     if separation not in ("separated", "merged"):
         separation = "separated"
@@ -36,10 +83,40 @@ async def to_doctor_account_out(
         "status": doctor.status,
         "workspace_mode": doctor.workspace_mode,
         "account_notes": doctor.account_notes,
+        "account_notes_format": notes_format,
+        "specialty_tag_id": doctor.specialty_tag_id,
+        "specialty_label_en": label_en,
+        "specialty_label_zh": label_zh,
         "created_at": doctor.created_at,
-        "clinic_ids": clinic_ids,
         "notes": doctor.account_notes or "",
+        "notes_format": notes_format,
         "workspace_separation": separation,
+    }
+
+
+async def doctor_to_out(db: AsyncSession, doctor: Doctor) -> dict:
+    tag = await db.get(FormTag, doctor.specialty_tag_id)
+    return _doctor_base_out(doctor, tag)
+
+
+async def list_linked_clinic_ids(db: AsyncSession, doctor_id: int) -> list[int]:
+    return await clinic_link_service.list_linked_clinic_ids(db, doctor_id)
+
+
+async def to_doctor_account_out(
+    db: AsyncSession,
+    doctor: Doctor,
+    *,
+    clinic_ids: list[int] | None = None,
+    specialty_tag: FormTag | None = None,
+) -> dict:
+    if clinic_ids is None:
+        clinic_ids = await list_linked_clinic_ids(db, doctor.id)
+    if specialty_tag is None:
+        specialty_tag = await db.get(FormTag, doctor.specialty_tag_id)
+    return {
+        **_doctor_base_out(doctor, specialty_tag),
+        "clinic_ids": clinic_ids,
         "mfa_enabled": False,
     }
 
@@ -77,10 +154,16 @@ async def list_doctor_accounts(
     link_map = await clinic_link_service.map_linked_clinic_ids(
         db, [doctor.id for doctor in items]
     )
+    tag_map = await _load_specialty_tags(
+        db, {doctor.specialty_tag_id for doctor in items}
+    )
     accounts = [
         DoctorAccountOut.model_validate(
             await to_doctor_account_out(
-                db, doctor, clinic_ids=link_map.get(doctor.id, [])
+                db,
+                doctor,
+                clinic_ids=link_map.get(doctor.id, []),
+                specialty_tag=tag_map.get(doctor.specialty_tag_id),
             )
         )
         for doctor in items
@@ -146,6 +229,12 @@ async def create_doctor(db: AsyncSession, data: DoctorCreate) -> Doctor:
         if clinic is None:
             raise NotFoundException("诊所不存在")
 
+    specialty_tag_id = data.specialty_tag_id
+    if specialty_tag_id is None:
+        specialty_tag_id = await _default_specialty_tag_id(db)
+    else:
+        specialty_tag_id = await _validate_specialty_tag(db, specialty_tag_id)
+
     doctor = Doctor(
         clinic_id=data.clinic_id,
         doctor_name=data.doctor_name,
@@ -155,6 +244,7 @@ async def create_doctor(db: AsyncSession, data: DoctorCreate) -> Doctor:
         login_account=data.login_account,
         password_hash=hash_password(data.password),
         signature_url=data.signature_url,
+        specialty_tag_id=specialty_tag_id,
     )
     db.add(doctor)
     try:
@@ -204,9 +294,19 @@ async def set_workspace_mode(db: AsyncSession, doctor_id: int, mode: str) -> Doc
     return doctor
 
 
-async def set_account_notes(db: AsyncSession, doctor_id: int, notes: str) -> Doctor:
+async def set_account_notes(
+    db: AsyncSession,
+    doctor_id: int,
+    notes: str,
+    *,
+    notes_format: str | None = None,
+) -> Doctor:
     doctor = await get_doctor(db, doctor_id)
     doctor.account_notes = notes
+    if notes_format is not None:
+        if notes_format not in NOTE_FORMATS:
+            raise ValidationException("备注格式仅支持 html / markdown")
+        doctor.account_notes_format = notes_format
     await db.flush()
     return doctor
 
@@ -278,6 +378,10 @@ async def update_doctor(db: AsyncSession, doctor_id: int, data: DoctorUpdate) ->
         reg_no=values.get("reg_no"),
         exclude_id=doctor_id,
     )
+    if "specialty_tag_id" in values:
+        values["specialty_tag_id"] = await _validate_specialty_tag(
+            db, values["specialty_tag_id"]
+        )
     for key, value in values.items():
         setattr(doctor, key, value)
     try:

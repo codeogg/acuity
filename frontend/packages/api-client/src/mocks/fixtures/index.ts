@@ -24,7 +24,7 @@ export type {
   SupportAccessGrant,
   SupportAccessState,
 } from "../../endpoints/frontend-only/support-access";
-export type { AuditActionClass, AuditEvent } from "../../endpoints/frontend-only/admin-audit";
+export type { AuditActionType, AuditLogOut } from "@acuity/types";
 export type {
   OnboardingQueueItem,
   Ticket,

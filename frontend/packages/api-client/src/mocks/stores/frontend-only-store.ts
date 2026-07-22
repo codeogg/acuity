@@ -1,10 +1,9 @@
 // In-memory state for the frontend-only surfaces (notifications, tickets, tags,
 // saved views, hand-offs, settings, document inbox, support access /
-// impersonation, audit events) — mutable copies of the fixture universe so the
-// mock flows behave statefully (resolve a ticket, retire a tag, accept a
-// hand-off, record an audit event).
+// impersonation, audit logs) — mutable copies of the fixture universe so the
+// mock flows behave statefully.
 
-import type { AuditEvent } from "../../endpoints/frontend-only/admin-audit";
+import type { AuditActionType, AuditLogOut } from "@acuity/types";
 import type {
   OnboardingQueueItem,
   Ticket,
@@ -31,6 +30,51 @@ import {
   tickets,
 } from "../fixtures/universe";
 
+const ACTION_MAP: Record<string, AuditActionType> = {
+  "account-created": "account_creation",
+  "impersonation-start": "simulation_start",
+  "impersonation-end": "simulation_end",
+  "impersonation-abandoned": "simulation_interrupt",
+  "act-as-edit": "proxy_edit",
+  "retention-override": "retention_override",
+  "template-publish": "template_publish",
+  "template-archive": "template_archive",
+  "crm-edit": "crm_billing_edit",
+  "tag-change": "tag_category_change",
+  "bulk-operation": "batch_operation",
+  export: "export",
+  "phi-reveal": "patient_data_view",
+};
+
+function parseHouseTimestamp(ts: string): string {
+  const iso = ts.replace(" at ", "T").replaceAll(".", ":");
+  const parsed = Date.parse(iso);
+  return Number.isFinite(parsed) ? new Date(parsed).toISOString() : new Date().toISOString();
+}
+
+function migrateDemoAudit(): AuditLogOut[] {
+  return (demoAudit as Array<{
+    id: string;
+    ts: string;
+    operator: string;
+    action: string;
+    target: string;
+    mode: "view-as" | "act-as" | null;
+  }>).map((e, i) => ({
+    id: i + 1,
+    event_code: e.id,
+    action_type: ACTION_MAP[e.action] ?? "batch_operation",
+    operator_id: 1,
+    operator_name: e.operator,
+    clinic_id: null,
+    target_ref: e.target,
+    mode: e.mode,
+    field_set: null,
+    detail: null,
+    created_at: parseHouseTimestamp(e.ts),
+  }));
+}
+
 export interface FrontendOnlyState {
   notifications: NotificationItem[];
   inboxDocuments: InboxDocument[];
@@ -42,15 +86,21 @@ export interface FrontendOnlyState {
   tags: Tag[];
   tagVisibility: TagVisibilityEntry[];
   savedViews: SavedView[];
-  auditEvents: AuditEvent[];
+  auditLogs: AuditLogOut[];
   impersonation: ImpersonationSession | null;
   nextId: number;
+  nextAuditSeq: number;
 }
 
 let state: FrontendOnlyState | null = null;
 
 export function frontendOnlyState(): FrontendOnlyState {
   if (!state) {
+    const auditLogs = migrateDemoAudit();
+    const maxEv = auditLogs.reduce((n, row) => {
+      const m = /^EV-(\d+)$/.exec(row.event_code);
+      return m ? Math.max(n, Number(m[1])) : n;
+    }, 9000);
     state = {
       notifications: structuredClone(notifications),
       inboxDocuments: structuredClone(printCaptures),
@@ -62,9 +112,10 @@ export function frontendOnlyState(): FrontendOnlyState {
       tags: structuredClone(tags),
       tagVisibility: structuredClone(tagVisibility),
       savedViews: structuredClone(savedViews),
-      auditEvents: structuredClone(demoAudit),
+      auditLogs,
       impersonation: null,
       nextId: 1,
+      nextAuditSeq: maxEv + 1,
     };
   }
   return state;
@@ -74,25 +125,52 @@ export function nextFrontendOnlyId(prefix: string): string {
   return `${prefix}-${frontendOnlyState().nextId++}`;
 }
 
-// Prepend a new audit event (the trail renders newest-first). Uses the house
-// timestamp form the console displays.
-export function recordAuditEvent(
-  input: Omit<AuditEvent, "id" | "ts">,
-): AuditEvent {
+export type RecordAuditLogInput = {
+  action_type: AuditActionType;
+  operator_id?: number;
+  operator_name?: string;
+  clinic_id?: number | null;
+  target_ref?: string | null;
+  mode?: "view-as" | "act-as" | null;
+  field_set?: string | null;
+  detail?: Record<string, unknown> | null;
+};
+
+/** Prepend a unified audit log row (newest-first). */
+export function recordAuditLog(input: RecordAuditLogInput): AuditLogOut {
   const s = frontendOnlyState();
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  const ts = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} at ${pad(now.getHours())}.${pad(now.getMinutes())}.${pad(now.getSeconds())}`;
-  const event: AuditEvent = {
-    id: `EV-${9100 + s.auditEvents.length}`,
-    ts,
-    ...input,
+  const event: AuditLogOut = {
+    id: s.auditLogs.length + 1,
+    event_code: `EV-${s.nextAuditSeq++}`,
+    action_type: input.action_type,
+    operator_id: input.operator_id ?? 1,
+    operator_name: input.operator_name ?? "you@acuity",
+    clinic_id: input.clinic_id ?? null,
+    target_ref: input.target_ref ?? null,
+    mode: input.mode ?? null,
+    field_set: input.field_set ?? null,
+    detail: input.detail ?? null,
+    created_at: new Date().toISOString(),
   };
-  s.auditEvents.unshift(event);
+  s.auditLogs.unshift(event);
   return event;
 }
 
-// Test/dev helper.
+/** @deprecated Use recordAuditLog — kept for call-site migration. */
+export function recordAuditEvent(input: {
+  operator: string;
+  action: string;
+  target: string;
+  mode: "view-as" | "act-as" | null;
+}): AuditLogOut {
+  return recordAuditLog({
+    action_type: ACTION_MAP[input.action] ?? "batch_operation",
+    operator_name: input.operator,
+    target_ref: input.target,
+    mode: input.mode,
+  });
+}
+
 export function resetFrontendOnlyStore(): void {
   state = null;
 }

@@ -27,6 +27,8 @@ from src.db.models.standard_fields import (
     StandardField,
 )
 from src.db.models.subscriptions import ClinicSubscription
+from src.db.models.retention import ClinicDataRetention, RetentionPolicy
+from src.db.models.audit import AuditLog
 from src.db.models.tags import FormTag, TagVisibility
 from src.db.models.templates import (
     ClinicPolicyTemplate,
@@ -58,6 +60,9 @@ __all__ = [
     "ClinicInsuranceCompany",
     "District",
     "ClinicSubscription",
+    "RetentionPolicy",
+    "ClinicDataRetention",
+    "AuditLog",
     "FieldDomain",
     "StandardField",
     "FieldTransformRule",

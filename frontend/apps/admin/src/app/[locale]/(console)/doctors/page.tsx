@@ -21,7 +21,9 @@ import {
   doctorMatchesTab,
   listClinicRows,
   listDoctorRows,
+  listTags,
   sortDoctorRows,
+  doctorSpecialtyLabel,
   type DoctorLinked,
   type DoctorRow,
   type DoctorTab,
@@ -79,11 +81,12 @@ async function DoctorsGrid({ locale, sp }: { locale: string; sp: Search }) {
   const clinicId = sp.clinic ? Number(sp.clinic) : undefined;
   const linked: DoctorLinked | undefined =
     sp.linked === "clinic" || sp.linked === "individual" ? sp.linked : undefined;
-  const [t, tRoot, allRows, clinicRows] = await Promise.all([
+  const [t, tRoot, allRows, clinicRows, specialtyTags] = await Promise.all([
     getTranslations("doctors"),
     getTranslations(),
     listDoctorRows(sp.keyword, clinicId, linked),
     listClinicRows(),
+    listTags("specialty"),
   ]);
 
   const counts = Object.fromEntries(
@@ -124,7 +127,7 @@ async function DoctorsGrid({ locale, sp }: { locale: string; sp: Search }) {
     { header: t("col.clinic"), sort: colSort("clinic") },
     { header: t("col.activation") },
     { header: t("col.last-activity"), width: "9rem", sort: colSort("last") },
-    { header: t("col.tags") },
+    { header: t("col.specialty") },
   ];
 
   const gridRows: BridgeRow[] = rows.map((r) => ({
@@ -165,11 +168,11 @@ async function DoctorsGrid({ locale, sp }: { locale: string; sp: Search }) {
       <span key="last" className="text-muted-foreground">
         {formatRelative(r.ops.last_activity, locale, Date.now())}
       </span>,
-      <div key="tags" className="flex gap-1">
+      <div key="specialty" className="flex gap-1">
         <StatusBadge
           tone="accent"
           appearance="outline"
-          label={locale.startsWith("zh") ? r.ops.specialty_zh : r.ops.specialty_en}
+          label={doctorSpecialtyLabel(r.doctor, locale)}
         />
       </div>,
     ],
@@ -184,7 +187,16 @@ async function DoctorsGrid({ locale, sp }: { locale: string; sp: Search }) {
         title={t("title")}
         grid="doctors"
         tabs={tabs}
-        action={<NewDoctorButton clinics={clinicRows.map((c) => ({ id: c.clinic.id, label: pickName(locale, c.clinic.clinic_name, c.clinic.clinic_name_en) }))} />}
+        action={
+          <NewDoctorButton
+            clinics={clinicRows.map((c) => ({
+              id: c.clinic.id,
+              label: pickName(locale, c.clinic.clinic_name, c.clinic.clinic_name_en),
+            }))}
+            specialtyTags={specialtyTags}
+            locale={locale}
+          />
+        }
         filterRow={
           <FilterRow>
             <KeywordSearch placeholder={t("search-placeholder")} />

@@ -71,7 +71,7 @@ test.describe("admin oversight guardrails", () => {
 
     // The reveal recorded an audit event (raw-code render, never mislabelled).
     await page.goto(`${base}/audit`);
-    await expect(page.getByText("PHI reveal (audited)").first()).toBeVisible();
+    await expect(page.getByText("Patient data view (audited)").first()).toBeVisible();
     await expect(page.getByRole("cell", { name: /SUB20260710001396|SUB\d+/ }).first()).toBeVisible();
   });
 
@@ -97,7 +97,7 @@ test.describe("admin oversight guardrails", () => {
     await banner.getByRole("button", { name: "Exit impersonation" }).click();
     await expect(page.getByRole("status").filter({ hasText: "Viewing as" })).toHaveCount(0);
     await page.goto(`${base}/audit`);
-    await expect(page.getByText("Impersonation start").first()).toBeVisible();
-    await expect(page.getByText("Impersonation end").first()).toBeVisible();
+    await expect(page.getByText("Simulation start").first()).toBeVisible();
+    await expect(page.getByText("Simulation end").first()).toBeVisible();
   });
 });

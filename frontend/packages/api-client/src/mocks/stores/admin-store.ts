@@ -66,9 +66,69 @@ export interface AdminState {
   clinicTemplates: Map<number, number[]>;
   // clinic_id -> 1:1 subscription record
   clinicSubscriptions: Map<number, ClinicSubscriptionRecord>;
+  // clinic_id -> retention override (absent = use global default)
+  clinicRetention: Map<number, ClinicRetentionOverrideRecord>;
+  clinicRetentionAudits: ClinicRetentionAuditRecord[];
+  defaultRetentionDays: number;
+  defaultRetentionPolicyName: string;
   // template_id -> simulated parse progress (advances on each poll).
   parseProgress: Map<number, number>;
   nextId: number;
+}
+
+export type ClinicRetentionOverrideRecord = {
+  clinic_id: number;
+  is_overridden: number;
+  retention_days: number | null;
+  overridden_by: number | null;
+  overridden_at: string | null;
+};
+
+export type ClinicRetentionAuditRecord = {
+  id: number;
+  clinic_id: number;
+  clinic_code_input: string;
+  old_retention_days: number;
+  new_retention_days: number;
+  operated_by: number;
+  operator_name: string | null;
+  operated_at: string;
+  ip_address: string | null;
+};
+
+export const DEFAULT_RETENTION_DAYS = 2555;
+export const DEFAULT_RETENTION_POLICY_NAME = "標準保留政策";
+
+export function effectiveClinicRetention(
+  s: AdminState,
+  clinicId: number,
+): {
+  clinic_id: number;
+  retention_days: number;
+  is_overridden: boolean;
+  policy_name: string | null;
+  overridden_at: string | null;
+  overridden_by: number | null;
+} {
+  const row = s.clinicRetention.get(clinicId);
+  if (row && row.is_overridden === 1 && row.retention_days != null) {
+    return {
+      clinic_id: clinicId,
+      retention_days: row.retention_days,
+      is_overridden: true,
+      policy_name: null,
+      overridden_at: row.overridden_at,
+      overridden_by: row.overridden_by,
+    };
+  }
+  return {
+    clinic_id: clinicId,
+    retention_days: s.defaultRetentionDays,
+    is_overridden: false,
+    policy_name: s.defaultRetentionPolicyName,
+    overridden_at: null,
+    overridden_by: null,
+  };
 }
 
 export function defaultClinicSubscription(
@@ -135,6 +195,10 @@ export function adminState(): AdminState {
           return [c.id, defaultClinicSubscription(c.id, notes)];
         }),
       ),
+      clinicRetention: new Map(),
+      clinicRetentionAudits: [],
+      defaultRetentionDays: DEFAULT_RETENTION_DAYS,
+      defaultRetentionPolicyName: DEFAULT_RETENTION_POLICY_NAME,
       parseProgress: new Map(),
       nextId: 10000,
     };

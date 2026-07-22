@@ -250,6 +250,48 @@ async def seed() -> None:
         elif clinic.district_id is None:
             clinic.district_id = districts["中環"].id
 
+        # Forms library tags — must exist before doctor (specialty_tag_id FK).
+        seed_tags = [
+            ("type", "Outpatient", "門診", 1, False),
+            ("type", "Inpatient", "住院", 2, False),
+            ("type", "Accident", "意外", 3, False),
+            ("type", "Declaration", "聲明", 4, False),
+            ("insurer", "Demo Insurance", "示例保險", 1, False),
+            ("insurer", "Victoria Harbour", "維港健康", 2, False),
+            ("insurer", "Harbour Trust", "港安人壽", 3, False),
+            ("specialty", "General practice", "全科", 1, False),
+            ("specialty", "Cardiology", "心臟科", 2, False),
+            ("specialty", "Dermatology", "皮膚科", 3, True),
+        ]
+        tag_by_key: dict[tuple[str, str], FormTag] = {}
+        for kind, label_en, label_zh, sort_order, retired in seed_tags:
+            existing = (
+                await db.execute(
+                    select(FormTag).where(
+                        FormTag.kind == kind, FormTag.label_en == label_en
+                    )
+                )
+            ).scalar_one_or_none()
+            if existing:
+                existing.label_zh = label_zh
+                existing.sort_order = sort_order
+                existing.retired = retired
+                tag_by_key[(kind, label_en)] = existing
+            else:
+                tag = FormTag(
+                    kind=kind,
+                    label_en=label_en,
+                    label_zh=label_zh,
+                    parent_id=None,
+                    sort_order=sort_order,
+                    retired=retired,
+                )
+                db.add(tag)
+                await db.flush()
+                tag_by_key[(kind, label_en)] = tag
+
+        gp_tag = tag_by_key[("specialty", "General practice")]
+
         doctor = (
             await db.execute(select(Doctor).where(Doctor.login_account == "doctor"))
         ).scalar_one_or_none()
@@ -260,12 +302,14 @@ async def seed() -> None:
                 doctor_name_en="Chan Tai Man",
                 login_account="doctor",
                 password_hash=hash_password("doctor123"),
+                specialty_tag_id=gp_tag.id,
             )
             db.add(doctor)
             await db.flush()
         elif not verify_password("doctor123", doctor.password_hash):
             # 开发环境：bcrypt 库升级后旧哈希可能失效，自动修复演示账号
             doctor.password_hash = hash_password("doctor123")
+        doctor.specialty_tag_id = gp_tag.id
 
         # 确保演示医生拥有主诊所关联（兼容迁移前后）
         existing_link = (
@@ -325,46 +369,6 @@ async def seed() -> None:
                         clinic_id=linked_clinic.id, company_id=company.id
                     )
                 )
-
-        # Forms library tags（对齐 frontend fixture universe.json）
-        seed_tags = [
-            ("type", "Outpatient", "門診", 1, False),
-            ("type", "Inpatient", "住院", 2, False),
-            ("type", "Accident", "意外", 3, False),
-            ("type", "Declaration", "聲明", 4, False),
-            ("insurer", "Demo Insurance", "示例保險", 1, False),
-            ("insurer", "Victoria Harbour", "維港健康", 2, False),
-            ("insurer", "Harbour Trust", "港安人壽", 3, False),
-            ("specialty", "General practice", "全科", 1, False),
-            ("specialty", "Cardiology", "心臟科", 2, False),
-            ("specialty", "Dermatology", "皮膚科", 3, True),
-        ]
-        tag_by_key: dict[tuple[str, str], FormTag] = {}
-        for kind, label_en, label_zh, sort_order, retired in seed_tags:
-            existing = (
-                await db.execute(
-                    select(FormTag).where(
-                        FormTag.kind == kind, FormTag.label_en == label_en
-                    )
-                )
-            ).scalar_one_or_none()
-            if existing:
-                existing.label_zh = label_zh
-                existing.sort_order = sort_order
-                existing.retired = retired
-                tag_by_key[(kind, label_en)] = existing
-            else:
-                tag = FormTag(
-                    kind=kind,
-                    label_en=label_en,
-                    label_zh=label_zh,
-                    parent_id=None,
-                    sort_order=sort_order,
-                    retired=retired,
-                )
-                db.add(tag)
-                await db.flush()
-                tag_by_key[(kind, label_en)] = tag
 
         # Demo doctor visibility: outpatient/inpatient/accident visible
         for label_en in ("Outpatient", "Inpatient", "Accident"):

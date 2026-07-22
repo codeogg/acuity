@@ -23,6 +23,8 @@ from src.db.models import (
     InsuranceCompany,
     PolicyTemplate,
 )
+from src.db.models.retention import ClinicDataRetention
+from src.db.models.audit import AuditLog
 from src.modules.clinics.schemas import (
     DATA_REGIONS,
     ClinicConfigOverview,
@@ -320,6 +322,16 @@ async def delete_clinic(db: AsyncSession, clinic_id: int) -> None:
     )
     await db.execute(
         delete(ClinicSubscription).where(ClinicSubscription.clinic_id == clinic_id)
+    )
+    await db.execute(
+        delete(ClinicDataRetention).where(ClinicDataRetention.clinic_id == clinic_id)
+    )
+    # audit_logs.clinic_id is nullable FK — clear the link so hard-delete can proceed
+    # while keeping the append-only history row.
+    await db.execute(
+        AuditLog.__table__.update()
+        .where(AuditLog.clinic_id == clinic_id)
+        .values(clinic_id=None)
     )
     await db.delete(clinic)
     await db.flush()

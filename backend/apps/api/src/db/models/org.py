@@ -72,6 +72,10 @@ class Doctor(Base, TimestampMixin):
     account_notes: Mapped[str | None] = mapped_column(Text)
     # 个人覆盖；NULL 时继承主诊所 clinic.idle_lock_minutes
     idle_lock_minutes: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    specialty_tag_id: Mapped[int] = mapped_column(
+        ForeignKey("form_tag.id"), index=True
+    )
+    account_notes_format: Mapped[str] = mapped_column(String(20), default="markdown")
 
     clinic: Mapped["Clinic | None"] = relationship(back_populates="doctors")
     clinic_links: Mapped[list["DoctorClinicLink"]] = relationship(

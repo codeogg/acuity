@@ -19,21 +19,22 @@ import {
 import { AcuityIcon } from "@acuity/ui";
 import { CrmFieldRow } from "@/components/ui/crm-field";
 import { ActionButton } from "@/components/ui/action-button";
-import { MarkdownNotes } from "@/components/ui/markdown-notes";
+import { RichNotes, type NoteFormat } from "@/components/ui/markdown-notes";
 import { FacetSection } from "@/components/ui/detail";
 import { StatusBadge } from "@/components/ui/ui-client";
 import { useToast } from "@acuity/ui";
+import { DoctorSpecialtySelect } from "@/components/drawers/doctor-specialty-select";
 import {
   linkDoctorClinicAction,
   resendInviteAction,
+  setDoctorPrimaryClinicAction,
   unlinkDoctorClinicAction,
   unlockDoctorAccountAction,
   updateDoctorAccountAction,
   updateDoctorAction,
-  updateDoctorOpsAction,
+  updateDoctorNotesAction,
 } from "@/lib/actions";
-import type { DoctorOps } from "@/lib/ops-model";
-import type { WorkspaceSeparation } from "@acuity/api-client";
+import type { Tag, WorkspaceSeparation } from "@acuity/types";
 
 export interface LinkedClinicItem {
   id: number;
@@ -45,18 +46,28 @@ export function DoctorAccountFacet({
   doctorId,
   login,
   email,
-  ops,
   notes,
+  notesFormat,
+  specialtyTagId,
+  specialtyLabel,
+  specialtyTags,
+  locale,
   workspaceSeparation,
+  primaryClinicId,
   linkedClinics,
   linkableClinics,
 }: {
   doctorId: number;
   login: string;
   email: string | null;
-  ops: DoctorOps;
   notes: string;
+  notesFormat: NoteFormat;
+  specialtyTagId: number;
+  specialtyLabel: string;
+  specialtyTags: Tag[];
+  locale: string;
   workspaceSeparation: WorkspaceSeparation;
+  primaryClinicId: number | null;
   linkedClinics: LinkedClinicItem[];
   linkableClinics: LinkedClinicItem[];
 }) {
@@ -64,10 +75,22 @@ export function DoctorAccountFacet({
 
   return (
     <div>
+      <FacetSection title={t("specialty")}>
+        <DoctorSpecialtySelect
+          doctorId={doctorId}
+          login={login}
+          value={specialtyTagId}
+          tags={specialtyTags}
+          locale={locale}
+          fallbackLabel={specialtyLabel}
+        />
+      </FacetSection>
+
       <FacetSection title={t("clinic-links")}>
         <ClinicLinks
           doctorId={doctorId}
           login={login}
+          primaryClinicId={primaryClinicId}
           linkedClinics={linkedClinics}
           linkableClinics={linkableClinics}
         />
@@ -117,19 +140,13 @@ export function DoctorAccountFacet({
           commit={(next) => updateDoctorAction(doctorId, { email: next.trim() || null })}
           successMessage={t("email-saved")}
         />
-        <CrmFieldRow
-          label={t("tags")}
-          value={ops.tags.join(", ")}
-          commit={(next) =>
-            updateDoctorOpsAction(doctorId, { tags: next.split(",").map((s) => s.trim()).filter(Boolean) })
-          }
-        />
       </FacetSection>
 
       <FacetSection title={t("notes")}>
-        <MarkdownNotes
+        <RichNotes
           value={notes}
-          commit={(next) => updateDoctorAccountAction(doctorId, login, { notes: next })}
+          format={notesFormat}
+          commit={(next, format) => updateDoctorNotesAction(doctorId, login, next, format)}
         />
       </FacetSection>
     </div>
@@ -139,11 +156,13 @@ export function DoctorAccountFacet({
 function ClinicLinks({
   doctorId,
   login,
+  primaryClinicId,
   linkedClinics,
   linkableClinics,
 }: {
   doctorId: number;
   login: string;
+  primaryClinicId: number | null;
   linkedClinics: LinkedClinicItem[];
   linkableClinics: LinkedClinicItem[];
 }) {
@@ -181,21 +200,59 @@ function ClinicLinks({
     });
   }
 
+  function setPrimary(clinicId: string) {
+    const id = Number(clinicId);
+    if (!id || id === primaryClinicId) return;
+    const clinic = linkedClinics.find((c) => c.id === id);
+    startTransition(async () => {
+      const result = await setDoctorPrimaryClinicAction(doctorId, login, id);
+      if (result.ok) {
+        showToast(t("primary-saved", { name: clinic?.name ?? String(id) }));
+        router.refresh();
+      } else {
+        showToast(result.message, "error");
+      }
+    });
+  }
+
   return (
     <div>
+      {linkedClinics.length >= 2 ? (
+        <div className="mb-3">
+          <label className="mb-1.5 block text-xs text-muted-foreground">{t("primary-clinic")}</label>
+          <Select
+            value={primaryClinicId != null ? String(primaryClinicId) : undefined}
+            onValueChange={setPrimary}
+            disabled={pending}
+          >
+            <SelectTrigger aria-label={t("primary-clinic")} className="h-9 w-full">
+              <SelectValue placeholder={t("primary-clinic-select")} />
+            </SelectTrigger>
+            <SelectContent>
+              {linkedClinics.map((c) => (
+                <SelectItem key={c.id} value={String(c.id)}>
+                  {c.name} · {c.code}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
       {linkedClinics.length === 0 ? (
         <div className="mb-2 flex items-center gap-2">
           <StatusBadge tone="accent" appearance="outline" label={t("individual")} />
           <span className="text-sm text-muted-foreground">{t("individual-caption")}</span>
         </div>
       ) : (
-        linkedClinics.map((clinic, i) => (
+        linkedClinics.map((clinic) => (
           <div key={clinic.id} className="flex items-center gap-3 border-b border-border py-2.5 last:border-0">
             <div className="min-w-0 flex-1">
               <div className="text-sm font-medium text-foreground">{clinic.name}</div>
               <div className="font-mono text-xs text-muted-foreground">{clinic.code}</div>
             </div>
-            {i === 0 ? <StatusBadge tone="info" appearance="outline" label={t("primary")} /> : null}
+            {clinic.id === primaryClinicId ? (
+              <StatusBadge tone="info" appearance="outline" label={t("primary")} />
+            ) : null}
             <Button
               type="button"
               variant="ghost"

@@ -6,6 +6,7 @@
 // namespace (e.g. `import { claims } from "@acuity/api-client"`).
 
 export * as ai from "./ai";
+export * as audit from "./audit";
 export * as authEndpoints from "./auth";
 export * as claims from "./claims";
 export * as clinics from "./clinics";

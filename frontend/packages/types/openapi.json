@@ -5242,126 +5242,6 @@
         "security": []
       }
     },
-    "/api/admin/audit-events": {
-      "get": {
-        "tags": [
-          "admin-audit"
-        ],
-        "summary": "List audit events",
-        "operationId": "listAuditEvents",
-        "x-backend-status": "PARTIAL",
-        "x-implementation-note": "The backend's operation_log table exists but is never written; wiring it is the backend work here.",
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer"
-            }
-          },
-          {
-            "name": "operator",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "action",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "clinic_code",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Page_AuditEvent_"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Domain error (ErrorEnvelope). Request-shape validation failures return the native 422 HTTPValidationError instead.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "admin-audit"
-        ],
-        "summary": "Record a client-driven audit event",
-        "operationId": "recordAuditEvent",
-        "x-backend-status": "PARTIAL",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AuditEventCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AuditEvent"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Domain error (ErrorEnvelope). Request-shape validation failures return the native 422 HTTPValidationError instead.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ]
-      }
-    },
     "/api/admin/tickets": {
       "get": {
         "tags": [
@@ -7094,6 +6974,354 @@
           }
         }
       }
+    },
+    "/api/admin/clinics/{clinic_id}/retention": {
+      "get": {
+        "tags": [
+          "admin:clinics"
+        ],
+        "summary": "Get Clinic Retention",
+        "description": "Effective retention days for a clinic (global default or override).",
+        "operationId": "get_clinic_retention_api_admin_clinics_clinic_id_retention_get",
+        "parameters": [
+          {
+            "name": "clinic_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Clinic Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicRetentionOut"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Domain error (ErrorEnvelope).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/clinics/{clinic_id}/retention/override": {
+      "post": {
+        "tags": [
+          "admin:clinics"
+        ],
+        "summary": "Override Clinic Retention",
+        "description": "Super-admin only. Requires clinic_code_input paste match. Writes audit + upserts override in one transaction.",
+        "operationId": "override_clinic_retention_api_admin_clinics_clinic_id_retention_override_post",
+        "parameters": [
+          {
+            "name": "clinic_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Clinic Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClinicRetentionOverrideRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicRetentionOut"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Domain error (ErrorEnvelope).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/clinics/{clinic_id}/retention/history": {
+      "get": {
+        "tags": [
+          "admin:clinics"
+        ],
+        "summary": "List Clinic Retention History",
+        "description": "Append-only audit log for retention overrides, newest first.",
+        "operationId": "list_clinic_retention_history_api_admin_clinics_clinic_id_retention_history_get",
+        "parameters": [
+          {
+            "name": "clinic_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Clinic Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ClinicRetentionAuditOut"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Domain error (ErrorEnvelope).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/audit-logs": {
+      "get": {
+        "tags": [
+          "admin:audit"
+        ],
+        "summary": "List Audit Logs",
+        "operationId": "list_audit_logs_api_admin_audit_logs_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "scope",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "global",
+                "clinic"
+              ]
+            }
+          },
+          {
+            "name": "operator_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "action_type",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "clinic_id",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_AuditLogOut_"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Domain error (ErrorEnvelope).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "admin:audit"
+        ],
+        "summary": "Create Audit Log",
+        "description": "Client-driven audit write. PHI in field_set/detail is rejected server-side.",
+        "operationId": "create_audit_log_api_admin_audit_logs_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuditLogCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditLogOut"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Domain error (ErrorEnvelope).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/audit-logs/{event_code}": {
+      "get": {
+        "tags": [
+          "admin:audit"
+        ],
+        "summary": "Get Audit Log",
+        "operationId": "get_audit_log_api_admin_audit_logs_event_code_get",
+        "parameters": [
+          {
+            "name": "event_code",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditLogOut"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Domain error (ErrorEnvelope).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/doctors/{doctor_id}/account-notes": {
+      "put": {
+        "tags": [
+          "admin:doctors"
+        ],
+        "summary": "Set Account Notes",
+        "operationId": "set_account_notes_api_admin_doctors__doctor_id__account_notes_put",
+        "parameters": [
+          {
+            "name": "doctor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountNotesUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DoctorOut"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -8177,6 +8405,18 @@
             ],
             "title": "Signature Url",
             "description": "Opaque URL string. Production values are signed or public asset URLs (branding/asset class - long TTL acceptable)."
+          },
+          "specialty_tag_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Specialty Tag Id",
+            "description": "专科标签 ID（form_tag.kind=specialty）；省略时默认为全科。"
           }
         },
         "type": "object",
@@ -8195,7 +8435,14 @@
             "title": "Id"
           },
           "clinic_id": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Clinic Id"
           },
           "doctor_name": {
@@ -8260,6 +8507,41 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "workspace_mode": {
+            "type": "string",
+            "title": "Workspace Mode"
+          },
+          "account_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Account Notes"
+          },
+          "account_notes_format": {
+            "type": "string",
+            "enum": [
+              "markdown",
+              "html"
+            ],
+            "title": "Account Notes Format"
+          },
+          "specialty_tag_id": {
+            "type": "integer",
+            "title": "Specialty Tag Id"
+          },
+          "specialty_label_en": {
+            "type": "string",
+            "title": "Specialty Label En"
+          },
+          "specialty_label_zh": {
+            "type": "string",
+            "title": "Specialty Label Zh"
           }
         },
         "type": "object",
@@ -8273,7 +8555,12 @@
           "signature_url",
           "login_account",
           "status",
-          "created_at"
+          "created_at",
+          "workspace_mode",
+          "account_notes_format",
+          "specialty_tag_id",
+          "specialty_label_en",
+          "specialty_label_zh"
         ],
         "title": "DoctorOut"
       },
@@ -8371,6 +8658,17 @@
             "title": "Status",
             "deprecated": true,
             "description": "Deprecated: use PATCH .../status. Kept for compatibility; servers keep accepting it."
+          },
+          "specialty_tag_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Specialty Tag Id"
           }
         },
         "type": "object",
@@ -10755,13 +11053,21 @@
               },
               "mfa_enabled": {
                 "type": "boolean"
+              },
+              "notes_format": {
+                "type": "string",
+                "enum": [
+                  "markdown",
+                  "html"
+                ]
               }
             },
             "required": [
               "clinic_ids",
               "notes",
               "workspace_separation",
-              "mfa_enabled"
+              "mfa_enabled",
+              "notes_format"
             ]
           }
         ],
@@ -12530,6 +12836,283 @@
             "title": "Note Format"
           }
         }
+      },
+      "ClinicRetentionOut": {
+        "type": "object",
+        "title": "ClinicRetentionOut",
+        "required": [
+          "clinic_id",
+          "retention_days",
+          "is_overridden"
+        ],
+        "properties": {
+          "clinic_id": {
+            "type": "integer"
+          },
+          "retention_days": {
+            "type": "integer"
+          },
+          "is_overridden": {
+            "type": "boolean"
+          },
+          "policy_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "overridden_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "overridden_by": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "ClinicRetentionOverrideRequest": {
+        "type": "object",
+        "title": "ClinicRetentionOverrideRequest",
+        "required": [
+          "clinic_code_input",
+          "retention_days"
+        ],
+        "properties": {
+          "clinic_code_input": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50
+          },
+          "retention_days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 36500
+          }
+        }
+      },
+      "ClinicRetentionAuditOut": {
+        "type": "object",
+        "title": "ClinicRetentionAuditOut",
+        "required": [
+          "id",
+          "clinic_id",
+          "clinic_code_input",
+          "old_retention_days",
+          "new_retention_days",
+          "operated_by",
+          "operated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "clinic_id": {
+            "type": "integer"
+          },
+          "clinic_code_input": {
+            "type": "string"
+          },
+          "old_retention_days": {
+            "type": "integer"
+          },
+          "new_retention_days": {
+            "type": "integer"
+          },
+          "operated_by": {
+            "type": "integer"
+          },
+          "operator_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "operated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ip_address": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "AuditActionType": {
+        "type": "string",
+        "title": "AuditActionType",
+        "enum": [
+          "account_creation",
+          "simulation_start",
+          "simulation_end",
+          "simulation_interrupt",
+          "proxy_edit",
+          "retention_override",
+          "template_publish",
+          "template_archive",
+          "crm_billing_edit",
+          "tag_category_change",
+          "batch_operation",
+          "export",
+          "patient_data_view"
+        ]
+      },
+      "AuditLogOut": {
+        "type": "object",
+        "title": "AuditLogOut",
+        "required": [
+          "id",
+          "event_code",
+          "action_type",
+          "operator_id",
+          "created_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "event_code": {
+            "type": "string"
+          },
+          "action_type": {
+            "$ref": "#/components/schemas/AuditActionType"
+          },
+          "operator_id": {
+            "type": "integer"
+          },
+          "operator_name": {
+            "type": "string",
+            "nullable": true
+          },
+          "clinic_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "target_ref": {
+            "type": "string",
+            "nullable": true
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "view-as",
+                  "act-as"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "field_set": {
+            "type": "string",
+            "nullable": true
+          },
+          "detail": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AuditLogCreate": {
+        "type": "object",
+        "title": "AuditLogCreate",
+        "required": [
+          "action_type"
+        ],
+        "properties": {
+          "action_type": {
+            "$ref": "#/components/schemas/AuditActionType"
+          },
+          "clinic_id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "target_ref": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "view-as",
+                  "act-as"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "field_set": {
+            "type": "string",
+            "nullable": true,
+            "maxLength": 255
+          },
+          "detail": {
+            "type": "object",
+            "additionalProperties": true,
+            "nullable": true
+          }
+        }
+      },
+      "Page_AuditLogOut_": {
+        "type": "object",
+        "title": "Page[AuditLogOut]",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuditLogOut"
+            }
+          },
+          "total": {
+            "type": "integer"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "page_size": {
+            "type": "integer"
+          }
+        }
+      },
+      "AccountNotesUpdate": {
+        "type": "object",
+        "title": "AccountNotesUpdate",
+        "properties": {
+          "notes": {
+            "type": "string",
+            "default": ""
+          },
+          "notes_format": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "markdown",
+                  "html"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -12682,6 +13265,10 @@
       "name": "account-management",
       "description": "ADR 0041 account-clinic management: link/unlink/switch, account-model fields, login-issue tooling, clinic notes.",
       "x-backend-status-group": true
+    },
+    {
+      "name": "admin:audit",
+      "description": "Unified operator audit trail (append-only, PHI-safe)."
     }
   ]
 }

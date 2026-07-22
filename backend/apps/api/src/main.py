@@ -10,6 +10,7 @@ from src.core.exceptions import register_exception_handlers
 from src.core.i18n import locale_from_request, reset_locale, set_locale
 from src.core.logging import configure_logging, get_logger
 from src.modules.ai_extraction.router import router as ai_router
+from src.modules.audit.router import router as audit_router
 from src.modules.auth.router import router as auth_router
 from src.modules.claims.router import router as claims_router
 from src.modules.clinics.router import router as clinics_router
@@ -72,6 +73,7 @@ register_exception_handlers(app)
 
 for router in (
     auth_router,
+    audit_router,
     clinics_router,
     districts_router,
     doctors_router,

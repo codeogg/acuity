@@ -14,9 +14,17 @@ import { ActionButton } from "@/components/ui/action-button";
 import { GateButton } from "@/components/ui/confirm-gate";
 import { useToast } from "@acuity/ui";
 import { clinics, districts } from "@acuity/api-client";
-import type { ClinicConfigOverview, CompanyConfigItem } from "@acuity/types";
+import type {
+  ClinicConfigOverview,
+  ClinicRetentionAuditOut,
+  ClinicRetentionOut,
+  ClinicSubscriptionOut,
+  ClinicSubscriptionUpdate,
+  CompanyConfigItem,
+} from "@acuity/types";
 import { MetaBadge } from "@/components/ui/status-badge";
 import { RichNotes, type NoteFormat } from "@/components/ui/markdown-notes";
+import { RetentionOverridePanel } from "@/components/drawers/retention-override-panel";
 import {
   createDoctorAction,
   setClinicCompanyEnablementAction,
@@ -28,7 +36,6 @@ import {
   updateClinicSubscriptionNoteAction,
 } from "@/lib/actions";
 import type { ClinicOps } from "@/lib/ops-model";
-import type { ClinicSubscriptionOut, ClinicSubscriptionUpdate } from "@acuity/types";
 
 type DistrictOption = Awaited<ReturnType<typeof districts.listDistricts>>[number];
 
@@ -297,16 +304,19 @@ function AddDoctorForm({ clinicId }: { clinicId: number }) {
 
 export function AccountFacet({
   clinic,
-  ops,
   subscription,
+  retention,
+  retentionHistory,
+  locale,
 }: {
   clinic: ClinicSummary;
-  ops: ClinicOps;
   subscription: ClinicSubscriptionOut;
+  retention: ClinicRetentionOut;
+  retentionHistory: ClinicRetentionAuditOut[];
+  locale: string;
 }) {
   const t = useTranslations("clinic-drawer.account");
 
-  const patchOps = (p: Partial<ClinicOps>) => updateClinicOpsAction(clinic.id, clinic.code, p);
   const patchSub = (p: ClinicSubscriptionUpdate) =>
     updateClinicSubscriptionAction(clinic.id, clinic.code, p);
 
@@ -380,19 +390,13 @@ export function AccountFacet({
       />
 
       <FacetHeading className="mt-8">{t("retention")}</FacetHeading>
-      <GateButton
-        buttonLabel={t("override-retention")}
-        buttonIcon="shield"
-        buttonVariant="ghost"
-        buttonClassName="text-destructive"
-        title={t("retention-title")}
-        description={t("retention-feedforward", { name: clinic.name_en ?? clinic.name })}
-        variant="paste"
-        target={clinic.code}
-        destructive
-        confirmLabel={t("retention-confirm")}
-        action={() => patchOps({ retention_months: ops.retention_months })}
-        successMessage={t("retention-done", { name: clinic.name_en ?? clinic.name })}
+      <RetentionOverridePanel
+        clinicId={clinic.id}
+        clinicCode={clinic.code}
+        clinicName={clinic.name_en ?? clinic.name}
+        retention={retention}
+        history={retentionHistory}
+        locale={locale}
       />
     </div>
   );

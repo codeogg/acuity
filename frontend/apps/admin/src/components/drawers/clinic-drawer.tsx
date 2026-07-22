@@ -20,11 +20,11 @@ import { ImpersonateControl } from "@/components/system/impersonate-control";
 import { AccountFacet, InsurersFacet, NewClinicForm, OnboardingFacet, ProvisioningFacet } from "@/components/drawers/clinic-facets";
 import { StatusBadge } from "@/components/ui/ui-client";
 import { deleteClinicAction } from "@/lib/actions";
-import { getClinic, getClinicConfigOverview, getClinicSubscription, listDoctorRows } from "@/lib/data";
+import { getClinic, getClinicConfigOverview, getClinicRetention, getClinicSubscription, listClinicRetentionHistory, listDoctorRows } from "@/lib/data";
 import { clinicOps } from "@/lib/ops-model";
 import { clinicOpsStatus } from "@/lib/status";
 import { formatRelative } from "@acuity/i18n/format";
-import type { ClinicSubscriptionOut } from "@acuity/types";
+import type { ClinicRetentionAuditOut, ClinicRetentionOut, ClinicSubscriptionOut } from "@acuity/types";
 import { ClinicFlagStar } from "@/components/drawers/clinic-flag-star";
 
 const FACETS = ["overview", "provisioning", "insurers", "usage", "account", "onboarding", "impersonate"] as const;
@@ -74,7 +74,7 @@ export async function ClinicDrawer({
   const activeFacet: ClinicFacet = (FACETS as readonly string[]).includes(facet)
     ? (facet as ClinicFacet)
     : "overview";
-  const [doctorRows, config, subscription] = await Promise.all([
+  const [doctorRows, config, subscription, retention, retentionHistory] = await Promise.all([
     listDoctorRows(undefined, clinic.id),
     getClinicConfigOverview(clinic.id).catch(() => null),
     getClinicSubscription(clinic.id).catch(
@@ -93,6 +93,17 @@ export async function ClinicDrawer({
         updated_at: new Date().toISOString(),
       }),
     ),
+    getClinicRetention(clinic.id).catch(
+      (): ClinicRetentionOut => ({
+        clinic_id: clinic.id,
+        retention_days: 2555,
+        is_overridden: false,
+        policy_name: "標準保留政策",
+        overridden_at: null,
+        overridden_by: null,
+      }),
+    ),
+    listClinicRetentionHistory(clinic.id).catch((): ClinicRetentionAuditOut[] => []),
   ]);
   const ops = clinicOps(clinic);
   const clinicName = pickName(locale, clinic.clinic_name, clinic.clinic_name_en);
@@ -307,7 +318,13 @@ export async function ClinicDrawer({
       ) : null}
 
       {activeFacet === "account" ? (
-        <AccountFacet clinic={summary} ops={ops} subscription={subscription} />
+        <AccountFacet
+          clinic={summary}
+          subscription={subscription}
+          retention={retention}
+          retentionHistory={retentionHistory}
+          locale={locale}
+        />
       ) : null}
       {activeFacet === "onboarding" ? <OnboardingFacet clinic={summary} ops={ops} /> : null}
       {activeFacet === "impersonate" ? (

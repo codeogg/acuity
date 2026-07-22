@@ -32,7 +32,6 @@ import type { StaffHandoff } from "../../endpoints/frontend-only/staff-handoff";
 import type { DoctorSettings } from "../../endpoints/frontend-only/doctor-settings";
 import type { NotificationItem } from "../../endpoints/frontend-only/notifications";
 import type { SupportAccessState } from "../../endpoints/frontend-only/support-access";
-import type { AuditEvent } from "../../endpoints/frontend-only/admin-audit";
 import type {
   OnboardingQueueItem,
   Ticket,
@@ -239,7 +238,15 @@ export const onboardingQueue = fo.onboarding_queue as unknown as OnboardingQueue
 export const tags = fo.tags as unknown as Tag[];
 export const tagVisibility = fo.tag_visibility as unknown as TagVisibilityEntry[];
 export const savedViews = fo.saved_views as unknown as SavedView[];
-export const demoAudit = fo.audit_events as unknown as AuditEvent[];
+/** Legacy fixture rows; migrated to AuditLogOut shape in frontend-only-store. */
+export const demoAudit = fo.audit_events as unknown as Array<{
+  id: string;
+  ts: string;
+  operator: string;
+  action: string;
+  target: string;
+  mode: "view-as" | "act-as" | null;
+}>;
 export const analyticsOverview = fo.analytics.overview as AnalyticsOverview;
 export const analyticsUsage = fo.analytics.usage as UsagePoint[];
 export const analyticsFunnel = fo.analytics.funnel as ActivationFunnel;

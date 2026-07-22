@@ -26,7 +26,7 @@ Operations without `x-backend-status` are implemented by the backend today. Oper
 | Group | Operations | Backend status |
 |---|---|---|
 | [auth](#groupauth) | 3 | EXISTS |
-| [admin:clinics](#groupadminclinics) | 16 | EXISTS |
+| [admin:clinics](#groupadminclinics) | 19 | EXISTS |
 | [admin:doctors](#groupadmindoctors) | 7 | EXISTS |
 | [admin:insurance](#groupadmininsurance) | 7 | EXISTS |
 | [admin:standard-fields](#groupadminstandardfields) | 8 | EXISTS |
@@ -50,7 +50,7 @@ Operations without `x-backend-status` are implemented by the backend today. Oper
 | [admin-impersonation](#groupadminimpersonation) | 3 | MISSING |
 | [admin-claims-oversight](#groupadminclaimsoversight) | 2 | PARTIAL |
 | [account-management](#groupaccountmanagement) | 7 | MISSING |
-| **Total** | **137** | |
+| **Total** | **140** | |
 
 ## Group auth
 
@@ -417,6 +417,65 @@ Request body: [ClinicSubscriptionNoteUpdate](#clinicsubscriptionnoteupdate)
 Responses:
 
 - `200` — [ClinicSubscriptionOut](#clinicsubscriptionout)
+- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
+
+### GET `/api/admin/clinics/{clinic_id}/retention`
+
+Get Clinic Retention
+
+Effective retention days for a clinic (global default or override).
+
+Auth: bearer / cookie
+
+Path parameters:
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `clinic_id` | integer | yes |  |
+
+Responses:
+
+- `200` — [ClinicRetentionOut](#clinicretentionout)
+- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
+
+### POST `/api/admin/clinics/{clinic_id}/retention/override`
+
+Override Clinic Retention
+
+Super-admin only. Requires clinic_code_input paste match. Writes audit + upserts override in one transaction.
+
+Auth: bearer / cookie
+
+Path parameters:
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `clinic_id` | integer | yes |  |
+
+Request body: [ClinicRetentionOverrideRequest](#clinicretentionoverriderequest)
+
+Responses:
+
+- `200` — [ClinicRetentionOut](#clinicretentionout)
+- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
+
+### GET `/api/admin/clinics/{clinic_id}/retention/history`
+
+List Clinic Retention History
+
+Append-only audit log for retention overrides, newest first.
+
+Auth: bearer / cookie
+
+Path parameters:
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `clinic_id` | integer | yes |  |
+
+Responses:
+
+- `200` — array of [ClinicRetentionAuditOut](#clinicretentionauditout)
 - errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
 
 ## Group admin:doctors
@@ -2803,6 +2862,9 @@ Responses:
 | `created_at` | string (date-time) | yes |  |
 | `data_region` | string | yes | Clinic data residency: 香港 / 新加坡 / 美国. |
 | `is_flagged` | integer | yes | 1 = needs attention (operator flag), 0 = not flagged. |
+| `subscription_status` | string | no | Joined from clinic_subscriptions.subscription_status (1:1). |
+| `payment_status` | string | no | Joined from clinic_subscriptions.payment_status (1:1). |
+| `plan_code` | string | no | Joined from clinic_subscriptions.plan_code (1:1). |
 
 ### ClinicStatusUpdate
 
@@ -4188,4 +4250,36 @@ Enum: `type`, `insurer`, `specialty`
 |---|---|---|---|
 | `note_content` | string | no |  |
 | `note_format` | `"html"` \| `"markdown"` | no |  |
+
+### ClinicRetentionOut
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `clinic_id` | integer | yes |  |
+| `retention_days` | integer | yes |  |
+| `is_overridden` | boolean | yes |  |
+| `policy_name` | string | no |  |
+| `overridden_at` | string (date-time) | no |  |
+| `overridden_by` | integer | no |  |
+
+### ClinicRetentionOverrideRequest
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `clinic_code_input` | string | yes |  |
+| `retention_days` | integer | yes |  |
+
+### ClinicRetentionAuditOut
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `id` | integer | yes |  |
+| `clinic_id` | integer | yes |  |
+| `clinic_code_input` | string | yes |  |
+| `old_retention_days` | integer | yes |  |
+| `new_retention_days` | integer | yes |  |
+| `operated_by` | integer | yes |  |
+| `operator_name` | string | no |  |
+| `operated_at` | string (date-time) | yes |  |
+| `ip_address` | string | no |  |
 

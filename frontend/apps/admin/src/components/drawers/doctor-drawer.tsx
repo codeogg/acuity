@@ -21,7 +21,7 @@ import {
   setDoctorEnabledAction,
 } from "@/lib/actions";
 import { DoctorAccountFacet, type LinkedClinicItem } from "@/components/drawers/doctor-facets";
-import { doctorAccount, getDoctor, listClinics } from "@/lib/data";
+import { doctorAccount, doctorSpecialtyLabel, getDoctor, listClinics, listTags } from "@/lib/data";
 import { doctorOps } from "@/lib/ops-model";
 import { activationStatus } from "@/lib/status";
 import { formatRelative } from "@acuity/i18n/format";
@@ -63,7 +63,11 @@ export async function DoctorDrawer({
     ? (facet as DoctorFacet)
     : "overview";
   const account = doctorAccount(doctor);
-  const [clinicPage, ops] = [await listClinics({ page_size: 100 }), doctorOps(doctor)];
+  const ops = doctorOps(doctor);
+  const [clinicPage, specialtyTags] = [
+    await listClinics({ page_size: 100 }),
+    await listTags("specialty"),
+  ];
   const toItem = (id: number): LinkedClinicItem | null => {
     const c = clinicPage.items.find((x) => x.id === id);
     return c ? { id: c.id, code: c.clinic_code, name: pickName(locale, c.clinic_name, c.clinic_name_en) } : null;
@@ -81,7 +85,8 @@ export async function DoctorDrawer({
         ? linkedClinics[0]!.name
         : t("clinic-plus-n", { name: linkedClinics[0]!.name, count: linkedClinics.length - 1 });
   const enabled = doctor.status === 1;
-  const specialty = locale.startsWith("zh") ? ops.specialty_zh : ops.specialty_en;
+  const specialty = doctorSpecialtyLabel(doctor, locale);
+  const primaryClinicId = doctor.clinic_id ?? linkedClinics[0]?.id ?? null;
   const login = doctor.login_account.toUpperCase();
 
   const facetHref = (f: DoctorFacet) => {
@@ -201,19 +206,24 @@ export async function DoctorDrawer({
           doctorId={doctor.id}
           login={doctor.login_account}
           email={doctor.email}
-          ops={ops}
           notes={account.notes}
+          notesFormat={(account.notes_format as "markdown" | "html") || "markdown"}
+          specialtyTagId={doctor.specialty_tag_id}
+          specialtyLabel={specialty}
+          specialtyTags={specialtyTags}
+          locale={locale}
           workspaceSeparation={account.workspace_separation}
+          primaryClinicId={primaryClinicId}
           linkedClinics={linkedClinics}
           linkableClinics={linkableClinics}
         />
       ) : null}
 
       {activeFacet === "impersonate" ? (
-        linkedClinics.length > 0 ? (
+        primaryClinicId != null ? (
           <ImpersonateControl
-            clinicId={linkedClinics[0]!.id}
-            clinicName={linkedClinics[0]!.name}
+            clinicId={primaryClinicId}
+            clinicName={linkedClinics.find((c) => c.id === primaryClinicId)?.name ?? ""}
             doctors={[{ id: doctor.id, label: `${login} · ${specialty}` }]}
           />
         ) : (

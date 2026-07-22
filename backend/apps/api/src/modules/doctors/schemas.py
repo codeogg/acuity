@@ -3,6 +3,9 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+NoteFormat = Literal["markdown", "html"]
+NOTE_FORMATS = frozenset({"html", "markdown"})
+
 
 class DoctorCreate(BaseModel):
     clinic_id: int | None = None
@@ -13,6 +16,7 @@ class DoctorCreate(BaseModel):
     login_account: str
     password: str
     signature_url: str | None = None
+    specialty_tag_id: int | None = None
 
 
 class DoctorUpdate(BaseModel):
@@ -23,6 +27,7 @@ class DoctorUpdate(BaseModel):
     login_account: str | None = None
     signature_url: str | None = None
     status: int | None = None
+    specialty_tag_id: int | None = None
 
 
 class DoctorStatusUpdate(BaseModel):
@@ -53,6 +58,7 @@ class WorkspaceModeUpdate(BaseModel):
 
 class AccountNotesUpdate(BaseModel):
     notes: str = Field(default="")
+    notes_format: NoteFormat | None = None
 
 
 class DoctorOut(BaseModel):
@@ -69,6 +75,10 @@ class DoctorOut(BaseModel):
     status: int
     workspace_mode: str
     account_notes: str | None
+    account_notes_format: str
+    specialty_tag_id: int
+    specialty_label_en: str
+    specialty_label_zh: str
     created_at: datetime
 
 
@@ -77,6 +87,7 @@ class DoctorAccountOut(DoctorOut):
 
     clinic_ids: list[int]
     notes: str
+    notes_format: str
     workspace_separation: Literal["separated", "merged"]
     mfa_enabled: bool = False
 

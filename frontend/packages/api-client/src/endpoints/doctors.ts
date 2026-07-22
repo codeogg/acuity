@@ -53,3 +53,15 @@ export function deleteDoctor(doctorId: number): Promise<void> {
 export function resetDoctorPassword(doctorId: number): Promise<ResetPasswordResponse> {
   return api.post<ResetPasswordResponse>(`/admin/doctors/${doctorId}/reset-password`);
 }
+
+export type DoctorNotesUpdate = {
+  notes?: string;
+  notes_format?: "markdown" | "html";
+};
+
+export function updateDoctorNotes(
+  doctorId: number,
+  body: DoctorNotesUpdate,
+): Promise<DoctorOut> {
+  return api.put<DoctorOut>(`/admin/doctors/${doctorId}/account-notes`, body);
+}

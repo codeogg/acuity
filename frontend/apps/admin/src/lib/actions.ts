@@ -9,11 +9,13 @@
 
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { api, ApiError, clinics, companies, doctors, fields, frontendOnly, templates } from "@acuity/api-client";
+import { api, ApiError, audit as auditApi, companies, doctors, fields, frontendOnly, templates } from "@acuity/api-client";
 import type { DoctorAccountExtension } from "@acuity/api-client";
 import type {
+  AuditActionType,
   ClinicCreate,
   ClinicOut,
+  ClinicRetentionOut,
   ClinicSubscriptionOut,
   ClinicSubscriptionUpdate,
   ClinicUpdate,
@@ -40,7 +42,6 @@ import {
 
 const {
   accountManagement,
-  adminAudit,
   adminImpersonation,
   adminSavedViews,
   adminTickets,
@@ -104,15 +105,44 @@ async function run<T>(fn: () => Promise<T>, paths: string[]): Promise<ActionResu
   }
 }
 
-const audit = (action: string, target: string, mode: "view-as" | "act-as" | null = null) =>
-  adminAudit.recordAuditEvent({ action, target, mode }).catch(() => undefined);
+const logAudit = (
+  actionType: AuditActionType,
+  targetRef: string,
+  opts: {
+    mode?: "view-as" | "act-as" | null;
+    clinicId?: number | null;
+    fieldSet?: string | null;
+    detail?: Record<string, unknown> | null;
+  } = {},
+) => {
+  const target = process.env.API_PROXY_TARGET;
+  const base =
+    process.env.NEXT_PUBLIC_API_MOCKING === "disabled" && target
+      ? `${target}/api`
+      : undefined;
+  return sessionHeaders().then((headers) =>
+    auditApi
+      .createAuditLog(
+        {
+          action_type: actionType,
+          target_ref: targetRef,
+          clinic_id: opts.clinicId ?? null,
+          mode: opts.mode ?? null,
+          field_set: opts.fieldSet ?? null,
+          detail: opts.detail ?? null,
+        },
+        { headers, base },
+      )
+      .catch(() => undefined),
+  );
+};
 
 // --- clinics --------------------------------------------------------------------
 
 export async function createClinicAction(body: ClinicCreate) {
   return run(async () => {
     const clinic = await clinicMutation<ClinicOut>("post", "/admin/clinics", body);
-    await audit("account-created", clinic.clinic_code);
+    await logAudit("account_creation", clinic.clinic_code, { clinicId: clinic.id });
     return clinic;
   }, ["/"]);
 }
@@ -127,7 +157,7 @@ export async function updateClinicAction(clinicId: number, body: ClinicUpdate) {
 export async function setClinicStatusAction(clinicId: number, status: number, code: string) {
   return run(async () => {
     const out = await clinicMutation<ClinicOut>("patch", `/admin/clinics/${clinicId}/status`, { status });
-    await audit("bulk-operation", `${code} · status → ${status}`);
+    await logAudit("batch_operation", `${code} · status → ${status}`, { clinicId });
     return out;
   }, ["/"]);
 }
@@ -137,7 +167,7 @@ export async function setClinicFlagAction(clinicId: number, isFlagged: boolean, 
     const out = await clinicMutation<ClinicOut>("patch", `/admin/clinics/${clinicId}/flag`, {
       is_flagged: isFlagged ? 1 : 0,
     });
-    await audit("bulk-operation", `${code} · flag → ${isFlagged ? 1 : 0}`);
+    await logAudit("batch_operation", `${code} · flag → ${isFlagged ? 1 : 0}`, { clinicId });
     return out;
   }, ["/"]);
 }
@@ -145,7 +175,7 @@ export async function setClinicFlagAction(clinicId: number, isFlagged: boolean, 
 export async function deleteClinicAction(clinicId: number, code: string) {
   return run(async () => {
     await clinicMutation<void>("delete", `/admin/clinics/${clinicId}`);
-    await audit("bulk-operation", `${code} · deleted`);
+    await logAudit("batch_operation", `${code} · deleted`, { clinicId: null });
   }, ["/"]);
 }
 
@@ -207,7 +237,7 @@ export async function setClinicCompanyTemplatesAction(
 export async function updateClinicOpsAction(clinicId: number, code: string, patch: Partial<ClinicOps>) {
   return run(async () => {
     updateClinicOps(clinicId, patch);
-    if (patch.retention_months) await audit("retention-override", code);
+    if (patch.retention_months) await logAudit("retention_override", code, { clinicId });
   }, ["/"]);
 }
 
@@ -246,7 +276,6 @@ export async function updateClinicSubscriptionAction(
       opsPatch.pay_method = methodMap[patch.payment_method] ?? "other";
     }
     if (Object.keys(opsPatch).length) updateClinicOps(clinicId, opsPatch);
-    await audit("crm-edit", code);
     return out;
   }, ["/"]);
 }
@@ -263,7 +292,22 @@ export async function updateClinicSubscriptionNoteAction(
       `/admin/clinics/${clinicId}/subscription/note`,
       { note_content: noteContent, note_format: noteFormat },
     );
-    await audit("crm-edit", `${code} · notes`);
+    return out;
+  }, ["/"]);
+}
+
+export async function overrideClinicRetentionAction(
+  clinicId: number,
+  code: string,
+  clinicCodeInput: string,
+  retentionDays: number,
+) {
+  return run(async () => {
+    const out = await clinicMutation<ClinicRetentionOut>(
+      "post",
+      `/admin/clinics/${clinicId}/retention/override`,
+      { clinic_code_input: clinicCodeInput, retention_days: retentionDays },
+    );
     return out;
   }, ["/"]);
 }
@@ -283,7 +327,7 @@ export async function bulkClinicsAction(
         await clinicMutation<ClinicOut>("patch", `/admin/clinics/${item.id}/status`, { status: 0 });
       }
     }
-    await audit(op === "export" ? "export" : "bulk-operation", `clinics · ${op} ×${items.length}`);
+    await logAudit(op === "export" ? "export" : "batch_operation", `clinics · ${op} ×${items.length}`);
   }, ["/"]);
 }
 
@@ -292,7 +336,7 @@ export async function bulkClinicsAction(
 export async function createDoctorAction(body: DoctorCreate) {
   return run(async () => {
     const doctor = await doctors.createDoctor(body);
-    await audit("account-created", doctor.login_account);
+    await logAudit("account_creation", doctor.login_account);
     return doctor;
   }, ["/"]);
 }
@@ -300,7 +344,7 @@ export async function createDoctorAction(body: DoctorCreate) {
 export async function updateDoctorAction(doctorId: number, body: DoctorUpdate) {
   return run(async () => {
     const doctor = await doctors.updateDoctor(doctorId, body);
-    await audit("crm-edit", `${doctor.login_account} · email`);
+    await logAudit("crm_billing_edit", `${doctor.login_account} · email`);
     return doctor;
   }, ["/"]);
 }
@@ -320,7 +364,7 @@ export async function linkDoctorClinicAction(doctorId: number, login: string, cl
       `/admin/doctors/${doctorId}/clinics`,
       { clinic_id: clinicId },
     );
-    await audit("account-link", `${login} · clinic ${clinicId} linked`);
+    await logAudit("proxy_edit", `${login} · clinic ${clinicId} linked`, { clinicId });
     return out;
   }, ["/"]);
 }
@@ -331,19 +375,58 @@ export async function unlinkDoctorClinicAction(doctorId: number, login: string, 
       "delete",
       `/admin/doctors/${doctorId}/clinics/${clinicId}`,
     );
-    await audit("account-unlink", `${login} · clinic ${clinicId} unlinked`);
+    await logAudit("proxy_edit", `${login} · clinic ${clinicId} unlinked`, { clinicId });
     return out;
+  }, ["/"]);
+}
+
+export async function setDoctorPrimaryClinicAction(doctorId: number, login: string, clinicId: number) {
+  return run(async () => {
+    await clinicMutation<void>(
+      "put",
+      `/admin/doctors/${doctorId}/clinic-links/${clinicId}/set-primary`,
+    );
+    await logAudit("proxy_edit", `${login} · primary clinic → ${clinicId}`, { clinicId });
   }, ["/"]);
 }
 
 export async function updateDoctorAccountAction(
   doctorId: number,
   login: string,
-  patch: Partial<Pick<DoctorAccountExtension, "notes" | "workspace_separation" | "mfa_enabled">>,
+  patch: Partial<Pick<DoctorAccountExtension, "workspace_separation" | "mfa_enabled">>,
 ) {
   return run(async () => {
     const out = await accountManagement.updateDoctorAccountModel(doctorId, patch);
-    await audit("crm-edit", `${login} · account model`);
+    await logAudit("crm_billing_edit", `${login} · account model`);
+    return out;
+  }, ["/"]);
+}
+
+export async function updateDoctorNotesAction(
+  doctorId: number,
+  login: string,
+  noteContent: string,
+  noteFormat: "markdown" | "html",
+) {
+  return run(async () => {
+    const out = await clinicMutation<import("@acuity/types").DoctorOut>(
+      "put",
+      `/admin/doctors/${doctorId}/account-notes`,
+      { notes: noteContent, notes_format: noteFormat },
+    );
+    await logAudit("crm_billing_edit", `${login} · notes`);
+    return out;
+  }, ["/"]);
+}
+
+export async function updateDoctorSpecialtyAction(
+  doctorId: number,
+  login: string,
+  specialtyTagId: number,
+) {
+  return run(async () => {
+    const out = await doctors.updateDoctor(doctorId, { specialty_tag_id: specialtyTagId });
+    await logAudit("tag_category_change", `${login} · specialty`);
     return out;
   }, ["/"]);
 }
@@ -351,7 +434,7 @@ export async function updateDoctorAccountAction(
 export async function unlockDoctorAccountAction(doctorId: number, login: string) {
   return run(async () => {
     const out = await accountManagement.unlockDoctorAccount(doctorId);
-    await audit("account-unlock", login);
+    await logAudit("proxy_edit", `${login} · unlock`);
     return out;
   }, ["/"]);
 }
@@ -359,7 +442,7 @@ export async function unlockDoctorAccountAction(doctorId: number, login: string)
 export async function resendInviteAction(doctorId: number, login: string) {
   return run(async () => {
     const out = await doctors.resetDoctorPassword(doctorId);
-    await audit("invite-resent", login);
+    await logAudit("proxy_edit", `${login} · invite resent`);
     return out;
   }, ["/"]);
 }
@@ -373,7 +456,7 @@ export async function resetDoctorPasswordAction(doctorId: number) {
 export async function setDoctorEnabledAction(doctorId: number, login: string, enabled: boolean) {
   return run(async () => {
     const out = await doctors.setDoctorStatus(doctorId, { status: enabled ? 1 : 0 });
-    await audit("account-status", `${login} · ${enabled ? "enabled" : "disabled"}`);
+    await logAudit("proxy_edit", `${login} · ${enabled ? "enabled" : "disabled"}`);
     return out;
   }, ["/"]);
 }
@@ -391,7 +474,7 @@ export async function bulkDoctorsAction(
         await clinicMutation<void>("delete", `/admin/doctors/${item.id}`);
       }
     }
-    await audit("bulk-operation", `doctors · ${op} ×${items.length}`);
+    await logAudit("batch_operation", `doctors · ${op} ×${items.length}`);
   }, ["/"]);
 }
 
@@ -524,7 +607,7 @@ export async function publishTemplateAction(templateId: number) {
 export async function archiveTemplateAction(templateId: number, code: string) {
   return run(async () => {
     await templates.deleteTemplate(templateId);
-    await audit("template-archive", code);
+    await logAudit("template_archive", code);
   }, ["/"]);
 }
 
@@ -540,10 +623,10 @@ export async function bulkTemplatesAction(
     if (op === "archive") {
       for (const item of items) {
         await templates.deleteTemplate(item.id);
-        await audit("template-archive", item.code);
+        await logAudit("template_archive", item.code);
       }
     }
-    await audit("bulk-operation", `templates · ${op} ×${items.length}`);
+    await logAudit("batch_operation", `templates · ${op} ×${items.length}`);
   }, ["/"]);
 }
 
@@ -569,7 +652,7 @@ export async function createTagAction(kind: "type" | "insurer" | "specialty", la
       label_en: labelEn,
       label_zh: labelZh,
     });
-    await audit("tag-change", `tag · ${labelEn} added`);
+    await logAudit("tag_category_change", `tag · ${labelEn} added`);
     return tag;
   }, ["/"]);
 }
@@ -581,7 +664,7 @@ export async function retireTagAction(tagId: number, label: string) {
       `/admin/tags/${tagId}/retire`,
       {},
     );
-    await audit("tag-change", `tag · ${label} retired · re-mapped ${result.remapped_count}`);
+    await logAudit("tag_category_change", `tag · ${label} retired · re-mapped ${result.remapped_count}`);
     return result;
   }, ["/"]);
 }
@@ -613,13 +696,13 @@ export async function exportAnalyticsAction(report: "usage" | "funnel" | "verifi
 
 export async function revealClaimPhiAction(submissionNo: string) {
   return run(async () => {
-    await audit("phi-reveal", submissionNo);
+    await logAudit("patient_data_view", submissionNo, { fieldSet: "claim.surrogate", detail: { submission_no: submissionNo } });
   }, ["/"]);
 }
 
 export async function exportAuditAction(scope: string) {
   return run(async () => {
-    await audit("export", `audit · ${scope}`);
+    await logAudit("export", `audit · ${scope}`);
   }, ["/"]);
 }
 
@@ -663,7 +746,7 @@ export async function setCompanyStatusAction(companyId: number, status: number) 
 export async function deleteCompanyAction(companyId: number, code: string) {
   return run(async () => {
     await clinicMutation<void>("delete", `/admin/insurance-companies/${companyId}`);
-    await audit("bulk-operation", `${code} · deleted`);
+    await logAudit("batch_operation", `${code} · deleted`);
   }, ["/", "/insurers"]);
 }
 
@@ -681,6 +764,6 @@ export async function updateProfileAction(patch: { name?: string; email?: string
 
 export async function changeRoleAction(email: string) {
   return run(async () => {
-    await audit("crm-edit", `rbac · ${email} role change`);
+    await logAudit("crm_billing_edit", `rbac · ${email} role change`);
   }, ["/"]);
 }

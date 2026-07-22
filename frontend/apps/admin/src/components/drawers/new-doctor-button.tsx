@@ -1,9 +1,5 @@
 "use client";
 
-// New doctor account — dialog form (clinic + name + login + email) creating
-// through the contract endpoint; replaces the reference's inert New-doctor
-// control.
-
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -24,24 +20,37 @@ import {
 import { AcuityIcon } from "@acuity/ui";
 import { useToast } from "@acuity/ui";
 import { doctors } from "@acuity/api-client";
+import type { Tag } from "@acuity/types";
 
-export function NewDoctorButton({ clinics }: { clinics: { id: number; label: string }[] }) {
+export function NewDoctorButton({
+  clinics,
+  specialtyTags,
+  locale,
+}: {
+  clinics: { id: number; label: string }[];
+  specialtyTags: Tag[];
+  locale: string;
+}) {
   const t = useTranslations("doctors.new");
   const [open, setOpen] = useState(false);
   const [clinicId, setClinicId] = useState(clinics[0] ? String(clinics[0].id) : "");
+  const defaultSpecialty =
+    specialtyTags.find((tag) => tag.label_en === "General practice" && !tag.retired)?.id ??
+    specialtyTags.find((tag) => !tag.retired)?.id ??
+    0;
+  const [specialtyTagId, setSpecialtyTagId] = useState(String(defaultSpecialty || ""));
   const [name, setName] = useState("");
   const [login, setLogin] = useState("");
   const [email, setEmail] = useState("");
   const [pending, startTransition] = useTransition();
   const router = useRouter();
   const { showToast } = useToast();
+  const activeSpecialties = specialtyTags.filter((tag) => !tag.retired);
 
   function submit() {
-    if (!clinicId || !name.trim() || !login.trim()) return;
+    if (!clinicId || !name.trim() || !login.trim() || !specialtyTagId) return;
     startTransition(async () => {
       try {
-        // This browser-originated request stays on the same origin and carries
-        // the httpOnly access_token cookie automatically.
         await doctors.createDoctor({
           clinic_id: Number(clinicId),
           doctor_name: name.trim(),
@@ -49,6 +58,7 @@ export function NewDoctorButton({ clinics }: { clinics: { id: number; label: str
           login_account: login.trim(),
           email: email.trim() || null,
           password: "changeme-on-first-signin",
+          specialty_tag_id: Number(specialtyTagId),
         });
         showToast(t("created", { login: login.trim() }));
         setOpen(false);
@@ -84,6 +94,21 @@ export function NewDoctorButton({ clinics }: { clinics: { id: number; label: str
                   {clinics.map((c) => (
                     <SelectItem key={c.id} value={String(c.id)}>
                       {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("specialty")}</label>
+              <Select value={specialtyTagId} onValueChange={setSpecialtyTagId}>
+                <SelectTrigger aria-label={t("specialty")} className="h-10 w-full rounded-lg border-border bg-muted/55">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {activeSpecialties.map((tag) => (
+                    <SelectItem key={tag.id} value={String(tag.id)}>
+                      {locale.startsWith("zh") ? tag.label_zh : tag.label_en}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -127,7 +152,7 @@ export function NewDoctorButton({ clinics }: { clinics: { id: number; label: str
               size="sm"
               className="rounded-full px-4 shadow-sm"
               onClick={submit}
-              disabled={pending || !clinicId || !name.trim() || !login.trim()}
+              disabled={pending || !clinicId || !specialtyTagId || !name.trim() || !login.trim()}
             >
               {t("create")}
             </Button>

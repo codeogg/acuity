@@ -75,4 +75,17 @@ def get_current_doctor(user: CurrentUserDep) -> CurrentDoctor:
 
 
 AdminDep = Annotated[CurrentUser, Depends(require_admin)]
+# 「高级管理员」→ SUPER_ADMIN（种子账号 real_name「超级管理员」）
+SuperAdminDep = Annotated[CurrentUser, Depends(require_roles("SUPER_ADMIN"))]
 DoctorDep = Annotated[CurrentDoctor, Depends(get_current_doctor)]
+
+
+def client_ip(request: Request) -> str | None:
+    """Best-effort client IP (honours first X-Forwarded-For hop)."""
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip() or None
+    if request.client is not None:
+        return request.client.host
+    return None
+

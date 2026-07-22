@@ -13,6 +13,7 @@ import type {
   ClinicStatusUpdate,
   ClinicSubscriptionNoteUpdate,
   ClinicSubscriptionUpdate,
+  ClinicRetentionOverrideRequest,
   ClinicTemplatesSet,
   ClinicUpdate,
   CompanyCreate,
@@ -41,7 +42,7 @@ import type {
   TransformRuleCreate,
   TransformRuleOut,
 } from "@acuity/types";
-import type { AuditEventCreate } from "../../endpoints/frontend-only/admin-audit";
+import type { AuditLogCreate } from "@acuity/types";
 import type { ImpersonationSession, ImpersonationStartRequest } from "../../endpoints/frontend-only/admin-impersonation";
 import type { SavedView, SavedViewCreate, SavedViewUpdate } from "../../endpoints/frontend-only/admin-saved-views";
 import type { Tag, TagCreate, TagRetireRequest, TagUpdate, TagVisibilityEntry } from "../../endpoints/frontend-only/admin-tags";
@@ -54,12 +55,17 @@ import {
   analyticsUsage,
   analyticsVerification,
 } from "../fixtures/index";
-import { adminState, defaultClinicSubscription, nextAdminId } from "../stores/admin-store";
+import {
+  adminState,
+  defaultClinicSubscription,
+  effectiveClinicRetention,
+  nextAdminId,
+} from "../stores/admin-store";
 import { listClaimEntries } from "../stores/claims-store";
 import {
   frontendOnlyState,
   nextFrontendOnlyId,
-  recordAuditEvent,
+  recordAuditLog,
 } from "../stores/frontend-only-store";
 import { isConflict, isTenantNotFound, listItems } from "../scenario";
 import { API, conflictZh, errorEnvelope, gate, notFoundZh, page, pageQuery } from "./shared";
@@ -151,6 +157,50 @@ function setDoctorClinicIds(doctor: DoctorOut, ids: number[]): void {
   };
   ext.clinic_ids = ids;
   ext.clinic_id = ids[0] ?? null;
+}
+
+function specialtyForDoctor(doctorId: number, overrideTagId?: number) {
+  const byDoctor: Record<number, number> = {
+    2301: 21,
+    2320: 21,
+    2410: 22,
+    2450: 22,
+  };
+  const tagId = overrideTagId ?? byDoctor[doctorId] ?? 20;
+  const tag = frontendOnlyState().tags.find((t) => t.id === tagId);
+  return {
+    id: tagId,
+    en: tag?.label_en ?? "General practice",
+    zh: tag?.label_zh ?? "全科",
+  };
+}
+
+function asDoctorAccount(doctor: DoctorOut) {
+  const ext = doctor as Record<string, unknown>;
+  const spec = specialtyForDoctor(
+    doctor.id,
+    typeof ext.specialty_tag_id === "number" ? ext.specialty_tag_id : undefined,
+  );
+  const notes = String(ext.notes ?? ext.account_notes ?? "");
+  const notesFormat =
+    ((ext.notes_format as string) ??
+      (ext.account_notes_format as string) ??
+      "markdown") as "markdown" | "html";
+  return {
+    ...doctor,
+    clinic_id: doctor.clinic_id ?? null,
+    specialty_tag_id: spec.id,
+    specialty_label_en: (ext.specialty_label_en as string) ?? spec.en,
+    specialty_label_zh: (ext.specialty_label_zh as string) ?? spec.zh,
+    workspace_mode: (ext.workspace_separation as string) ?? "separated",
+    account_notes: notes || null,
+    account_notes_format: notesFormat,
+    clinic_ids: doctorClinicIds(doctor),
+    notes,
+    notes_format: notesFormat,
+    workspace_separation: (ext.workspace_separation as "separated" | "merged") ?? "separated",
+    mfa_enabled: Boolean(ext.mfa_enabled),
+  };
 }
 
 export const adminHandlers = [
@@ -431,6 +481,17 @@ export const adminHandlers = [
     if (body.payment_status !== undefined) row.payment_status = body.payment_status;
     if (body.payment_method !== undefined) row.payment_method = body.payment_method;
     row.updated_at = new Date().toISOString();
+    const clinic = s.clinics.find((c) => c.id === clinicId);
+    const fields = Object.keys(body).filter((k) => (body as Record<string, unknown>)[k] !== undefined);
+    if (fields.length) {
+      recordAuditLog({
+        action_type: "crm_billing_edit",
+        clinic_id: clinicId,
+        target_ref: clinic?.clinic_code ?? String(clinicId),
+        field_set: "subscription",
+        detail: { fields },
+      });
+    }
     return HttpResponse.json(row);
   }),
 
@@ -454,7 +515,94 @@ export const adminHandlers = [
     row.note_updated_by = 1;
     row.note_updated_at = new Date().toISOString();
     row.updated_at = row.note_updated_at;
+    const clinic = s.clinics.find((c) => c.id === clinicId);
+    recordAuditLog({
+      action_type: "crm_billing_edit",
+      clinic_id: clinicId,
+      target_ref: clinic?.clinic_code ?? String(clinicId),
+      field_set: "subscription.note",
+      detail: { note_format: row.note_format, note_updated: true },
+    });
     return HttpResponse.json(row);
+  }),
+
+  http.get(`${API}/admin/clinics/:clinicId/retention`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const s = adminState();
+    const clinicId = Number(params.clinicId);
+    if (!s.clinics.some((c) => c.id === clinicId)) return notFoundZh("診所不存在");
+    return HttpResponse.json(effectiveClinicRetention(s, clinicId));
+  }),
+
+  http.post(`${API}/admin/clinics/:clinicId/retention/override`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const s = adminState();
+    const clinicId = Number(params.clinicId);
+    const clinic = s.clinics.find((c) => c.id === clinicId);
+    if (!clinic) return notFoundZh("診所不存在");
+    const body = (await request.json()) as ClinicRetentionOverrideRequest;
+    const codeInput = String(body.clinic_code_input ?? "").trim();
+    if (codeInput !== clinic.clinic_code) {
+      return errorEnvelope(
+        "VALIDATION_ERROR",
+        "诊所识别码与当前诊所不匹配，请贴上正确的诊所识别码后重试",
+        422,
+      );
+    }
+    const current = effectiveClinicRetention(s, clinicId);
+    const now = new Date().toISOString();
+    recordAuditLog({
+      action_type: "retention_override",
+      operator_name: "超級管理員",
+      clinic_id: clinicId,
+      target_ref: clinic.clinic_code,
+      field_set: "retention_days",
+      detail: {
+        clinic_code_input: codeInput,
+        old_retention_days: current.retention_days,
+        new_retention_days: body.retention_days,
+      },
+    });
+    s.clinicRetention.set(clinicId, {
+      clinic_id: clinicId,
+      is_overridden: 1,
+      retention_days: body.retention_days,
+      overridden_by: 1,
+      overridden_at: now,
+    });
+    return HttpResponse.json(effectiveClinicRetention(s, clinicId));
+  }),
+
+  http.get(`${API}/admin/clinics/:clinicId/retention/history`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const clinicId = Number(params.clinicId);
+    if (!adminState().clinics.some((c) => c.id === clinicId)) return notFoundZh("診所不存在");
+    const rows = frontendOnlyState()
+      .auditLogs.filter(
+        (a) => a.clinic_id === clinicId && a.action_type === "retention_override",
+      )
+      .map((a) => {
+        const detail = (a.detail ?? {}) as {
+          clinic_code_input?: string;
+          old_retention_days?: number;
+          new_retention_days?: number;
+        };
+        return {
+          id: a.id,
+          clinic_id: clinicId,
+          clinic_code_input: detail.clinic_code_input ?? "",
+          old_retention_days: detail.old_retention_days ?? 0,
+          new_retention_days: detail.new_retention_days ?? 0,
+          operated_by: a.operator_id,
+          operator_name: a.operator_name,
+          operated_at: a.created_at,
+          ip_address: null,
+        };
+      });
+    return HttpResponse.json(rows);
   }),
 
   http.get(`${API}/admin/clinics/:clinicId/insurance-companies`, async ({ request, params }) => {
@@ -587,14 +735,16 @@ export const adminHandlers = [
     if (linked === "individual") rows = rows.filter((d) => doctorClinicIds(d).length === 0);
     rows = rows.filter((d) => matches(k, d.doctor_name, d.doctor_name_en, d.login_account, d.email));
     const { pageNo, pageSize } = pageQuery(request);
-    return HttpResponse.json(page(listItems(scenario, rows), pageNo, pageSize));
+    const enriched = rows.map((d) => asDoctorAccount(d));
+    return HttpResponse.json(page(listItems(scenario, enriched), pageNo, pageSize));
   }),
 
   http.post(`${API}/admin/doctors`, async ({ request }) => {
     const { deny } = await gate(request);
     if (deny) return deny;
     const body = (await request.json()) as DoctorCreate;
-    const doctor: DoctorOut = {
+    const spec = specialtyForDoctor(0, body.specialty_tag_id ?? undefined);
+    const doctor = asDoctorAccount({
       id: nextAdminId(),
       clinic_id: body.clinic_id,
       doctor_name: body.doctor_name,
@@ -604,9 +754,15 @@ export const adminHandlers = [
       signature_url: body.signature_url ?? null,
       login_account: body.login_account,
       status: 1,
+      workspace_mode: "separated",
+      account_notes: null,
+      account_notes_format: "markdown",
+      specialty_tag_id: spec.id,
+      specialty_label_en: spec.en,
+      specialty_label_zh: spec.zh,
       created_at: nowIso(),
-    };
-    adminState().doctors.unshift(doctor);
+    });
+    adminState().doctors.unshift(doctor as DoctorOut);
     return HttpResponse.json(doctor);
   }),
 
@@ -616,7 +772,7 @@ export const adminHandlers = [
     if (isTenantNotFound(scenario)) return notFoundZh("醫生不存在");
     const doctor = adminState().doctors.find((d) => d.id === Number(params.doctorId));
     if (!doctor) return notFoundZh("醫生不存在");
-    return HttpResponse.json(doctor);
+    return HttpResponse.json(asDoctorAccount(doctor));
   }),
 
   http.put(`${API}/admin/doctors/:doctorId`, async ({ request, params }) => {
@@ -633,7 +789,32 @@ export const adminHandlers = [
     if (body.login_account != null) doctor.login_account = body.login_account;
     if (body.signature_url !== undefined) doctor.signature_url = body.signature_url;
     if (body.status != null) doctor.status = body.status;
-    return HttpResponse.json(doctor);
+    if (body.specialty_tag_id != null) {
+      const spec = specialtyForDoctor(doctor.id, body.specialty_tag_id);
+      const ext = doctor as Record<string, unknown>;
+      ext.specialty_tag_id = spec.id;
+      ext.specialty_label_en = spec.en;
+      ext.specialty_label_zh = spec.zh;
+    }
+    return HttpResponse.json(asDoctorAccount(doctor));
+  }),
+
+  http.put(`${API}/admin/doctors/:doctorId/account-notes`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const doctor = adminState().doctors.find((d) => d.id === Number(params.doctorId));
+    if (!doctor) return notFoundZh("醫生不存在");
+    const body = (await request.json()) as { notes?: string; notes_format?: "markdown" | "html" };
+    const ext = doctor as Record<string, unknown>;
+    if (body.notes !== undefined) {
+      ext.notes = body.notes;
+      ext.account_notes = body.notes;
+    }
+    if (body.notes_format !== undefined) {
+      ext.notes_format = body.notes_format;
+      ext.account_notes_format = body.notes_format;
+    }
+    return HttpResponse.json(asDoctorAccount(doctor));
   }),
 
   http.delete(`${API}/admin/doctors/:doctorId`, async ({ request, params }) => {
@@ -705,6 +886,26 @@ export const adminHandlers = [
       const ids = doctorClinicIds(doctor).filter((id) => id !== Number(params.clinicId));
       setDoctorClinicIds(doctor, ids);
       return HttpResponse.json(doctor);
+    },
+  ),
+
+  http.put(
+    `${API}/admin/doctors/:doctorId/clinic-links/:clinicId/set-primary`,
+    async ({ request, params }) => {
+      const { deny } = await gate(request);
+      if (deny) return deny;
+      const doctor = adminState().doctors.find((d) => d.id === Number(params.doctorId));
+      if (!doctor) return notFoundZh("醫生不存在");
+      const clinicId = Number(params.clinicId);
+      const ids = doctorClinicIds(doctor);
+      if (!ids.includes(clinicId)) return notFoundZh("診所未連結");
+      setDoctorClinicIds(doctor, [clinicId, ...ids.filter((id) => id !== clinicId)]);
+      return HttpResponse.json({
+        doctor_id: doctor.id,
+        clinic_id: clinicId,
+        is_primary: true,
+        linked_at: new Date().toISOString(),
+      });
     },
   ),
 
@@ -1220,40 +1421,50 @@ export const adminHandlers = [
     if (!template) return notFoundZh("範本不存在");
     template.parse_status = "PUBLISHED";
     template.is_active = true;
-    recordAuditEvent({
-      operator: "you@acuity",
-      action: "template-publish",
-      target: template.template_code,
-      mode: null,
+    recordAuditLog({
+      action_type: "template_publish",
+      target_ref: template.template_code,
     });
     return HttpResponse.json(template);
   }),
 
-  // ===== frontend-only: audit events ============================================
-  http.get(`${API}/admin/audit-events`, async ({ request }) => {
+  // ===== audit logs (unified) ====================================================
+  http.get(`${API}/admin/audit-logs`, async ({ request }) => {
     const { scenario, deny } = await gate(request);
     if (deny) return deny;
     const url = new URL(request.url);
-    const operator = url.searchParams.get("operator");
-    const action = url.searchParams.get("action");
-    const clinicCode = url.searchParams.get("clinic_code");
-    let rows = frontendOnlyState().auditEvents;
-    if (operator) rows = rows.filter((e) => e.operator.toLowerCase().includes(operator.toLowerCase()));
-    if (action) rows = rows.filter((e) => e.action === action);
-    if (clinicCode) rows = rows.filter((e) => e.target.toLowerCase().includes(clinicCode.toLowerCase()));
+    const scope = url.searchParams.get("scope");
+    const operatorId = url.searchParams.get("operator_id");
+    const actionType = url.searchParams.get("action_type");
+    const clinicId = url.searchParams.get("clinic_id");
+    let rows = frontendOnlyState().auditLogs;
+    if (scope === "clinic") rows = rows.filter((e) => e.clinic_id != null);
+    if (operatorId) rows = rows.filter((e) => e.operator_id === Number(operatorId));
+    if (actionType) rows = rows.filter((e) => e.action_type === actionType);
+    if (clinicId) rows = rows.filter((e) => e.clinic_id === Number(clinicId));
     const { pageNo, pageSize } = pageQuery(request);
     return HttpResponse.json(page(listItems(scenario, rows), pageNo, pageSize));
   }),
 
-  http.post(`${API}/admin/audit-events`, async ({ request }) => {
+  http.get(`${API}/admin/audit-logs/:eventCode`, async ({ request, params }) => {
     const { deny } = await gate(request);
     if (deny) return deny;
-    const body = (await request.json()) as AuditEventCreate;
-    const event = recordAuditEvent({
-      operator: "you@acuity",
-      action: body.action,
-      target: body.target,
+    const row = frontendOnlyState().auditLogs.find((e) => e.event_code === params.eventCode);
+    if (!row) return notFoundZh("審計事件不存在");
+    return HttpResponse.json(row);
+  }),
+
+  http.post(`${API}/admin/audit-logs`, async ({ request }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const body = (await request.json()) as AuditLogCreate;
+    const event = recordAuditLog({
+      action_type: body.action_type,
+      clinic_id: body.clinic_id ?? null,
+      target_ref: body.target_ref ?? null,
       mode: body.mode ?? null,
+      field_set: body.field_set ?? null,
+      detail: body.detail ?? null,
     });
     return HttpResponse.json(event);
   }),
@@ -1365,7 +1576,10 @@ export const adminHandlers = [
       retired: false,
     };
     state.tags.push(tag);
-    recordAuditEvent({ operator: "you@acuity", action: "tag-change", target: tag.label_en, mode: null });
+    recordAuditLog({
+      action_type: "tag_category_change",
+      target_ref: tag.label_en,
+    });
     return HttpResponse.json(tag);
   }),
 
@@ -1401,7 +1615,10 @@ export const adminHandlers = [
         }
       }
     }
-    recordAuditEvent({ operator: "you@acuity", action: "tag-change", target: tag.label_en, mode: null });
+    recordAuditLog({
+      action_type: "tag_category_change",
+      target_ref: tag.label_en,
+    });
     return HttpResponse.json({ tag, remapped_count: remapped });
   }),
 
@@ -1444,15 +1661,13 @@ export const adminHandlers = [
     if (deny) return deny;
     const body = (await request.json().catch(() => ({}))) as { report?: string };
     // Surrogate-only export, always logged.
-    const event = recordAuditEvent({
-      operator: "you@acuity",
-      action: "export",
-      target: `analytics/${body.report ?? "usage"}`,
-      mode: null,
+    const event = recordAuditLog({
+      action_type: "export",
+      target_ref: `analytics/${body.report ?? "usage"}`,
     });
     return HttpResponse.json({
       export_url: `/local-storage/exports/${body.report ?? "usage"}-${Date.now() % 100000}.csv`,
-      logged_event_id: event.id,
+      logged_event_id: event.event_code,
     });
   }),
 
@@ -1540,10 +1755,11 @@ export const adminHandlers = [
       expires_at: new Date(now + (body.duration_minutes ?? 30) * 60_000).toISOString(),
     };
     frontendOnlyState().impersonation = session;
-    recordAuditEvent({
-      operator: session.operator,
-      action: "impersonation-start",
-      target: `clinic:${session.clinic_id} doctor:${session.doctor_id}`,
+    recordAuditLog({
+      action_type: "simulation_start",
+      operator_name: session.operator,
+      clinic_id: session.clinic_id,
+      target_ref: `clinic:${session.clinic_id} · doctor:${session.doctor_id}`,
       mode: session.mode,
     });
     return HttpResponse.json(session);
@@ -1555,10 +1771,11 @@ export const adminHandlers = [
     const state = frontendOnlyState();
     const session = state.impersonation;
     if (session) {
-      recordAuditEvent({
-        operator: session.operator,
-        action: "impersonation-end",
-        target: `clinic:${session.clinic_id} doctor:${session.doctor_id}`,
+      recordAuditLog({
+        action_type: "simulation_end",
+        operator_name: session.operator,
+        clinic_id: session.clinic_id,
+        target_ref: `clinic:${session.clinic_id} · doctor:${session.doctor_id}`,
         mode: session.mode,
       });
     }

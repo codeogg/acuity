@@ -24,7 +24,8 @@ router = APIRouter(prefix="/api/admin/doctors", tags=["admin:doctors"])
 
 @router.post("", response_model=DoctorOut)
 async def create_doctor(body: DoctorCreate, db: DbSession, _: AdminDep) -> DoctorOut:
-    return DoctorOut.model_validate(await service.create_doctor(db, body))
+    doctor = await service.create_doctor(db, body)
+    return DoctorOut.model_validate(await service.doctor_to_out(db, doctor))
 
 
 @router.get("", response_model=Page[DoctorAccountOut])
@@ -62,14 +63,16 @@ async def get_doctor(doctor_id: int, db: DbSession, _: AdminDep) -> DoctorAccoun
 async def update_doctor(
     doctor_id: int, body: DoctorUpdate, db: DbSession, _: AdminDep
 ) -> DoctorOut:
-    return DoctorOut.model_validate(await service.update_doctor(db, doctor_id, body))
+    doctor = await service.update_doctor(db, doctor_id, body)
+    return DoctorOut.model_validate(await service.doctor_to_out(db, doctor))
 
 
 @router.patch("/{doctor_id}/status", response_model=DoctorOut)
 async def update_status(
     doctor_id: int, body: DoctorStatusUpdate, db: DbSession, _: AdminDep
 ) -> DoctorOut:
-    return DoctorOut.model_validate(await service.set_status(db, doctor_id, body.status))
+    doctor = await service.set_status(db, doctor_id, body.status)
+    return DoctorOut.model_validate(await service.doctor_to_out(db, doctor))
 
 
 @router.delete("/{doctor_id}", status_code=204)
@@ -150,12 +153,14 @@ async def set_workspace_mode(
     doctor_id: int, body: WorkspaceModeUpdate, db: DbSession, _: AdminDep
 ) -> DoctorOut:
     doctor = await service.set_workspace_mode(db, doctor_id, body.mode)
-    return DoctorOut.model_validate(doctor)
+    return DoctorOut.model_validate(await service.doctor_to_out(db, doctor))
 
 
 @router.put("/{doctor_id}/account-notes", response_model=DoctorOut)
 async def set_account_notes(
     doctor_id: int, body: AccountNotesUpdate, db: DbSession, _: AdminDep
 ) -> DoctorOut:
-    doctor = await service.set_account_notes(db, doctor_id, body.notes)
-    return DoctorOut.model_validate(doctor)
+    doctor = await service.set_account_notes(
+        db, doctor_id, body.notes, notes_format=body.notes_format
+    )
+    return DoctorOut.model_validate(await service.doctor_to_out(db, doctor))

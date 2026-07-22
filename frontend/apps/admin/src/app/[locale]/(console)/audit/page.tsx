@@ -17,14 +17,20 @@ import { AcuityIcon } from "@acuity/ui";
 import { GridSkeleton } from "@/components/ui/skeletons";
 import { AuditTable } from "@/components/grid/audit-table";
 import { PaginationBar } from "@/components/grid/pagination-bar";
-import { listAuditEvents } from "@/lib/data";
+import { listAuditLogs, listClinicRows } from "@/lib/data";
 import { AUDIT_ACTION } from "@/lib/status";
 
 const TABS = ["global", "clinic", "action"] as const;
 type Tab = (typeof TABS)[number];
 const PAGE_SIZE = 25;
 
-type Search = { tab?: string; clinic?: string; operator?: string; action?: string; page?: string };
+type Search = {
+  tab?: string;
+  clinic?: string;
+  operator?: string;
+  action?: string;
+  page?: string;
+};
 
 export default async function AuditPage({
   params,
@@ -63,24 +69,32 @@ async function AuditGrid({ locale, sp }: { locale: string; sp: Search }) {
   const pathname = `/${locale}/audit`;
   const pageNo = Math.max(1, Number.parseInt(sp.page ?? "1", 10) || 1);
 
-  // The trail filters and paginates server-side (every axis a query param);
-  // the wide fetch feeds the operator-filter options and the tab counts.
+  const clinicRows = sp.clinic ? await listClinicRows(sp.clinic) : [];
+  const clinicId =
+    clinicRows.find((r) => r.clinic.clinic_code === sp.clinic)?.clinic.id ??
+    (Number.isFinite(Number(sp.clinic)) ? Number(sp.clinic) : undefined);
+
   const [t, tRoot, events, allEvents] = await Promise.all([
     getTranslations("audit"),
     getTranslations(),
-    listAuditEvents({
+    listAuditLogs({
       page: pageNo,
       page_size: PAGE_SIZE,
-      operator: sp.operator,
-      action: sp.action,
-      clinic_code: tab === "clinic" ? sp.clinic : undefined,
+      scope: tab === "clinic" ? "clinic" : undefined,
+      operator_id: sp.operator ? Number(sp.operator) || undefined : undefined,
+      action_type: sp.action || undefined,
+      clinic_id: tab === "clinic" ? clinicId : undefined,
     }),
-    listAuditEvents({ page_size: 100 }),
+    listAuditLogs({
+      page_size: 100,
+      scope: tab === "clinic" ? "clinic" : undefined,
+      clinic_id: tab === "clinic" ? clinicId : undefined,
+    }),
   ]);
 
-  const clinicCount = sp.clinic
-    ? allEvents.items.filter((e) => e.target.includes(sp.clinic ?? "")).length
-    : 0;
+  const clinicCount = clinicId
+    ? allEvents.items.filter((e) => e.clinic_id === clinicId).length
+    : allEvents.items.filter((e) => e.clinic_id != null).length;
 
   const tabHref = (tb: Tab) => {
     const p = new URLSearchParams();
@@ -99,7 +113,13 @@ async function AuditGrid({ locale, sp }: { locale: string; sp: Search }) {
     starred: tb === "global",
   }));
 
-  const operators = [...new Set(allEvents.items.map((e) => e.operator))];
+  const operators = [
+    ...new Map(
+      allEvents.items
+        .filter((e) => e.operator_name)
+        .map((e) => [String(e.operator_id), e.operator_name!] as const),
+    ).entries(),
+  ].map(([id, name]) => ({ value: id, label: name }));
 
   return (
     <>
@@ -117,7 +137,7 @@ async function AuditGrid({ locale, sp }: { locale: string; sp: Search }) {
               param="operator"
               label={t("operator-filter")}
               allLabel={t("operator-all")}
-              options={operators.map((o) => ({ value: o, label: o }))}
+              options={operators}
             />
             <UrlSelect
               param="action"

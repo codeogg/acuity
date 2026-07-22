@@ -94,11 +94,11 @@ if (parityMisses === 0) {
 
 console.log("2. Contract parity (typed endpoint functions vs spec)");
 
-if (backendOps.length === 76) ok(`spec carries 76 backend-implemented operations`);
-else fail(`spec has ${backendOps.length} backend-implemented operations, expected 76`);
+if (backendOps.length === 83) ok(`spec carries 83 backend-implemented operations`);
+else fail(`spec has ${backendOps.length} backend-implemented operations, expected 83`);
 
 const CONTRACT_MODULES = [
-  "ai.ts", "auth.ts", "claims.ts", "clinics.ts", "companies.ts",
+  "ai.ts", "audit.ts", "auth.ts", "claims.ts", "clinics.ts", "companies.ts",
   "doctors.ts", "fields.ts", "health.ts", "templates.ts",
 ];
 let contractFnCount = 0;

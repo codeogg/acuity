@@ -95,22 +95,21 @@ export const CLAIM_STATUS: Record<string, StatusMeta> = {
   CANCELLED: { tone: "danger", icon: "x", key: "status.cancelled" },
 };
 
-// audit action classes — the full 12-class taxonomy. Unknown codes render the
-// raw code on a neutral tone (never mislabelled as another class).
+// audit action classes — unified audit_logs.action_type taxonomy.
 export const AUDIT_ACTION: Record<string, StatusMeta> = {
-  "account-created": { tone: "info", icon: "user", key: "audit.account-created" },
-  "impersonation-start": { tone: "accent", icon: "eye", key: "audit.impersonation-start" },
-  "impersonation-end": { tone: "neutral", icon: "x", key: "audit.impersonation-end" },
-  "impersonation-abandoned": { tone: "warning", icon: "alert", key: "audit.impersonation-abandoned" },
-  "act-as-edit": { tone: "accent", icon: "pencil", key: "audit.act-as-edit" },
-  "retention-override": { tone: "danger", icon: "shield", key: "audit.retention-override" },
-  "template-publish": { tone: "success", icon: "check", key: "audit.template-publish" },
-  "template-archive": { tone: "neutral", icon: "layers", key: "audit.template-archive" },
-  "crm-edit": { tone: "info", icon: "card", key: "audit.crm-edit" },
-  "tag-change": { tone: "accent", icon: "tag", key: "audit.tag-change" },
-  "bulk-operation": { tone: "neutral", icon: "layers", key: "audit.bulk-operation" },
+  account_creation: { tone: "info", icon: "user", key: "audit.account_creation" },
+  simulation_start: { tone: "accent", icon: "eye", key: "audit.simulation_start" },
+  simulation_end: { tone: "neutral", icon: "x", key: "audit.simulation_end" },
+  simulation_interrupt: { tone: "warning", icon: "alert", key: "audit.simulation_interrupt" },
+  proxy_edit: { tone: "accent", icon: "pencil", key: "audit.proxy_edit" },
+  retention_override: { tone: "danger", icon: "shield", key: "audit.retention_override" },
+  template_publish: { tone: "success", icon: "check", key: "audit.template_publish" },
+  template_archive: { tone: "neutral", icon: "layers", key: "audit.template_archive" },
+  crm_billing_edit: { tone: "info", icon: "card", key: "audit.crm_billing_edit" },
+  tag_category_change: { tone: "accent", icon: "tag", key: "audit.tag_category_change" },
+  batch_operation: { tone: "neutral", icon: "layers", key: "audit.batch_operation" },
   export: { tone: "info", icon: "download", key: "audit.export" },
-  "phi-reveal": { tone: "danger", icon: "eye", key: "audit.phi-reveal" },
+  patient_data_view: { tone: "danger", icon: "eye", key: "audit.patient_data_view" },
 };
 
 // Safe accessors: always return a defined StatusMeta.

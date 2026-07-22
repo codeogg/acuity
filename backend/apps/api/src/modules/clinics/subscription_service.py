@@ -64,9 +64,16 @@ async def get_subscription(db: AsyncSession, clinic_id: int) -> ClinicSubscripti
 
 
 async def update_subscription(
-    db: AsyncSession, clinic_id: int, data: ClinicSubscriptionUpdate
+    db: AsyncSession,
+    clinic_id: int,
+    data: ClinicSubscriptionUpdate,
+    *,
+    admin_id: int | None = None,
 ) -> ClinicSubscription:
+    from src.modules.audit.service import log_audit
+
     row = await get_subscription(db, clinic_id)
+    clinic = await db.get(Clinic, clinic_id)
     updates = data.model_dump(exclude_unset=True)
     if "subscription_status" in updates and updates["subscription_status"] is not None:
         if updates["subscription_status"] not in SUBSCRIPTION_STATUSES:
@@ -92,6 +99,18 @@ async def update_subscription(
     for key, value in updates.items():
         setattr(row, key, value)
     await db.flush()
+
+    if admin_id is not None and updates:
+        await log_audit(
+            db,
+            action_type="crm_billing_edit",
+            operator_id=admin_id,
+            clinic_id=clinic_id,
+            target_ref=clinic.clinic_code if clinic else str(clinic_id),
+            mode=None,
+            field_set="subscription",
+            detail={"fields": sorted(updates.keys())},
+        )
     await db.refresh(row)
     return row
 
@@ -103,7 +122,10 @@ async def update_subscription_note(
     *,
     admin_id: int,
 ) -> ClinicSubscription:
+    from src.modules.audit.service import log_audit
+
     row = await get_subscription(db, clinic_id)
+    clinic = await db.get(Clinic, clinic_id)
     updates = data.model_dump(exclude_unset=True)
     if not updates:
         raise ValidationException("备注内容或格式至少提供一项")
@@ -116,5 +138,20 @@ async def update_subscription_note(
     row.note_updated_by = admin_id
     row.note_updated_at = datetime.now(timezone.utc)
     await db.flush()
+
+    await log_audit(
+        db,
+        action_type="crm_billing_edit",
+        operator_id=admin_id,
+        clinic_id=clinic_id,
+        target_ref=clinic.clinic_code if clinic else str(clinic_id),
+        mode=None,
+        field_set="subscription.note",
+        detail={
+            "note_format": row.note_format,
+            "note_updated": True,
+            # Never store note body — may contain operational free text.
+        },
+    )
     await db.refresh(row)
     return row

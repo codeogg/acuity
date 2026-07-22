@@ -11,6 +11,9 @@ import type {
   ClinicSubscriptionNoteUpdate,
   ClinicSubscriptionOut,
   ClinicSubscriptionUpdate,
+  ClinicRetentionAuditOut,
+  ClinicRetentionOut,
+  ClinicRetentionOverrideRequest,
   ClinicTemplatesSet,
   ClinicTemplatesSetResult,
   ClinicUpdate,
@@ -26,6 +29,9 @@ export type {
   ClinicSubscriptionNoteUpdate,
   ClinicSubscriptionOut,
   ClinicSubscriptionUpdate,
+  ClinicRetentionAuditOut,
+  ClinicRetentionOut,
+  ClinicRetentionOverrideRequest,
 };
 
 // A type alias (not interface) so it is assignable to the client's query index
@@ -147,4 +153,23 @@ export function updateClinicSubscriptionNote(
   body: ClinicSubscriptionNoteUpdate,
 ): Promise<ClinicSubscriptionOut> {
   return api.patch<ClinicSubscriptionOut>(`/admin/clinics/${clinicId}/subscription/note`, body);
+}
+
+// --- retention (global default + per-clinic override + audit) -------------------
+
+export function getClinicRetention(clinicId: number): Promise<ClinicRetentionOut> {
+  return api.get<ClinicRetentionOut>(`/admin/clinics/${clinicId}/retention`);
+}
+
+export function overrideClinicRetention(
+  clinicId: number,
+  body: ClinicRetentionOverrideRequest,
+): Promise<ClinicRetentionOut> {
+  return api.post<ClinicRetentionOut>(`/admin/clinics/${clinicId}/retention/override`, body);
+}
+
+export function listClinicRetentionHistory(
+  clinicId: number,
+): Promise<ClinicRetentionAuditOut[]> {
+  return api.get<ClinicRetentionAuditOut[]>(`/admin/clinics/${clinicId}/retention/history`);
 }

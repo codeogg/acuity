@@ -10,6 +10,7 @@
 import {
   ApiError,
   api,
+  audit,
   claims as claimsContract,
   clinics,
   companies,
@@ -27,9 +28,11 @@ import type {
 import type {
   ActivationFunnel,
   AnalyticsOverview,
-  AuditEvent as AuditEventOut,
+  AuditLogOut,
   ClinicConfigOverview,
   ClinicOut,
+  ClinicRetentionAuditOut,
+  ClinicRetentionOut,
   ClinicSubscriptionOut,
   DoctorOut,
   OnboardingQueueItem,
@@ -57,7 +60,6 @@ import { compareBy, type SortState } from "./table";
 
 const {
   adminAnalytics,
-  adminAudit,
   adminClaimsOversight,
   adminImpersonation,
   adminSavedViews,
@@ -66,9 +68,9 @@ const {
 } = frontendOnly;
 
 // Live FastAPI does not implement most forward-contract / frontend-only admin
-// surfaces yet (tickets, analytics, audit, impersonation, claims oversight).
+// surfaces yet (tickets, analytics, impersonation, claims oversight).
 // Soft-fail those reads to empty defaults so the console shell stays usable.
-// Tags are implemented on the live API — read them with session cookies below.
+// Tags and audit-logs are implemented on the live API.
 function emptyPage<T>(pageSize = 100): Page<T> {
   return { items: [], total: 0, page: 1, page_size: pageSize };
 }
@@ -126,6 +128,23 @@ export async function getClinicSubscription(
     headers: await serverSessionHeaders(),
   });
 }
+
+export async function getClinicRetention(
+  clinicId: number,
+): Promise<ClinicRetentionOut> {
+  return api.get<ClinicRetentionOut>(`/admin/clinics/${clinicId}/retention`, {
+    headers: await serverSessionHeaders(),
+  });
+}
+
+export async function listClinicRetentionHistory(
+  clinicId: number,
+): Promise<ClinicRetentionAuditOut[]> {
+  return api.get<ClinicRetentionAuditOut[]>(
+    `/admin/clinics/${clinicId}/retention/history`,
+    { headers: await serverSessionHeaders() },
+  );
+}
 export async function getDoctor(doctorId: number): Promise<DoctorOut> {
   return api.get<DoctorOut>(`/admin/doctors/${doctorId}`, {
     headers: await serverSessionHeaders(),
@@ -140,13 +159,21 @@ export const getTemplate = templates.getTemplate;
 export const listTemplateFields = templates.listTemplateFields;
 export const getParseProgress = templates.getParseProgress;
 export const getPublishPreview = templates.getPublishPreview;
-export function listAuditEvents(
-  query: Parameters<typeof adminAudit.listAuditEvents>[0] = {},
-): Promise<Page<AuditEventOut>> {
-  return softFrontendOnly(
-    () => adminAudit.listAuditEvents(query),
-    emptyPage<AuditEventOut>(query.page_size ?? 25),
-  );
+export async function listAuditLogs(
+  query: {
+    page?: number;
+    page_size?: number;
+    scope?: "global" | "clinic";
+    operator_id?: number;
+    action_type?: string;
+    clinic_id?: number;
+  } = {},
+): Promise<Page<AuditLogOut>> {
+  return audit.listAuditLogs(query, { headers: await serverSessionHeaders() });
+}
+
+export async function getAuditLog(eventCode: string): Promise<AuditLogOut> {
+  return audit.getAuditLog(eventCode, { headers: await serverSessionHeaders() });
 }
 export function listTickets(
   query: Parameters<typeof adminTickets.listTickets>[0] = {},
@@ -230,7 +257,9 @@ export function listClaimsOversight(
 export const getClaimOversight = adminClaimsOversight.getClaimOversight;
 export const listClaimsContract = claimsContract.listClaims;
 
-export type AuditEvent = AuditEventOut;
+export type AuditLog = AuditLogOut;
+/** @deprecated Prefer AuditLog */
+export type AuditEvent = AuditLogOut;
 
 // --- account-model normalisers (dev ADR 0041) -----------------------------------
 // The account fields ride DoctorOut/ClinicOut as mock-first body extensions;
@@ -238,7 +267,19 @@ export type AuditEvent = AuditEventOut;
 // workspaces, MFA off, empty notes).
 
 export function doctorAccount(doctor: DoctorOut): DoctorAccountOut {
-  const ext = doctor as DoctorOut & Partial<DoctorAccountExtension>;
+  const ext = doctor as DoctorAccountOut;
+  const notes =
+    typeof ext.notes === "string"
+      ? ext.notes
+      : typeof doctor.account_notes === "string"
+        ? doctor.account_notes
+        : "";
+  const notesFormat =
+    ext.notes_format === "html" || ext.notes_format === "markdown"
+      ? ext.notes_format
+      : doctor.account_notes_format === "html"
+        ? "html"
+        : "markdown";
   return {
     ...doctor,
     clinic_ids: Array.isArray(ext.clinic_ids)
@@ -246,10 +287,21 @@ export function doctorAccount(doctor: DoctorOut): DoctorAccountOut {
       : doctor.clinic_id != null
         ? [doctor.clinic_id]
         : [],
-    notes: typeof ext.notes === "string" ? ext.notes : "",
+    notes,
+    notes_format: notesFormat,
     workspace_separation: ext.workspace_separation ?? "separated",
     mfa_enabled: ext.mfa_enabled ?? false,
   };
+}
+
+/** Display label for a doctor's specialty (live API or fallback). */
+export function doctorSpecialtyLabel(
+  doctor: Pick<DoctorOut, "specialty_label_en" | "specialty_label_zh">,
+  locale: string,
+): string {
+  return locale.startsWith("zh")
+    ? (doctor.specialty_label_zh || "全科")
+    : (doctor.specialty_label_en || "General practice");
 }
 
 export function clinicAccount(clinic: ClinicOut): ClinicAccountOut {

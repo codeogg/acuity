@@ -392,35 +392,6 @@
       ]
     },
     {
-      "name": "admin-audit",
-      "module": "./frontend-only/admin-audit",
-      "surfaces": [
-        "admin"
-      ],
-      "reason": "Audit trail read + client-emitted events (impersonation lifecycle, act-as edits). operation_log exists server-side but is never written or exposed.",
-      "matrix": "matrix-admin.md §11 AU9, §6 I7",
-      "ops": [
-        {
-          "method": "GET",
-          "path": "/api/admin/audit-events",
-          "fn": "listAuditEvents",
-          "req": null,
-          "res": "Page<AuditEvent>",
-          "backend_status": "PARTIAL",
-          "msw_implemented": true
-        },
-        {
-          "method": "POST",
-          "path": "/api/admin/audit-events",
-          "fn": "recordAuditEvent",
-          "req": "AuditEventCreate",
-          "res": "AuditEvent",
-          "backend_status": "PARTIAL",
-          "msw_implemented": true
-        }
-      ]
-    },
-    {
       "name": "admin-tickets",
       "module": "./frontend-only/admin-tickets",
       "surfaces": [

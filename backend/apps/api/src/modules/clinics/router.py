@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 
-from src.deps import AdminDep, DbSession
+from src.deps import AdminDep, DbSession, SuperAdminDep, client_ip
 from src.modules.clinics import service
 from src.modules.clinics.schemas import (
     ClinicConfigOverview,
@@ -22,7 +22,12 @@ from src.modules.clinics.subscription_schemas import (
     ClinicSubscriptionOut,
     ClinicSubscriptionUpdate,
 )
-from src.modules.clinics import subscription_service
+from src.modules.clinics.retention_schemas import (
+    ClinicRetentionAuditOut,
+    ClinicRetentionOut,
+    ClinicRetentionOverrideRequest,
+)
+from src.modules.clinics import retention_service, subscription_service
 from src.modules.common import Page
 
 router = APIRouter(prefix="/api/admin/clinics", tags=["admin:clinics"])
@@ -106,10 +111,12 @@ async def get_subscription(
 
 @router.put("/{clinic_id}/subscription", response_model=ClinicSubscriptionOut)
 async def put_subscription(
-    clinic_id: int, body: ClinicSubscriptionUpdate, db: DbSession, _: AdminDep
+    clinic_id: int, body: ClinicSubscriptionUpdate, db: DbSession, admin: AdminDep
 ) -> ClinicSubscriptionOut:
     return subscription_service.subscription_to_out(
-        await subscription_service.update_subscription(db, clinic_id, body)
+        await subscription_service.update_subscription(
+            db, clinic_id, body, admin_id=admin.id
+        )
     )
 
 
@@ -125,6 +132,40 @@ async def patch_subscription_note(
             db, clinic_id, body, admin_id=admin.id
         )
     )
+
+
+@router.get("/{clinic_id}/retention", response_model=ClinicRetentionOut)
+async def get_retention(
+    clinic_id: int, db: DbSession, _: AdminDep
+) -> ClinicRetentionOut:
+    return await retention_service.get_effective_retention(db, clinic_id)
+
+
+@router.post("/{clinic_id}/retention/override", response_model=ClinicRetentionOut)
+async def override_retention(
+    clinic_id: int,
+    body: ClinicRetentionOverrideRequest,
+    request: Request,
+    db: DbSession,
+    admin: SuperAdminDep,
+) -> ClinicRetentionOut:
+    return await retention_service.override_retention(
+        db,
+        clinic_id,
+        body,
+        admin_id=admin.id,
+        ip_address=client_ip(request),
+    )
+
+
+@router.get(
+    "/{clinic_id}/retention/history",
+    response_model=list[ClinicRetentionAuditOut],
+)
+async def get_retention_history(
+    clinic_id: int, db: DbSession, _: AdminDep
+) -> list[ClinicRetentionAuditOut]:
+    return await retention_service.list_retention_history(db, clinic_id)
 
 
 @router.delete("/{clinic_id}", status_code=204)
