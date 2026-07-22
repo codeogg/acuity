@@ -13,6 +13,7 @@ from src.modules.ai_extraction.router import router as ai_router
 from src.modules.auth.router import router as auth_router
 from src.modules.claims.router import router as claims_router
 from src.modules.clinics.router import router as clinics_router
+from src.modules.districts.router import router as districts_router
 from src.modules.doctor_settings.router import router as doctor_settings_router
 from src.modules.doctors.router import router as doctors_router
 from src.modules.insurance_companies.router import router as insurance_router
@@ -22,6 +23,7 @@ from src.modules.pdf_extraction.router import router as pdf_extraction_router
 from src.modules.standard_fields.router import router as standard_fields_router
 from src.modules.stats.router import router as stats_router
 from src.modules.storage.router import router as storage_router
+from src.modules.tags.router import router as tags_router
 from src.modules.templates.router import router as templates_router
 
 logger = get_logger(__name__)
@@ -71,6 +73,7 @@ register_exception_handlers(app)
 for router in (
     auth_router,
     clinics_router,
+    districts_router,
     doctors_router,
     doctor_settings_router,
     insurance_router,
@@ -81,6 +84,7 @@ for router in (
     pdf_extraction_router,
     stats_router,
     storage_router,
+    tags_router,
 ):
     app.include_router(router)
 

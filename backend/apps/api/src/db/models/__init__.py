@@ -13,6 +13,7 @@ from src.db.models.extraction import (
     ExtractionVisit,
     OcrResult,
 )
+from src.db.models.districts import District
 from src.db.models.org import (
     Clinic,
     ClinicInsuranceCompany,
@@ -25,6 +26,8 @@ from src.db.models.standard_fields import (
     FieldTransformRule,
     StandardField,
 )
+from src.db.models.subscriptions import ClinicSubscription
+from src.db.models.tags import FormTag, TagVisibility
 from src.db.models.templates import (
     ClinicPolicyTemplate,
     PolicyTemplate,
@@ -53,6 +56,8 @@ __all__ = [
     "DoctorClinicLink",
     "InsuranceCompany",
     "ClinicInsuranceCompany",
+    "District",
+    "ClinicSubscription",
     "FieldDomain",
     "StandardField",
     "FieldTransformRule",
@@ -60,4 +65,6 @@ __all__ = [
     "ClinicPolicyTemplate",
     "TemplateField",
     "TemplateFieldMapping",
+    "FormTag",
+    "TagVisibility",
 ]

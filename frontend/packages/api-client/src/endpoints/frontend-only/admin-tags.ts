@@ -1,8 +1,8 @@
-// frontend-only: pending backend
-//
 // Form-tag taxonomy (type / insurer / specialty) + the per-doctor visibility
 // matrix (the console's LIBRARY tags destination). Retiring a tag re-maps its
 // members (tag-integrity rule) and is never an orphaning delete.
+// Live FastAPI: GET/POST /api/admin/tags, PUT .../{id}, POST .../retire,
+// GET/PUT .../visibility (still registered under frontend-only until promoted).
 
 import type {
   SuccessResponse,

@@ -26,7 +26,7 @@ Operations without `x-backend-status` are implemented by the backend today. Oper
 | Group | Operations | Backend status |
 |---|---|---|
 | [auth](#groupauth) | 3 | EXISTS |
-| [admin:clinics](#groupadminclinics) | 12 | EXISTS |
+| [admin:clinics](#groupadminclinics) | 16 | EXISTS |
 | [admin:doctors](#groupadmindoctors) | 7 | EXISTS |
 | [admin:insurance](#groupadmininsurance) | 7 | EXISTS |
 | [admin:standard-fields](#groupadminstandardfields) | 8 | EXISTS |
@@ -50,7 +50,7 @@ Operations without `x-backend-status` are implemented by the backend today. Oper
 | [admin-impersonation](#groupadminimpersonation) | 3 | MISSING |
 | [admin-claims-oversight](#groupadminclaimsoversight) | 2 | PARTIAL |
 | [account-management](#groupaccountmanagement) | 7 | MISSING |
-| **Total** | **133** | |
+| **Total** | **137** | |
 
 ## Group auth
 
@@ -113,6 +113,8 @@ Query parameters:
 | `page` | integer | no |  |
 | `page_size` | integer | no |  |
 | `keyword` | string \| null | no |  |
+| `sort` | string \| null | no |  |
+| `is_flagged` | integer | no | Filter by needs-attention flag: 1 = flagged only, 0 = unflagged only. |
 
 Responses:
 
@@ -335,6 +337,86 @@ Responses:
 
 - `200` — [TemplateEnableResult](#templateenableresult)
 - `422` — [HTTPValidationError](#httpvalidationerror)
+- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
+
+### PATCH `/api/admin/clinics/{clinic_id}/flag`
+
+Set Clinic Flag
+
+Auth: bearer / cookie
+
+Path parameters:
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `clinic_id` | integer | yes |  |
+
+Request body: [ClinicFlagUpdate](#clinicflagupdate)
+
+Responses:
+
+- `200` — [ClinicOut](#clinicout)
+- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
+
+### GET `/api/admin/clinics/{clinic_id}/subscription`
+
+Get Clinic Subscription
+
+1:1 commercial subscription record for a clinic (auto-creates a trial row if missing).
+
+Auth: bearer / cookie
+
+Path parameters:
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `clinic_id` | integer | yes |  |
+
+Responses:
+
+- `200` — [ClinicSubscriptionOut](#clinicsubscriptionout)
+- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
+
+### PUT `/api/admin/clinics/{clinic_id}/subscription`
+
+Update Clinic Subscription
+
+Update subscription status, plan, price, and payment fields (not notes).
+
+Auth: bearer / cookie
+
+Path parameters:
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `clinic_id` | integer | yes |  |
+
+Request body: [ClinicSubscriptionUpdate](#clinicsubscriptionupdate)
+
+Responses:
+
+- `200` — [ClinicSubscriptionOut](#clinicsubscriptionout)
+- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
+
+### PATCH `/api/admin/clinics/{clinic_id}/subscription/note`
+
+Update Clinic Subscription Note
+
+Independently update note_content / note_format; writes note_updated_by and note_updated_at.
+
+Auth: bearer / cookie
+
+Path parameters:
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `clinic_id` | integer | yes |  |
+
+Request body: [ClinicSubscriptionNoteUpdate](#clinicsubscriptionnoteupdate)
+
+Responses:
+
+- `200` — [ClinicSubscriptionOut](#clinicsubscriptionout)
 - errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
 
 ## Group admin:doctors
@@ -2693,6 +2775,8 @@ Responses:
 | `address` | string \| null | no |  |
 | `phone` | string \| null | no |  |
 | `chop_image_url` | string \| null | no | Opaque URL string. Production values are signed or public asset URLs (branding/asset class - long TTL acceptable). |
+| `district_id` | integer \| null | no | FK to districts.id — select from the districts dictionary; free-text district is not accepted. |
+| `data_region` | `"香港"` \| `"新加坡"` \| `"美国"` \| null | no | Clinic data residency: 香港 / 新加坡 / 美国. |
 
 ### ClinicInsuranceUpdate
 
@@ -2712,7 +2796,13 @@ Responses:
 | `phone` | string \| null | yes |  |
 | `chop_image_url` | string \| null | yes | Opaque URL string. Production values are signed or public asset URLs (branding/asset class - long TTL acceptable). |
 | `status` | integer | yes | Organisation-entity status: 0 = disabled, 1 = enabled. |
+| `idle_lock_minutes` | integer | yes | Clinic default idle screen lock threshold (minutes, 2–30). |
+| `district_id` | integer \| null | no |  |
+| `district_name_zh` | string \| null | no | Joined from districts.name_zh for list/detail display. |
+| `district_name_en` | string \| null | no | Joined from districts.name_en for list/detail display. |
 | `created_at` | string (date-time) | yes |  |
+| `data_region` | string | yes | Clinic data residency: 香港 / 新加坡 / 美国. |
+| `is_flagged` | integer | yes | 1 = needs attention (operator flag), 0 = not flagged. |
 
 ### ClinicStatusUpdate
 
@@ -2741,6 +2831,9 @@ Responses:
 | `address` | string \| null | no |  |
 | `phone` | string \| null | no |  |
 | `chop_image_url` | string \| null | no | Opaque URL string. Production values are signed or public asset URLs (branding/asset class - long TTL acceptable). |
+| `idle_lock_minutes` | integer | no | Clinic default idle screen lock threshold (minutes, 2–30). |
+| `district_id` | integer \| null | no | FK to districts.id — select from the districts dictionary; free-text district is not accepted. |
+| `data_region` | `"香港"` \| `"新加坡"` \| `"美国"` \| null | no | Clinic data residency: 香港 / 新加坡 / 美国. |
 
 ### CompanyBrief
 
@@ -2930,6 +3023,8 @@ Responses:
 | `transform_rule_id` | integer \| null | yes |  |
 | `fixed_value` | string \| null | yes |  |
 | `checkbox_map_value` | string \| null | yes |  |
+| `template_specific_field_code` | string \| null | yes |  |
+| `template_specific_ai_hint` | string \| null | yes |  |
 
 ### FieldMappingSave
 
@@ -2939,6 +3034,8 @@ Responses:
 | `fixed_value` | string \| null | no |  |
 | `checkbox_map_value` | string \| null | no |  |
 | `transform_rule_id` | integer \| null | no |  |
+| `template_specific_field_code` | string \| null | no |  |
+| `template_specific_ai_hint` | string \| null | no |  |
 | `confirm` | boolean | no | Default: `false`. |
 
 ### FieldRestoreSave
@@ -4050,4 +4147,45 @@ Enum: `type`, `insurer`, `specialty`
 | `total` | integer | yes |  |
 | `page` | integer | yes |  |
 | `page_size` | integer | yes |  |
+
+### ClinicFlagUpdate
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `is_flagged` | integer | yes | 0 = clear flag, 1 = mark needs attention. |
+
+### ClinicSubscriptionOut
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `clinic_id` | integer | yes |  |
+| `subscription_status` | `"trial"` \| `"active"` \| `"cancelled"` \| `"expired"` | yes |  |
+| `plan_code` | string | no |  |
+| `price` | number | no |  |
+| `currency` | string | yes | Default: `"HKD"`. |
+| `payment_status` | `"unpaid"` \| `"paid"` \| `"overdue"` \| `"refunded"` | no |  |
+| `payment_method` | `"bank_transfer"` \| `"credit_card"` \| `"cheque"` \| `"other"` | no |  |
+| `note_content` | string | no |  |
+| `note_format` | `"html"` \| `"markdown"` | yes | Default: `"markdown"`. |
+| `note_updated_by` | integer | no |  |
+| `note_updated_at` | string (date-time) | no |  |
+| `updated_at` | string (date-time) | yes |  |
+
+### ClinicSubscriptionUpdate
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `subscription_status` | `"trial"` \| `"active"` \| `"cancelled"` \| `"expired"` | no |  |
+| `plan_code` | string | no |  |
+| `price` | number | no |  |
+| `currency` | string | no |  |
+| `payment_status` | `"unpaid"` \| `"paid"` \| `"overdue"` \| `"refunded"` | no |  |
+| `payment_method` | `"bank_transfer"` \| `"credit_card"` \| `"cheque"` \| `"other"` | no |  |
+
+### ClinicSubscriptionNoteUpdate
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `note_content` | string | no |  |
+| `note_format` | `"html"` \| `"markdown"` | no |  |
 

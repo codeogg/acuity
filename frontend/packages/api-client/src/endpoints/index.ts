@@ -10,6 +10,8 @@ export * as authEndpoints from "./auth";
 export * as claims from "./claims";
 export * as clinics from "./clinics";
 export * as companies from "./companies";
+export * as districts from "./districts";
+export type { DistrictCreate, DistrictOut, DistrictUpdate } from "./districts";
 export * as doctors from "./doctors";
 export * as fields from "./fields";
 export * as health from "./health";

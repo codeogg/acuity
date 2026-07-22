@@ -94,8 +94,8 @@ if (parityMisses === 0) {
 
 console.log("2. Contract parity (typed endpoint functions vs spec)");
 
-if (backendOps.length === 72) ok(`spec carries 72 backend-implemented operations`);
-else fail(`spec has ${backendOps.length} backend-implemented operations, expected 72`);
+if (backendOps.length === 76) ok(`spec carries 76 backend-implemented operations`);
+else fail(`spec has ${backendOps.length} backend-implemented operations, expected 76`);
 
 const CONTRACT_MODULES = [
   "ai.ts", "auth.ts", "claims.ts", "clinics.ts", "companies.ts",
@@ -213,7 +213,10 @@ for (const claim of universe.claims) {
   check(`claim ${claim.id}: template_id ${claim.template_id} not in templates`, templateIds.has(claim.template_id));
 }
 for (const doctor of universe.doctors) {
-  check(`doctor ${doctor.id}: clinic_id ${doctor.clinic_id} not in clinics`, clinicIds.has(doctor.clinic_id));
+  // Individual (unlinked) doctor accounts may have clinic_id: null (ADR 0041).
+  if (doctor.clinic_id != null) {
+    check(`doctor ${doctor.id}: clinic_id ${doctor.clinic_id} not in clinics`, clinicIds.has(doctor.clinic_id));
+  }
 }
 for (const template of universe.templates) {
   check(`template ${template.id}: company_id ${template.company_id} not in companies`, companyIds.has(template.company_id));

@@ -14,6 +14,8 @@ import type { DoctorAccountExtension } from "@acuity/api-client";
 import type {
   ClinicCreate,
   ClinicOut,
+  ClinicSubscriptionOut,
+  ClinicSubscriptionUpdate,
   ClinicUpdate,
   CompanyCreate,
   CompanyUpdate,
@@ -22,6 +24,8 @@ import type {
   DoctorUpdate,
   FieldMappingSave,
   StandardFieldCreate,
+  Tag,
+  TagRetireResult,
   TemplateFieldCreate,
   TemplateFieldOut,
   TemplateFieldUpdate,
@@ -39,7 +43,6 @@ const {
   adminAudit,
   adminImpersonation,
   adminSavedViews,
-  adminTags,
   adminTickets,
   adminAnalytics,
 } = frontendOnly;
@@ -129,6 +132,16 @@ export async function setClinicStatusAction(clinicId: number, status: number, co
   }, ["/"]);
 }
 
+export async function setClinicFlagAction(clinicId: number, isFlagged: boolean, code: string) {
+  return run(async () => {
+    const out = await clinicMutation<ClinicOut>("patch", `/admin/clinics/${clinicId}/flag`, {
+      is_flagged: isFlagged ? 1 : 0,
+    });
+    await audit("bulk-operation", `${code} · flag → ${isFlagged ? 1 : 0}`);
+    return out;
+  }, ["/"]);
+}
+
 export async function deleteClinicAction(clinicId: number, code: string) {
   return run(async () => {
     await clinicMutation<void>("delete", `/admin/clinics/${clinicId}`);
@@ -194,19 +207,70 @@ export async function setClinicCompanyTemplatesAction(
 export async function updateClinicOpsAction(clinicId: number, code: string, patch: Partial<ClinicOps>) {
   return run(async () => {
     updateClinicOps(clinicId, patch);
-    if (patch.subscription || patch.payment || patch.plan || patch.pay_method || patch.price_hkd_month) {
-      await audit("crm-edit", code);
-    }
     if (patch.retention_months) await audit("retention-override", code);
   }, ["/"]);
 }
 
-export async function updateClinicNotesAction(clinicId: number, code: string, notes: string) {
+export async function updateClinicSubscriptionAction(
+  clinicId: number,
+  code: string,
+  patch: ClinicSubscriptionUpdate,
+) {
   return run(async () => {
-    const out = await accountManagement.updateClinicNotes(clinicId, notes);
+    const out = await clinicMutation<ClinicSubscriptionOut>(
+      "put",
+      `/admin/clinics/${clinicId}/subscription`,
+      patch,
+    );
+    // Keep list-level ops badges roughly in sync until the list reads live subscription.
+    const opsPatch: Partial<ClinicOps> = {};
+    if (patch.subscription_status) {
+      opsPatch.subscription = patch.subscription_status as ClinicOps["subscription"];
+    }
+    if (patch.plan_code) {
+      opsPatch.plan = patch.plan_code as ClinicOps["plan"];
+    }
+    if (patch.price != null) {
+      opsPatch.price_hkd_month = Number(patch.price);
+    }
+    if (patch.payment_status) {
+      opsPatch.payment = patch.payment_status as ClinicOps["payment"];
+    }
+    if (patch.payment_method) {
+      const methodMap: Record<string, ClinicOps["pay_method"]> = {
+        bank_transfer: "bank-transfer",
+        credit_card: "credit-card",
+        cheque: "cheque",
+        other: "other",
+      };
+      opsPatch.pay_method = methodMap[patch.payment_method] ?? "other";
+    }
+    if (Object.keys(opsPatch).length) updateClinicOps(clinicId, opsPatch);
+    await audit("crm-edit", code);
+    return out;
+  }, ["/"]);
+}
+
+export async function updateClinicSubscriptionNoteAction(
+  clinicId: number,
+  code: string,
+  noteContent: string,
+  noteFormat: "markdown" | "html",
+) {
+  return run(async () => {
+    const out = await clinicMutation<ClinicSubscriptionOut>(
+      "patch",
+      `/admin/clinics/${clinicId}/subscription/note`,
+      { note_content: noteContent, note_format: noteFormat },
+    );
     await audit("crm-edit", `${code} · notes`);
     return out;
   }, ["/"]);
+}
+
+/** @deprecated Prefer updateClinicSubscriptionNoteAction — clinic notes live on subscription. */
+export async function updateClinicNotesAction(clinicId: number, code: string, notes: string) {
+  return updateClinicSubscriptionNoteAction(clinicId, code, notes, "markdown");
 }
 
 export async function bulkClinicsAction(
@@ -500,7 +564,11 @@ export async function resolveTicketAction(ticketId: string, note?: string) {
 
 export async function createTagAction(kind: "type" | "insurer" | "specialty", labelEn: string, labelZh: string) {
   return run(async () => {
-    const tag = await adminTags.createTag({ kind, label_en: labelEn, label_zh: labelZh });
+    const tag = await clinicMutation<Tag>("post", "/admin/tags", {
+      kind,
+      label_en: labelEn,
+      label_zh: labelZh,
+    });
     await audit("tag-change", `tag · ${labelEn} added`);
     return tag;
   }, ["/"]);
@@ -508,7 +576,11 @@ export async function createTagAction(kind: "type" | "insurer" | "specialty", la
 
 export async function retireTagAction(tagId: number, label: string) {
   return run(async () => {
-    const result = await adminTags.retireTag(tagId, {});
+    const result = await clinicMutation<TagRetireResult>(
+      "post",
+      `/admin/tags/${tagId}/retire`,
+      {},
+    );
     await audit("tag-change", `tag · ${label} retired · re-mapped ${result.remapped_count}`);
     return result;
   }, ["/"]);
@@ -517,7 +589,11 @@ export async function retireTagAction(tagId: number, label: string) {
 export async function setTagVisibilityAction(
   entries: { doctor_id: number; tag_id: number; visible: boolean }[],
 ) {
-  return run(() => adminTags.setTagVisibility(entries), ["/"]);
+  return run(
+    () =>
+      clinicMutation<{ success: boolean }>("put", "/admin/tags/visibility", { entries }),
+    ["/"],
+  );
 }
 
 // --- saved views ------------------------------------------------------------------
@@ -582,6 +658,13 @@ export async function setCompanyStatusAction(companyId: number, status: number) 
       ),
     ["/", "/insurers", `/insurers/${companyId}`],
   );
+}
+
+export async function deleteCompanyAction(companyId: number, code: string) {
+  return run(async () => {
+    await clinicMutation<void>("delete", `/admin/insurance-companies/${companyId}`);
+    await audit("bulk-operation", `${code} · deleted`);
+  }, ["/", "/insurers"]);
 }
 
 export async function createStandardFieldAction(body: StandardFieldCreate) {

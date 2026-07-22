@@ -1,5 +1,6 @@
 """诊所 / 医生 / 保险公司及关联关系模型。"""
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     BigInteger,
@@ -16,6 +17,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.db.base import Base, TimestampMixin
 
+if TYPE_CHECKING:
+    from src.db.models.districts import District
+    from src.db.models.subscriptions import ClinicSubscription
+
 
 class Clinic(Base, TimestampMixin):
     __tablename__ = "clinic"
@@ -29,7 +34,18 @@ class Clinic(Base, TimestampMixin):
     chop_image_url: Mapped[str | None] = mapped_column(String(255))
     status: Mapped[int] = mapped_column(SmallInteger, default=1)  # 0停用 1启用
     idle_lock_minutes: Mapped[int] = mapped_column(SmallInteger, default=10)
+    # 数据存放地区：香港 / 新加坡 / 美国
+    data_region: Mapped[str] = mapped_column(String(20), default="香港")
+    # 1 = 需要關注（运营手动标记）
+    is_flagged: Mapped[int] = mapped_column(SmallInteger, default=0, index=True)
+    district_id: Mapped[int | None] = mapped_column(
+        ForeignKey("districts.id"), nullable=True, index=True
+    )
 
+    district: Mapped["District | None"] = relationship(back_populates="clinics")
+    subscription: Mapped["ClinicSubscription | None"] = relationship(
+        back_populates="clinic", uselist=False
+    )
     doctors: Mapped[list["Doctor"]] = relationship(back_populates="clinic")
     doctor_links: Mapped[list["DoctorClinicLink"]] = relationship(
         back_populates="clinic"

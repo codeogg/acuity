@@ -30,6 +30,7 @@ import type {
   AuditEvent as AuditEventOut,
   ClinicConfigOverview,
   ClinicOut,
+  ClinicSubscriptionOut,
   DoctorOut,
   OnboardingQueueItem,
   Page,
@@ -64,10 +65,10 @@ const {
   adminTickets,
 } = frontendOnly;
 
-// Live FastAPI does not implement the forward-contract / frontend-only admin
-// surfaces yet (tags, tickets, analytics, audit, impersonation, claims
-// oversight). Soft-fail those reads to empty defaults so the console shell
-// and destinations stay usable against a real backend.
+// Live FastAPI does not implement most forward-contract / frontend-only admin
+// surfaces yet (tickets, analytics, audit, impersonation, claims oversight).
+// Soft-fail those reads to empty defaults so the console shell stays usable.
+// Tags are implemented on the live API — read them with session cookies below.
 function emptyPage<T>(pageSize = 100): Page<T> {
   return { items: [], total: 0, page: 1, page_size: pageSize };
 }
@@ -117,6 +118,14 @@ export async function getClinicConfigOverview(
     headers: await serverSessionHeaders(),
   });
 }
+
+export async function getClinicSubscription(
+  clinicId: number,
+): Promise<ClinicSubscriptionOut> {
+  return api.get<ClinicSubscriptionOut>(`/admin/clinics/${clinicId}/subscription`, {
+    headers: await serverSessionHeaders(),
+  });
+}
 export async function getDoctor(doctorId: number): Promise<DoctorOut> {
   return api.get<DoctorOut>(`/admin/doctors/${doctorId}`, {
     headers: await serverSessionHeaders(),
@@ -151,15 +160,21 @@ export const getTicket = adminTickets.getTicket;
 export function listOnboardingQueue(): Promise<OnboardingQueueItem[]> {
   return softFrontendOnly(() => adminTickets.listOnboardingQueue(), []);
 }
-export function listTags(
+export async function listTags(
   kind?: Parameters<typeof adminTags.listTags>[0],
 ): Promise<Tag[]> {
-  return softFrontendOnly(() => adminTags.listTags(kind), []);
+  return api.get<Tag[]>("/admin/tags", {
+    query: kind ? { kind } : undefined,
+    headers: await serverSessionHeaders(),
+  });
 }
-export function getTagVisibility(
+export async function getTagVisibility(
   doctorId?: Parameters<typeof adminTags.getTagVisibility>[0],
 ): Promise<TagVisibilityEntry[]> {
-  return softFrontendOnly(() => adminTags.getTagVisibility(doctorId), []);
+  return api.get<TagVisibilityEntry[]>("/admin/tags/visibility", {
+    query: doctorId === undefined ? undefined : { doctor_id: doctorId },
+    headers: await serverSessionHeaders(),
+  });
 }
 export function getAnalyticsOverview(): Promise<AnalyticsOverview> {
   return softFrontendOnly(
@@ -295,10 +310,14 @@ export async function listClinicRows(keyword?: string, sort?: string): Promise<C
       headers,
     }),
   ]);
+  // Count every doctor linked to the clinic (primary or secondary), matching
+  // the drawer / GET /admin/doctors?clinic_id=… filter — not only doctor.clinic_id.
   return clinicPage.items.map((clinic) => ({
     clinic,
     ops: clinicOps(clinic),
-    doctor_count: doctorPage.items.filter((d) => d.clinic_id === clinic.id).length,
+    doctor_count: doctorPage.items.filter((d) =>
+      doctorAccount(d).clinic_ids.includes(clinic.id),
+    ).length,
   }));
 }
 
@@ -308,7 +327,34 @@ export const CLINIC_TABS: ClinicTab[] = ["needs-attention", "provisioning", "act
 export function clinicMatchesTab(row: ClinicRow, tab: ClinicTab): boolean {
   if (tab === "all") return true;
   if (tab === "overdue") return row.ops.payment === "overdue";
-  return row.ops.ops_status === tab;
+  if (tab === "needs-attention") return Boolean(row.clinic.is_flagged);
+  return clinicDisplayStatus(row) === tab;
+}
+
+/** Status shown in the grid badge / used by the status filter. */
+export function clinicDisplayStatus(
+  row: ClinicRow,
+): "needs-attention" | ClinicRow["ops"]["ops_status"] {
+  if (row.clinic.is_flagged) return "needs-attention";
+  return row.ops.ops_status;
+}
+
+export function clinicMatchesKeyword(row: ClinicRow, keyword: string): boolean {
+  const k = keyword.trim().toLowerCase();
+  if (!k) return true;
+  const haystack = [
+    row.clinic.clinic_name,
+    row.clinic.clinic_name_en,
+    row.clinic.clinic_code,
+    row.clinic.district_name_zh,
+    row.clinic.district_name_en,
+    row.ops.district_zh,
+    row.ops.district_en,
+  ]
+    .filter(Boolean)
+    .join("\n")
+    .toLowerCase();
+  return haystack.includes(k);
 }
 
 export function sortClinicRows(rows: ClinicRow[], sort: SortState | null, needsFirst: boolean): ClinicRow[] {
@@ -329,9 +375,9 @@ export function sortClinicRows(rows: ClinicRow[], sort: SortState | null, needsF
       )
     : rows;
   if (!needsFirst || sort) return sorted;
-  // Default order surfaces needs-attention rows first (reference priority sort).
+  // Default order surfaces flagged (needs-attention) rows first.
   return [...sorted].sort(
-    (a, b) => Number(b.ops.ops_status === "needs-attention") - Number(a.ops.ops_status === "needs-attention"),
+    (a, b) => Number(Boolean(b.clinic.is_flagged)) - Number(Boolean(a.clinic.is_flagged)),
   );
 }
 

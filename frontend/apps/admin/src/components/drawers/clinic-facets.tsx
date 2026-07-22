@@ -13,20 +13,53 @@ import { CrmFieldRow } from "@/components/ui/crm-field";
 import { ActionButton } from "@/components/ui/action-button";
 import { GateButton } from "@/components/ui/confirm-gate";
 import { useToast } from "@acuity/ui";
-import { clinics } from "@acuity/api-client";
+import { clinics, districts } from "@acuity/api-client";
 import type { ClinicConfigOverview, CompanyConfigItem } from "@acuity/types";
 import { MetaBadge } from "@/components/ui/status-badge";
-import { MarkdownNotes } from "@/components/ui/markdown-notes";
+import { RichNotes, type NoteFormat } from "@/components/ui/markdown-notes";
 import {
   createDoctorAction,
   setClinicCompanyEnablementAction,
   setClinicCompanyTemplatesAction,
   setClinicTemplateEnablementAction,
   updateClinicAction,
-  updateClinicNotesAction,
   updateClinicOpsAction,
+  updateClinicSubscriptionAction,
+  updateClinicSubscriptionNoteAction,
 } from "@/lib/actions";
 import type { ClinicOps } from "@/lib/ops-model";
+import type { ClinicSubscriptionOut, ClinicSubscriptionUpdate } from "@acuity/types";
+
+type DistrictOption = Awaited<ReturnType<typeof districts.listDistricts>>[number];
+
+function districtSelectOptions(items: DistrictOption[]) {
+  return [
+    { value: "none", label: "—" },
+    ...items.map((d) => ({
+      value: String(d.id),
+      label: d.region ? `${d.name_zh}（${d.region}）` : d.name_zh,
+    })),
+  ];
+}
+
+function useDistrictOptions() {
+  const [items, setItems] = useState<DistrictOption[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    districts
+      .listDistricts()
+      .then((rows) => {
+        if (!cancelled) setItems(rows);
+      })
+      .catch(() => {
+        if (!cancelled) setItems([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return items;
+}
 
 export interface ClinicSummary {
   id: number;
@@ -36,6 +69,9 @@ export interface ClinicSummary {
   address: string | null;
   phone: string | null;
   idle_lock_minutes: number;
+  district_id: number | null;
+  data_region: string;
+  is_flagged: number;
 }
 
 // --- provisioning facet -----------------------------------------------------------
@@ -54,6 +90,7 @@ export function ProvisioningFacet({
   signatureUploaded: boolean;
 }) {
   const t = useTranslations("clinic-drawer.provisioning");
+  const districtOptions = useDistrictOptions();
   const checklist: { label: string; done: boolean }[] = [
     { label: t("check-basics"), done: Boolean(clinic.name && clinic.address) },
     { label: t("check-residency"), done: true },
@@ -93,6 +130,16 @@ export function ProvisioningFacet({
         }
       />
       <CrmFieldRow
+        label={t("district")}
+        value={clinic.district_id != null ? String(clinic.district_id) : "none"}
+        options={districtSelectOptions(districtOptions)}
+        commit={(next) =>
+          updateClinicAction(clinic.id, {
+            district_id: next === "none" || !next ? null : Number(next),
+          })
+        }
+      />
+      <CrmFieldRow
         label={t("address")}
         value={clinic.address ?? ""}
         commit={(next) => updateClinicAction(clinic.id, { address: next })}
@@ -104,13 +151,16 @@ export function ProvisioningFacet({
       />
       <CrmFieldRow
         label={t("residency")}
-        value={ops.residency}
+        value={clinic.data_region || "香港"}
         options={[
-          { value: "hong-kong", label: t("residency-hk") },
-          { value: "singapore", label: t("residency-sg") },
+          { value: "香港", label: t("residency-hk") },
+          { value: "新加坡", label: t("residency-sg") },
+          { value: "美国", label: t("residency-us") },
         ]}
         commit={(next) =>
-          updateClinicOpsAction(clinic.id, clinic.code, { residency: next as ClinicOps["residency"] })
+          updateClinicAction(clinic.id, {
+            data_region: next as "香港" | "新加坡" | "美国",
+          })
         }
       />
 
@@ -248,58 +298,85 @@ function AddDoctorForm({ clinicId }: { clinicId: number }) {
 export function AccountFacet({
   clinic,
   ops,
-  notes,
+  subscription,
 }: {
   clinic: ClinicSummary;
   ops: ClinicOps;
-  notes: string;
+  subscription: ClinicSubscriptionOut;
 }) {
   const t = useTranslations("clinic-drawer.account");
 
-  const patch = (p: Partial<ClinicOps>) => updateClinicOpsAction(clinic.id, clinic.code, p);
+  const patchOps = (p: Partial<ClinicOps>) => updateClinicOpsAction(clinic.id, clinic.code, p);
+  const patchSub = (p: ClinicSubscriptionUpdate) =>
+    updateClinicSubscriptionAction(clinic.id, clinic.code, p);
+
+  const plan = subscription.plan_code ?? "starter";
+  const price = subscription.price != null ? String(subscription.price) : "";
+  const payment = subscription.payment_status ?? "unpaid";
+  const payMethod = subscription.payment_method ?? "other";
 
   return (
     <div>
       <FacetHeading>{t("commercial")}</FacetHeading>
       <CrmFieldRow
         label={t("subscription")}
-        value={ops.subscription}
-        options={["trial", "active", "paused", "churned"].map((v) => ({ value: v, label: t(`subscription-${v}`) }))}
-        commit={(next) => patch({ subscription: next as ClinicOps["subscription"] })}
+        value={subscription.subscription_status}
+        options={["trial", "active", "cancelled", "expired"].map((v) => ({
+          value: v,
+          label: t(`subscription-${v}`),
+        }))}
+        commit={(next) =>
+          patchSub({
+            subscription_status: next as ClinicSubscriptionOut["subscription_status"],
+          })
+        }
         successMessage={t("logged")}
       />
       <CrmFieldRow
         label={t("plan")}
-        value={ops.plan}
+        value={plan}
         options={["starter", "practice", "group"].map((v) => ({ value: v, label: t(`plan-${v}`) }))}
-        commit={(next) => patch({ plan: next as ClinicOps["plan"] })}
+        commit={(next) => patchSub({ plan_code: next })}
         successMessage={t("logged")}
       />
       <CrmFieldRow
         label={t("price")}
-        value={String(ops.price_hkd_month)}
-        commit={(next) => patch({ price_hkd_month: Number(next) || ops.price_hkd_month })}
+        value={price}
+        commit={(next) => patchSub({ price: Number(next) || 0, currency: subscription.currency || "HKD" })}
         successMessage={t("logged")}
       />
       <CrmFieldRow
         label={t("payment")}
-        value={ops.payment}
-        options={["paid", "unpaid", "overdue"].map((v) => ({ value: v, label: t(`payment-${v}`) }))}
-        commit={(next) => patch({ payment: next as ClinicOps["payment"] })}
+        value={payment}
+        options={["paid", "unpaid", "overdue", "refunded"].map((v) => ({
+          value: v,
+          label: t(`payment-${v}`),
+        }))}
+        commit={(next) =>
+          patchSub({ payment_status: next as ClinicSubscriptionOut["payment_status"] })
+        }
         successMessage={t("logged")}
       />
       <CrmFieldRow
         label={t("pay-method")}
-        value={ops.pay_method}
-        options={["bank-transfer", "fps", "cheque", "none"].map((v) => ({ value: v, label: t(`pay-${v}`) }))}
-        commit={(next) => patch({ pay_method: next as ClinicOps["pay_method"] })}
+        value={payMethod}
+        options={["bank_transfer", "credit_card", "cheque", "other"].map((v) => ({
+          value: v,
+          label: t(`pay-${v}`),
+        }))}
+        commit={(next) =>
+          patchSub({ payment_method: next as ClinicSubscriptionOut["payment_method"] })
+        }
         successMessage={t("logged")}
       />
 
       <FacetHeading className="mt-8">{t("notes")}</FacetHeading>
-      <MarkdownNotes
-        value={notes}
-        commit={(next) => updateClinicNotesAction(clinic.id, clinic.code, next)}
+      <RichNotes
+        value={subscription.note_content ?? ""}
+        format={(subscription.note_format as NoteFormat) || "markdown"}
+        commit={(next, format) =>
+          updateClinicSubscriptionNoteAction(clinic.id, clinic.code, next, format)
+        }
       />
 
       <FacetHeading className="mt-8">{t("retention")}</FacetHeading>
@@ -314,7 +391,7 @@ export function AccountFacet({
         target={clinic.code}
         destructive
         confirmLabel={t("retention-confirm")}
-        action={() => patch({ retention_months: ops.retention_months })}
+        action={() => patchOps({ retention_months: ops.retention_months })}
         successMessage={t("retention-done", { name: clinic.name_en ?? clinic.name })}
       />
     </div>
@@ -417,6 +494,8 @@ export function NewClinicForm() {
   const [nameEn, setNameEn] = useState("");
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState("");
+  const [districtId, setDistrictId] = useState("");
+  const districtOptions = useDistrictOptions();
   const [pending, startTransition] = useTransition();
   const router = useRouter();
   const { showToast } = useToast();
@@ -434,6 +513,7 @@ export function NewClinicForm() {
           clinic_name_en: nameEn.trim() || null,
           address: address.trim() || null,
           phone: phone.trim() || null,
+          district_id: districtId ? Number(districtId) : null,
         });
         showToast(t("created", { name: nameEn.trim() || name.trim() }));
         const params = new URLSearchParams(searchParams.toString());
@@ -460,6 +540,25 @@ export function NewClinicForm() {
       <p className="mb-4 text-sm text-muted-foreground">{t("intro")}</p>
       {field(t("name-zh"), name, setName)}
       {field(t("name-en"), nameEn, setNameEn)}
+      <div className="mb-3.5">
+        <label className="mb-1 block text-xs font-medium text-muted-foreground" htmlFor="new-clinic-district">
+          {t("district")}
+        </label>
+        <select
+          id="new-clinic-district"
+          className="h-9 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground"
+          value={districtId}
+          onChange={(e) => setDistrictId(e.target.value)}
+          aria-label={t("district")}
+        >
+          <option value="">—</option>
+          {districtOptions.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.region ? `${d.name_zh}（${d.region}）` : d.name_zh}
+            </option>
+          ))}
+        </select>
+      </div>
       {field(t("address"), address, setAddress)}
       {field(t("phone"), phone, setPhone)}
       <div className="mt-4 flex justify-end">

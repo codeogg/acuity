@@ -5,6 +5,7 @@ from src.modules.clinics import service
 from src.modules.clinics.schemas import (
     ClinicConfigOverview,
     ClinicCreate,
+    ClinicFlagUpdate,
     ClinicInsuranceUpdate,
     ClinicOut,
     ClinicStatusUpdate,
@@ -16,6 +17,12 @@ from src.modules.clinics.schemas import (
     TemplateEnableResult,
     TemplateEnableUpdate,
 )
+from src.modules.clinics.subscription_schemas import (
+    ClinicSubscriptionNoteUpdate,
+    ClinicSubscriptionOut,
+    ClinicSubscriptionUpdate,
+)
+from src.modules.clinics import subscription_service
 from src.modules.common import Page
 
 router = APIRouter(prefix="/api/admin/clinics", tags=["admin:clinics"])
@@ -23,8 +30,7 @@ router = APIRouter(prefix="/api/admin/clinics", tags=["admin:clinics"])
 
 @router.post("", response_model=ClinicOut)
 async def create_clinic(body: ClinicCreate, db: DbSession, _: AdminDep) -> ClinicOut:
-    clinic = await service.create_clinic(db, body)
-    return ClinicOut.model_validate(clinic)
+    return service.clinic_to_out(await service.create_clinic(db, body))
 
 
 @router.get("", response_model=Page[ClinicOut])
@@ -34,16 +40,27 @@ async def list_clinics(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     keyword: str | None = None,
+    is_flagged: int | None = Query(
+        None,
+        ge=0,
+        le=1,
+        description="按需要關注筛选：1 = 仅返回已标记诊所，0 = 仅未标记",
+    ),
     sort: str | None = Query(
         None,
         description="排序：name、code、status、doctors、created_at；前缀 - 为降序",
     ),
 ) -> Page[ClinicOut]:
     items, total = await service.list_clinics(
-        db, page=page, page_size=page_size, keyword=keyword, sort=sort
+        db,
+        page=page,
+        page_size=page_size,
+        keyword=keyword,
+        sort=sort,
+        is_flagged=is_flagged,
     )
     return Page(
-        items=[ClinicOut.model_validate(i) for i in items],
+        items=[service.clinic_to_out(i) for i in items],
         total=total,
         page=page,
         page_size=page_size,
@@ -52,21 +69,62 @@ async def list_clinics(
 
 @router.get("/{clinic_id}", response_model=ClinicOut)
 async def get_clinic(clinic_id: int, db: DbSession, _: AdminDep) -> ClinicOut:
-    return ClinicOut.model_validate(await service.get_clinic(db, clinic_id))
+    return service.clinic_to_out(await service.get_clinic(db, clinic_id))
 
 
 @router.put("/{clinic_id}", response_model=ClinicOut)
 async def update_clinic(
     clinic_id: int, body: ClinicUpdate, db: DbSession, _: AdminDep
 ) -> ClinicOut:
-    return ClinicOut.model_validate(await service.update_clinic(db, clinic_id, body))
+    return service.clinic_to_out(await service.update_clinic(db, clinic_id, body))
 
 
 @router.patch("/{clinic_id}/status", response_model=ClinicOut)
 async def update_status(
     clinic_id: int, body: ClinicStatusUpdate, db: DbSession, _: AdminDep
 ) -> ClinicOut:
-    return ClinicOut.model_validate(await service.set_status(db, clinic_id, body.status))
+    return service.clinic_to_out(await service.set_status(db, clinic_id, body.status))
+
+
+@router.patch("/{clinic_id}/flag", response_model=ClinicOut)
+async def update_flag(
+    clinic_id: int, body: ClinicFlagUpdate, db: DbSession, _: AdminDep
+) -> ClinicOut:
+    return service.clinic_to_out(
+        await service.set_flagged(db, clinic_id, body.is_flagged)
+    )
+
+
+@router.get("/{clinic_id}/subscription", response_model=ClinicSubscriptionOut)
+async def get_subscription(
+    clinic_id: int, db: DbSession, _: AdminDep
+) -> ClinicSubscriptionOut:
+    return subscription_service.subscription_to_out(
+        await subscription_service.get_subscription(db, clinic_id)
+    )
+
+
+@router.put("/{clinic_id}/subscription", response_model=ClinicSubscriptionOut)
+async def put_subscription(
+    clinic_id: int, body: ClinicSubscriptionUpdate, db: DbSession, _: AdminDep
+) -> ClinicSubscriptionOut:
+    return subscription_service.subscription_to_out(
+        await subscription_service.update_subscription(db, clinic_id, body)
+    )
+
+
+@router.patch("/{clinic_id}/subscription/note", response_model=ClinicSubscriptionOut)
+async def patch_subscription_note(
+    clinic_id: int,
+    body: ClinicSubscriptionNoteUpdate,
+    db: DbSession,
+    admin: AdminDep,
+) -> ClinicSubscriptionOut:
+    return subscription_service.subscription_to_out(
+        await subscription_service.update_subscription_note(
+            db, clinic_id, body, admin_id=admin.id
+        )
+    )
 
 
 @router.delete("/{clinic_id}", status_code=204)

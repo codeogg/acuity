@@ -20,10 +20,12 @@ import { ImpersonateControl } from "@/components/system/impersonate-control";
 import { AccountFacet, InsurersFacet, NewClinicForm, OnboardingFacet, ProvisioningFacet } from "@/components/drawers/clinic-facets";
 import { StatusBadge } from "@/components/ui/ui-client";
 import { deleteClinicAction } from "@/lib/actions";
-import { clinicAccount, getClinic, getClinicConfigOverview, listDoctorRows } from "@/lib/data";
+import { getClinic, getClinicConfigOverview, getClinicSubscription, listDoctorRows } from "@/lib/data";
 import { clinicOps } from "@/lib/ops-model";
 import { clinicOpsStatus } from "@/lib/status";
 import { formatRelative } from "@acuity/i18n/format";
+import type { ClinicSubscriptionOut } from "@acuity/types";
+import { ClinicFlagStar } from "@/components/drawers/clinic-flag-star";
 
 const FACETS = ["overview", "provisioning", "insurers", "usage", "account", "onboarding", "impersonate"] as const;
 export type ClinicFacet = (typeof FACETS)[number];
@@ -72,9 +74,25 @@ export async function ClinicDrawer({
   const activeFacet: ClinicFacet = (FACETS as readonly string[]).includes(facet)
     ? (facet as ClinicFacet)
     : "overview";
-  const [doctorRows, config] = await Promise.all([
+  const [doctorRows, config, subscription] = await Promise.all([
     listDoctorRows(undefined, clinic.id),
     getClinicConfigOverview(clinic.id).catch(() => null),
+    getClinicSubscription(clinic.id).catch(
+      (): ClinicSubscriptionOut => ({
+        clinic_id: clinic.id,
+        subscription_status: "trial",
+        plan_code: null,
+        price: null,
+        currency: "HKD",
+        payment_status: null,
+        payment_method: null,
+        note_content: null,
+        note_format: "markdown",
+        note_updated_by: null,
+        note_updated_at: null,
+        updated_at: new Date().toISOString(),
+      }),
+    ),
   ]);
   const ops = clinicOps(clinic);
   const clinicName = pickName(locale, clinic.clinic_name, clinic.clinic_name_en);
@@ -103,11 +121,23 @@ export async function ClinicDrawer({
     address: clinic.address,
     phone: clinic.phone,
     idle_lock_minutes: clinic.idle_lock_minutes ?? 10,
+    district_id: clinic.district_id ?? null,
+    data_region: clinic.data_region ?? "香港",
+    is_flagged: clinic.is_flagged ?? 0,
   };
 
   return (
     <RouteDrawer
-      title={clinicName}
+      title={
+        <span className="inline-flex items-center gap-1.5">
+          <span className="min-w-0 truncate">{clinicName}</span>
+          <ClinicFlagStar
+            clinicId={clinic.id}
+            code={clinic.clinic_code}
+            flagged={Boolean(clinic.is_flagged)}
+          />
+        </span>
+      }
       description={`${t("eyebrow")} ${clinic.clinic_code}`}
       wide={wide}
       footer={
@@ -140,8 +170,11 @@ export async function ClinicDrawer({
         ) : undefined
       }
     >
-      <div className="mb-3">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
         <MetaBadge meta={clinicOpsStatus(ops.ops_status)} label={tRoot(clinicOpsStatus(ops.ops_status).key)} />
+        {clinic.is_flagged ? (
+          <StatusBadge tone="warning" appearance="outline" label={tRoot("status.needs-attention")} />
+        ) : null}
       </div>
       <FacetTabs
         facets={FACETS.map((f) => ({
@@ -274,7 +307,7 @@ export async function ClinicDrawer({
       ) : null}
 
       {activeFacet === "account" ? (
-        <AccountFacet clinic={summary} ops={ops} notes={clinicAccount(clinic).notes} />
+        <AccountFacet clinic={summary} ops={ops} subscription={subscription} />
       ) : null}
       {activeFacet === "onboarding" ? <OnboardingFacet clinic={summary} ops={ops} /> : null}
       {activeFacet === "impersonate" ? (

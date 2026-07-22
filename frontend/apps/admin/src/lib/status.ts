@@ -29,6 +29,7 @@ export const PAYMENT_STATUS: Record<string, StatusMeta> = {
   paid: { tone: "success", icon: "check", key: "status.paid" },
   unpaid: { tone: "neutral", icon: "dash", key: "status.unpaid" },
   overdue: { tone: "danger", icon: "alert", key: "status.overdue" },
+  refunded: { tone: "info", icon: "dash", key: "status.refunded" },
 };
 
 export const ACTIVATION_STATUS: Record<string, StatusMeta> = {
@@ -46,8 +47,11 @@ export const MFA_STATUS: Record<string, StatusMeta> = {
 export const SUBSCRIPTION_STATUS: Record<string, StatusMeta> = {
   trial: { tone: "warning", icon: "clock", key: "status.trial" },
   active: { tone: "success", icon: "check", key: "status.subscription-active" },
-  paused: { tone: "neutral", icon: "dash", key: "status.paused" },
-  churned: { tone: "danger", icon: "x", key: "status.churned" },
+  cancelled: { tone: "danger", icon: "x", key: "status.cancelled-sub" },
+  expired: { tone: "neutral", icon: "dash", key: "status.expired-sub" },
+  // Legacy mock labels kept so older badges still resolve.
+  paused: { tone: "neutral", icon: "dash", key: "status.expired-sub" },
+  churned: { tone: "danger", icon: "x", key: "status.cancelled-sub" },
 };
 
 // template lifecycle — the reference's operational statuses, derived from the

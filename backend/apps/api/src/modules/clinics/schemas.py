@@ -1,6 +1,10 @@
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+DataRegion = Literal["香港", "新加坡", "美国"]
+DATA_REGIONS: frozenset[str] = frozenset({"香港", "新加坡", "美国"})
 
 
 class ClinicCreate(BaseModel):
@@ -10,6 +14,8 @@ class ClinicCreate(BaseModel):
     address: str | None = None
     phone: str | None = None
     chop_image_url: str | None = None
+    district_id: int | None = None
+    data_region: DataRegion | None = None
 
 
 class ClinicUpdate(BaseModel):
@@ -19,10 +25,16 @@ class ClinicUpdate(BaseModel):
     phone: str | None = None
     chop_image_url: str | None = None
     idle_lock_minutes: int | None = None
+    district_id: int | None = None
+    data_region: DataRegion | None = None
 
 
 class ClinicStatusUpdate(BaseModel):
     status: int  # 0停用 1启用
+
+
+class ClinicFlagUpdate(BaseModel):
+    is_flagged: int = Field(ge=0, le=1, description="0 = 取消标记，1 = 需要關注")
 
 
 class ClinicOut(BaseModel):
@@ -37,7 +49,16 @@ class ClinicOut(BaseModel):
     chop_image_url: str | None
     status: int
     idle_lock_minutes: int
+    data_region: str
+    is_flagged: int
+    district_id: int | None = None
+    district_name_zh: str | None = None
+    district_name_en: str | None = None
     created_at: datetime
+    # Joined from clinic_subscriptions (1:1) for list filters / CRM badges.
+    subscription_status: str | None = None
+    payment_status: str | None = None
+    plan_code: str | None = None
 
 
 class ClinicInsuranceUpdate(BaseModel):

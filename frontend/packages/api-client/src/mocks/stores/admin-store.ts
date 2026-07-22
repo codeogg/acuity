@@ -12,6 +12,7 @@ import type {
   TemplateOut,
   TransformRuleOut,
 } from "@acuity/types";
+import type { DistrictOut } from "../../endpoints/districts";
 import {
   demoClinics,
   demoCompaniesFull,
@@ -23,6 +24,32 @@ import {
   demoTransformRules,
 } from "../fixtures/universe";
 
+const DEMO_DISTRICTS: DistrictOut[] = [
+  { id: 1, name_zh: "中環", name_en: "Central", region: "港島" },
+  { id: 2, name_zh: "灣仔", name_en: "Wan Chai", region: "港島" },
+  { id: 3, name_zh: "銅鑼灣", name_en: "Causeway Bay", region: "港島" },
+  { id: 4, name_zh: "半山", name_en: "Mid-Levels", region: "港島" },
+  { id: 5, name_zh: "太古", name_en: "Tai Koo", region: "港島" },
+  { id: 6, name_zh: "尖沙咀", name_en: "Tsim Sha Tsui", region: "九龍" },
+  { id: 7, name_zh: "旺角", name_en: "Mong Kok", region: "九龍" },
+  { id: 8, name_zh: "沙田", name_en: "Sha Tin", region: "新界" },
+];
+
+export type ClinicSubscriptionRecord = {
+  clinic_id: number;
+  subscription_status: "trial" | "active" | "cancelled" | "expired";
+  plan_code: string | null;
+  price: number | null;
+  currency: string;
+  payment_status: "unpaid" | "paid" | "overdue" | "refunded" | null;
+  payment_method: "bank_transfer" | "credit_card" | "cheque" | "other" | null;
+  note_content: string | null;
+  note_format: "html" | "markdown";
+  note_updated_by: number | null;
+  note_updated_at: string | null;
+  updated_at: string;
+};
+
 export interface AdminState {
   clinics: ClinicOut[];
   doctors: DoctorOut[];
@@ -32,13 +59,36 @@ export interface AdminState {
   domains: DomainOut[];
   standardFields: StandardFieldOut[];
   transformRules: TransformRuleOut[];
+  districts: DistrictOut[];
   // clinic_id -> enabled company ids.
   clinicInsurers: Map<number, number[]>;
   // clinic_id -> enabled template ids.
   clinicTemplates: Map<number, number[]>;
+  // clinic_id -> 1:1 subscription record
+  clinicSubscriptions: Map<number, ClinicSubscriptionRecord>;
   // template_id -> simulated parse progress (advances on each poll).
   parseProgress: Map<number, number>;
   nextId: number;
+}
+
+export function defaultClinicSubscription(
+  clinicId: number,
+  notes = "",
+): ClinicSubscriptionRecord {
+  return {
+    clinic_id: clinicId,
+    subscription_status: "trial",
+    plan_code: null,
+    price: null,
+    currency: "HKD",
+    payment_status: null,
+    payment_method: null,
+    note_content: notes || null,
+    note_format: "markdown",
+    note_updated_by: null,
+    note_updated_at: null,
+    updated_at: new Date().toISOString(),
+  };
 }
 
 let state: AdminState | null = null;
@@ -52,7 +102,11 @@ export function adminState(): AdminState {
       .filter((c) => c.status === 1)
       .map((c) => c.id);
     state = {
-      clinics: structuredClone(demoClinics),
+      clinics: structuredClone(demoClinics).map((c) => ({
+        ...c,
+        data_region: c.data_region ?? "香港",
+        is_flagged: c.is_flagged ?? 0,
+      })),
       doctors: structuredClone(demoDoctors),
       companies: structuredClone(demoCompaniesFull),
       templates: structuredClone(demoTemplatesAdmin),
@@ -65,11 +119,21 @@ export function adminState(): AdminState {
       domains: structuredClone(demoDomains),
       standardFields: structuredClone(demoStandardFields),
       transformRules: structuredClone(demoTransformRules),
+      districts: structuredClone(DEMO_DISTRICTS),
       clinicInsurers: new Map(
         demoClinics.map((c) => [c.id, c.status === 1 ? [...activeCompanies] : []]),
       ),
       clinicTemplates: new Map(
         demoClinics.map((c) => [c.id, c.status === 1 ? [...publishedActive] : []]),
+      ),
+      clinicSubscriptions: new Map(
+        demoClinics.map((c) => {
+          const notes =
+            typeof (c as { notes?: unknown }).notes === "string"
+              ? String((c as { notes?: unknown }).notes)
+              : "";
+          return [c.id, defaultClinicSubscription(c.id, notes)];
+        }),
       ),
       parseProgress: new Map(),
       nextId: 10000,

@@ -4,7 +4,7 @@
 // open record and facet live in search params (?open=<id>&facet=<facet>), so
 // the grid's filter/sort/selection context survives underneath, the facet
 // switch is a server re-render, and closing simply strips the params
-// (close via the header button only — outside click and Escape do not dismiss).
+// (close via the header button or Escape — outside click does not dismiss).
 
 import type { ReactNode } from "react";
 import { useSearchParams } from "next/navigation";
@@ -20,7 +20,7 @@ export function RouteDrawer({
   wide = false,
   children,
 }: {
-  title: string;
+  title: ReactNode;
   description?: string;
   footer?: ReactNode;
   wide?: boolean;

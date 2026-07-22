@@ -240,6 +240,18 @@
               "title": "Sort",
               "description": "Sort by name, code, status, doctors, or created_at; prefix - for descending."
             }
+          },
+          {
+            "name": "is_flagged",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1,
+              "title": "Is Flagged"
+            },
+            "description": "Filter by needs-attention flag: 1 = flagged only, 0 = unflagged only."
           }
         ],
         "responses": {
@@ -2800,6 +2812,9 @@
           }
         ],
         "responses": {
+          "204": {
+            "description": "Field deleted."
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -2809,9 +2824,6 @@
                 }
               }
             }
-          },
-          "204": {
-            "description": "Field deleted."
           },
           "default": {
             "description": "Domain error (ErrorEnvelope). Request-shape validation failures return the native 422 HTTPValidationError instead.",
@@ -6883,6 +6895,205 @@
           }
         }
       }
+    },
+    "/api/admin/clinics/{clinic_id}/flag": {
+      "patch": {
+        "tags": [
+          "admin:clinics"
+        ],
+        "summary": "Set Clinic Flag",
+        "operationId": "set_clinic_flag_api_admin_clinics_clinic_id_flag_patch",
+        "parameters": [
+          {
+            "name": "clinic_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Clinic Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClinicFlagUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicOut"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Domain error (ErrorEnvelope).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/clinics/{clinic_id}/subscription": {
+      "get": {
+        "tags": [
+          "admin:clinics"
+        ],
+        "summary": "Get Clinic Subscription",
+        "description": "1:1 commercial subscription record for a clinic (auto-creates a trial row if missing).",
+        "operationId": "get_clinic_subscription_api_admin_clinics_clinic_id_subscription_get",
+        "parameters": [
+          {
+            "name": "clinic_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Clinic Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicSubscriptionOut"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Domain error (ErrorEnvelope).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "admin:clinics"
+        ],
+        "summary": "Update Clinic Subscription",
+        "description": "Update subscription status, plan, price, and payment fields (not notes).",
+        "operationId": "update_clinic_subscription_api_admin_clinics_clinic_id_subscription_put",
+        "parameters": [
+          {
+            "name": "clinic_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Clinic Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClinicSubscriptionUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicSubscriptionOut"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Domain error (ErrorEnvelope).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/clinics/{clinic_id}/subscription/note": {
+      "patch": {
+        "tags": [
+          "admin:clinics"
+        ],
+        "summary": "Update Clinic Subscription Note",
+        "description": "Independently update note_content / note_format; writes note_updated_by and note_updated_at.",
+        "operationId": "update_clinic_subscription_note_api_admin_clinics_clinic_id_subscription_note_patch",
+        "parameters": [
+          {
+            "name": "clinic_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Clinic Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClinicSubscriptionNoteUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClinicSubscriptionOut"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Domain error (ErrorEnvelope).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -7234,6 +7445,35 @@
             ],
             "title": "Chop Image Url",
             "description": "Opaque URL string. Production values are signed or public asset URLs (branding/asset class - long TTL acceptable)."
+          },
+          "district_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District Id",
+            "description": "FK to districts.id — select from the districts dictionary; free-text district is not accepted."
+          },
+          "data_region": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "香港",
+                  "新加坡",
+                  "美国"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Region",
+            "description": "Clinic data residency: 香港 / 新加坡 / 美国."
           }
         },
         "type": "object",
@@ -7327,10 +7567,73 @@
             "title": "Idle Lock Minutes",
             "description": "Clinic default idle screen lock threshold (minutes, 2–30)."
           },
+          "district_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District Id"
+          },
+          "district_name_zh": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District Name Zh",
+            "description": "Joined from districts.name_zh for list/detail display."
+          },
+          "district_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District Name En",
+            "description": "Joined from districts.name_en for list/detail display."
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "data_region": {
+            "type": "string",
+            "title": "Data Region",
+            "description": "Clinic data residency: 香港 / 新加坡 / 美国."
+          },
+          "is_flagged": {
+            "type": "integer",
+            "title": "Is Flagged",
+            "description": "1 = needs attention (operator flag), 0 = not flagged."
+          },
+          "subscription_status": {
+            "type": "string",
+            "nullable": true,
+            "title": "Subscription Status",
+            "description": "Joined from clinic_subscriptions.subscription_status (1:1)."
+          },
+          "payment_status": {
+            "type": "string",
+            "nullable": true,
+            "title": "Payment Status",
+            "description": "Joined from clinic_subscriptions.payment_status (1:1)."
+          },
+          "plan_code": {
+            "type": "string",
+            "nullable": true,
+            "title": "Plan Code",
+            "description": "Joined from clinic_subscriptions.plan_code (1:1)."
           }
         },
         "type": "object",
@@ -7344,6 +7647,8 @@
           "chop_image_url",
           "status",
           "idle_lock_minutes",
+          "data_region",
+          "is_flagged",
           "created_at"
         ],
         "title": "ClinicOut"
@@ -7455,6 +7760,35 @@
             "type": "integer",
             "title": "Idle Lock Minutes",
             "description": "Clinic default idle screen lock threshold (minutes, 2–30)."
+          },
+          "district_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District Id",
+            "description": "FK to districts.id — select from the districts dictionary; free-text district is not accepted."
+          },
+          "data_region": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "香港",
+                  "新加坡",
+                  "美国"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data Region",
+            "description": "Clinic data residency: 香港 / 新加坡 / 美国."
           }
         },
         "type": "object",
@@ -12011,6 +12345,191 @@
           "page_size"
         ],
         "title": "Page[NotificationItem]"
+      },
+      "ClinicFlagUpdate": {
+        "properties": {
+          "is_flagged": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1,
+            "title": "Is Flagged",
+            "description": "0 = clear flag, 1 = mark needs attention."
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_flagged"
+        ],
+        "title": "ClinicFlagUpdate"
+      },
+      "ClinicSubscriptionOut": {
+        "type": "object",
+        "title": "ClinicSubscriptionOut",
+        "required": [
+          "clinic_id",
+          "subscription_status",
+          "currency",
+          "note_format",
+          "updated_at"
+        ],
+        "properties": {
+          "clinic_id": {
+            "type": "integer",
+            "title": "Clinic Id"
+          },
+          "subscription_status": {
+            "type": "string",
+            "enum": [
+              "trial",
+              "active",
+              "cancelled",
+              "expired"
+            ],
+            "title": "Subscription Status"
+          },
+          "plan_code": {
+            "type": "string",
+            "nullable": true,
+            "title": "Plan Code",
+            "maxLength": 50
+          },
+          "price": {
+            "type": "number",
+            "nullable": true,
+            "title": "Price"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency",
+            "default": "HKD"
+          },
+          "payment_status": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "unpaid",
+              "paid",
+              "overdue",
+              "refunded"
+            ],
+            "title": "Payment Status"
+          },
+          "payment_method": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "bank_transfer",
+              "credit_card",
+              "cheque",
+              "other"
+            ],
+            "title": "Payment Method"
+          },
+          "note_content": {
+            "type": "string",
+            "nullable": true,
+            "title": "Note Content"
+          },
+          "note_format": {
+            "type": "string",
+            "enum": [
+              "html",
+              "markdown"
+            ],
+            "title": "Note Format",
+            "default": "markdown"
+          },
+          "note_updated_by": {
+            "type": "integer",
+            "nullable": true,
+            "title": "Note Updated By"
+          },
+          "note_updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "title": "Note Updated At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        }
+      },
+      "ClinicSubscriptionUpdate": {
+        "type": "object",
+        "title": "ClinicSubscriptionUpdate",
+        "properties": {
+          "subscription_status": {
+            "type": "string",
+            "enum": [
+              "trial",
+              "active",
+              "cancelled",
+              "expired"
+            ],
+            "title": "Subscription Status"
+          },
+          "plan_code": {
+            "type": "string",
+            "nullable": true,
+            "title": "Plan Code",
+            "maxLength": 50
+          },
+          "price": {
+            "type": "number",
+            "nullable": true,
+            "title": "Price"
+          },
+          "currency": {
+            "type": "string",
+            "nullable": true,
+            "title": "Currency",
+            "maxLength": 10
+          },
+          "payment_status": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "unpaid",
+              "paid",
+              "overdue",
+              "refunded"
+            ],
+            "title": "Payment Status"
+          },
+          "payment_method": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "bank_transfer",
+              "credit_card",
+              "cheque",
+              "other"
+            ],
+            "title": "Payment Method"
+          }
+        }
+      },
+      "ClinicSubscriptionNoteUpdate": {
+        "type": "object",
+        "title": "ClinicSubscriptionNoteUpdate",
+        "properties": {
+          "note_content": {
+            "type": "string",
+            "nullable": true,
+            "title": "Note Content"
+          },
+          "note_format": {
+            "type": "string",
+            "enum": [
+              "html",
+              "markdown"
+            ],
+            "title": "Note Format"
+          }
+        }
       }
     },
     "securitySchemes": {

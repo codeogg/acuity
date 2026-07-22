@@ -11,6 +11,8 @@ import type {
   ClinicInsuranceUpdate,
   ClinicOut,
   ClinicStatusUpdate,
+  ClinicSubscriptionNoteUpdate,
+  ClinicSubscriptionUpdate,
   ClinicTemplatesSet,
   ClinicUpdate,
   CompanyCreate,
@@ -52,7 +54,7 @@ import {
   analyticsUsage,
   analyticsVerification,
 } from "../fixtures/index";
-import { adminState, nextAdminId } from "../stores/admin-store";
+import { adminState, defaultClinicSubscription, nextAdminId } from "../stores/admin-store";
 import { listClaimEntries } from "../stores/claims-store";
 import {
   frontendOnlyState,
@@ -161,10 +163,15 @@ export const adminHandlers = [
     let rows = s.clinics.filter((c) =>
       matches(k, c.clinic_name, c.clinic_name_en, c.clinic_code),
     );
+    const flagged = new URL(request.url).searchParams.get("is_flagged");
+    if (flagged === "0" || flagged === "1") {
+      const want = Number(flagged);
+      rows = rows.filter((c) => Number(c.is_flagged ?? 0) === want);
+    }
     const doctorCounts = new Map<number, number>();
     for (const d of s.doctors) {
-      if (d.clinic_id != null) {
-        doctorCounts.set(d.clinic_id, (doctorCounts.get(d.clinic_id) ?? 0) + 1);
+      for (const clinicId of doctorClinicIds(d)) {
+        doctorCounts.set(clinicId, (doctorCounts.get(clinicId) ?? 0) + 1);
       }
     }
     const sortRaw = new URL(request.url).searchParams.get("sort");
@@ -187,6 +194,13 @@ export const adminHandlers = [
       return errorEnvelope("CONFLICT", "诊所英文名称已存在", 409);
     }
     const id = nextAdminId();
+    const districtId = body.district_id ?? null;
+    const district = districtId
+      ? s.districts.find((d) => d.id === districtId)
+      : undefined;
+    if (districtId != null && !district) {
+      return errorEnvelope("VALIDATION_ERROR", "地区不存在，请从地区字典中选择", 422);
+    }
     const clinic: ClinicOut = {
       id,
       clinic_code: body.clinic_code ?? `CL-${String(id).padStart(4, "0")}`,
@@ -197,11 +211,20 @@ export const adminHandlers = [
       chop_image_url: body.chop_image_url ?? null,
       status: 1,
       idle_lock_minutes: 10,
+      data_region: body.data_region ?? "香港",
+      is_flagged: 0,
+      district_id: districtId,
+      district_name_zh: district?.name_zh ?? null,
+      district_name_en: district?.name_en ?? null,
       created_at: nowIso(),
+      subscription_status: "trial",
+      payment_status: null,
+      plan_code: null,
     };
     s.clinics.unshift(clinic);
     s.clinicInsurers.set(id, []);
     s.clinicTemplates.set(id, []);
+    s.clinicSubscriptions.set(id, defaultClinicSubscription(id));
     return HttpResponse.json(clinic);
   }),
 
@@ -240,16 +263,118 @@ export const adminHandlers = [
     if (body.phone !== undefined) clinic.phone = body.phone;
     if (body.chop_image_url !== undefined) clinic.chop_image_url = body.chop_image_url;
     if (body.idle_lock_minutes !== undefined) clinic.idle_lock_minutes = body.idle_lock_minutes;
+    if (body.data_region !== undefined && body.data_region != null) {
+      clinic.data_region = body.data_region;
+    }
+    if (body.district_id !== undefined) {
+      if (body.district_id == null) {
+        clinic.district_id = null;
+        clinic.district_name_zh = null;
+        clinic.district_name_en = null;
+      } else {
+        const district = s.districts.find((d) => d.id === body.district_id);
+        if (!district) {
+          return errorEnvelope("VALIDATION_ERROR", "地区不存在，请从地区字典中选择", 422);
+        }
+        clinic.district_id = district.id;
+        clinic.district_name_zh = district.name_zh;
+        clinic.district_name_en = district.name_en;
+      }
+    }
     return HttpResponse.json(clinic);
+  }),
+
+  // ===== districts ============================================================
+  http.get(`${API}/admin/districts`, async ({ request }) => {
+    const { scenario, deny } = await gate(request);
+    if (deny) return deny;
+    const region = new URL(request.url).searchParams.get("region");
+    let rows = adminState().districts;
+    if (region) rows = rows.filter((d) => d.region === region);
+    return HttpResponse.json(listItems(scenario, rows));
+  }),
+
+  http.post(`${API}/admin/districts`, async ({ request }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const body = (await request.json()) as {
+      name_zh: string;
+      name_en?: string | null;
+      region?: string | null;
+    };
+    const nameZh = body.name_zh?.trim();
+    if (!nameZh) return errorEnvelope("VALIDATION_ERROR", "地区中文名称不能为空", 422);
+    const s = adminState();
+    if (s.districts.some((d) => d.name_zh === nameZh)) {
+      return errorEnvelope("CONFLICT", "地区中文名称已存在", 409);
+    }
+    const district = {
+      id: nextAdminId(),
+      name_zh: nameZh,
+      name_en: body.name_en?.trim() || null,
+      region: body.region?.trim() || null,
+    };
+    s.districts.push(district);
+    return HttpResponse.json(district);
+  }),
+
+  http.get(`${API}/admin/districts/:districtId`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const district = adminState().districts.find((d) => d.id === Number(params.districtId));
+    if (!district) return notFoundZh("地区不存在");
+    return HttpResponse.json(district);
+  }),
+
+  http.put(`${API}/admin/districts/:districtId`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const s = adminState();
+    const district = s.districts.find((d) => d.id === Number(params.districtId));
+    if (!district) return notFoundZh("地区不存在");
+    const body = (await request.json()) as {
+      name_zh?: string | null;
+      name_en?: string | null;
+      region?: string | null;
+    };
+    if (body.name_zh !== undefined) {
+      const nameZh = body.name_zh?.trim() || "";
+      if (!nameZh) return errorEnvelope("VALIDATION_ERROR", "地区中文名称不能为空", 422);
+      if (s.districts.some((d) => d.id !== district.id && d.name_zh === nameZh)) {
+        return errorEnvelope("CONFLICT", "地区中文名称已存在", 409);
+      }
+      district.name_zh = nameZh;
+    }
+    if (body.name_en !== undefined) district.name_en = body.name_en?.trim() || null;
+    if (body.region !== undefined) district.region = body.region?.trim() || null;
+    return HttpResponse.json(district);
+  }),
+
+  http.delete(`${API}/admin/districts/:districtId`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const s = adminState();
+    const districtId = Number(params.districtId);
+    if (s.clinics.some((c) => c.district_id === districtId)) {
+      return errorEnvelope("CONFLICT", "该地区仍有关联诊所，无法删除", 409);
+    }
+    const index = s.districts.findIndex((d) => d.id === districtId);
+    if (index === -1) return notFoundZh("地区不存在");
+    s.districts.splice(index, 1);
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.delete(`${API}/admin/clinics/:clinicId`, async ({ request, params }) => {
     const { deny } = await gate(request);
     if (deny) return deny;
     const s = adminState();
-    const index = s.clinics.findIndex((c) => c.id === Number(params.clinicId));
+    const clinicId = Number(params.clinicId);
+    const index = s.clinics.findIndex((c) => c.id === clinicId);
     if (index === -1) return notFoundZh("診所不存在");
     s.clinics.splice(index, 1);
+    s.clinicInsurers.delete(clinicId);
+    s.clinicTemplates.delete(clinicId);
+    s.clinicSubscriptions.delete(clinicId);
     return new HttpResponse(null, { status: 204 });
   }),
 
@@ -261,6 +386,75 @@ export const adminHandlers = [
     const body = (await request.json()) as ClinicStatusUpdate;
     clinic.status = body.status;
     return HttpResponse.json(clinic);
+  }),
+
+  http.patch(`${API}/admin/clinics/:clinicId/flag`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const clinic = adminState().clinics.find((c) => c.id === Number(params.clinicId));
+    if (!clinic) return notFoundZh("診所不存在");
+    const body = (await request.json()) as { is_flagged: number };
+    clinic.is_flagged = body.is_flagged ? 1 : 0;
+    return HttpResponse.json(clinic);
+  }),
+
+  http.get(`${API}/admin/clinics/:clinicId/subscription`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const s = adminState();
+    const clinicId = Number(params.clinicId);
+    if (!s.clinics.some((c) => c.id === clinicId)) return notFoundZh("診所不存在");
+    let row = s.clinicSubscriptions.get(clinicId);
+    if (!row) {
+      row = defaultClinicSubscription(clinicId);
+      s.clinicSubscriptions.set(clinicId, row);
+    }
+    return HttpResponse.json(row);
+  }),
+
+  http.put(`${API}/admin/clinics/:clinicId/subscription`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const s = adminState();
+    const clinicId = Number(params.clinicId);
+    if (!s.clinics.some((c) => c.id === clinicId)) return notFoundZh("診所不存在");
+    let row = s.clinicSubscriptions.get(clinicId);
+    if (!row) {
+      row = defaultClinicSubscription(clinicId);
+      s.clinicSubscriptions.set(clinicId, row);
+    }
+    const body = (await request.json()) as ClinicSubscriptionUpdate;
+    if (body.subscription_status !== undefined) row.subscription_status = body.subscription_status;
+    if (body.plan_code !== undefined) row.plan_code = body.plan_code;
+    if (body.price !== undefined) row.price = body.price;
+    if (body.currency !== undefined && body.currency != null) row.currency = body.currency;
+    if (body.payment_status !== undefined) row.payment_status = body.payment_status;
+    if (body.payment_method !== undefined) row.payment_method = body.payment_method;
+    row.updated_at = new Date().toISOString();
+    return HttpResponse.json(row);
+  }),
+
+  http.patch(`${API}/admin/clinics/:clinicId/subscription/note`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const s = adminState();
+    const clinicId = Number(params.clinicId);
+    if (!s.clinics.some((c) => c.id === clinicId)) return notFoundZh("診所不存在");
+    let row = s.clinicSubscriptions.get(clinicId);
+    if (!row) {
+      row = defaultClinicSubscription(clinicId);
+      s.clinicSubscriptions.set(clinicId, row);
+    }
+    const body = (await request.json()) as ClinicSubscriptionNoteUpdate;
+    if (body.note_content === undefined && body.note_format === undefined) {
+      return errorEnvelope("VALIDATION_ERROR", "备注内容或格式至少提供一项", 422);
+    }
+    if (body.note_content !== undefined) row.note_content = body.note_content;
+    if (body.note_format !== undefined) row.note_format = body.note_format;
+    row.note_updated_by = 1;
+    row.note_updated_at = new Date().toISOString();
+    row.updated_at = row.note_updated_at;
+    return HttpResponse.json(row);
   }),
 
   http.get(`${API}/admin/clinics/:clinicId/insurance-companies`, async ({ request, params }) => {

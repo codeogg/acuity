@@ -21,6 +21,8 @@ import { ClinicsBulkBar } from "@/components/grid/bulk-bars";
 import { ClinicDrawer } from "@/components/drawers/clinic-drawer";
 import {
   CLINIC_TABS,
+  clinicDisplayStatus,
+  clinicMatchesKeyword,
   clinicMatchesTab,
   CLINIC_BACKEND_SORT_KEYS,
   listClinicRows,
@@ -119,8 +121,19 @@ async function ClinicsGrid({
   const counts = Object.fromEntries(
     CLINIC_TABS.map((tb) => [tb, allRows.filter((r) => clinicMatchesTab(r, tb)).length]),
   );
-  let rows = allRows.filter((r) => clinicMatchesTab(r, tab));
-  if (sp.status) rows = rows.filter((r) => r.ops.ops_status === sp.status);
+  // Status filter is the primary lifecycle lens; when set, ignore the tab's
+  // overlapping ops filter so the dropdown always visibly changes the grid.
+  // Tabs still apply for overdue / needs-attention special cases when no status
+  // is selected.
+  let rows = allRows;
+  if (sp.status) {
+    rows = rows.filter((r) => clinicDisplayStatus(r) === sp.status);
+  } else {
+    rows = rows.filter((r) => clinicMatchesTab(r, tab));
+  }
+  if (sp.keyword) {
+    rows = rows.filter((r) => clinicMatchesKeyword(r, sp.keyword!));
+  }
   const sort = parseSort(sp.sort);
   const clientSortOnly = sort && !CLINIC_BACKEND_SORT_KEYS.has(sort.key);
   const applyNeedsFirst = !sort && (tab === "needs-attention" || tab === "all");
@@ -163,7 +176,10 @@ async function ClinicsGrid({
       <div key="name">
         <div className="font-medium text-foreground">{pickName(locale, r.clinic.clinic_name, r.clinic.clinic_name_en)}</div>
         <div className="text-xs text-muted-foreground">
-          {locale.startsWith("zh") ? r.ops.district_zh : r.ops.district_en}
+          {(locale.startsWith("zh")
+            ? r.clinic.district_name_zh ?? r.clinic.district_name_en
+            : r.clinic.district_name_en ?? r.clinic.district_name_zh)
+            ?? (locale.startsWith("zh") ? r.ops.district_zh : r.ops.district_en)}
         </div>
       </div>,
       <span key="id" className="font-mono text-sm text-muted-foreground">
@@ -171,8 +187,8 @@ async function ClinicsGrid({
       </span>,
       <MetaBadge
         key="status"
-        meta={clinicOpsStatus(r.ops.ops_status)}
-        label={tRoot(clinicOpsStatus(r.ops.ops_status).key)}
+        meta={clinicOpsStatus(clinicDisplayStatus(r))}
+        label={tRoot(clinicOpsStatus(clinicDisplayStatus(r)).key)}
       />,
       <span key="doctors" className="tabular-nums">
         {r.doctor_count}
@@ -188,7 +204,10 @@ async function ClinicsGrid({
       <MetaBadge key="payment" meta={paymentStatus(r.ops.payment)} label={tRoot(paymentStatus(r.ops.payment).key)} />,
       <div key="tags" className="flex gap-1">
         {[
-          locale.startsWith("zh") ? r.ops.district_zh : r.ops.district_en,
+          (locale.startsWith("zh")
+            ? r.clinic.district_name_zh ?? r.clinic.district_name_en
+            : r.clinic.district_name_en ?? r.clinic.district_name_zh)
+            ?? (locale.startsWith("zh") ? r.ops.district_zh : r.ops.district_en),
           tRoot(`clinic-drawer.account.plan-${r.ops.plan}`),
         ].map((tag) => (
           <StatusBadge key={tag} tone="info" appearance="outline" label={tag} />

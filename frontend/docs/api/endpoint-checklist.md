@@ -10,12 +10,12 @@ Every row is an endpoint the frontend calls. **EXISTS** = implemented by the dem
 
 | Status | Count |
 |---|---|
-| EXISTS | 72 |
+| EXISTS | 76 |
 | DRIFT | 2 |
 | PARTIAL | 4 |
 | MISSING | 46 |
 | FUTURE-AUTH | 9 |
-| **Total frontend endpoints** | **133** |
+| **Total frontend endpoints** | **137** |
 
 ## Doctor app (`apps/app`) — /doctor/*
 
@@ -65,11 +65,15 @@ Every row is an endpoint the frontend calls. **EXISTS** = implemented by the dem
 | EXISTS | GET | `/api/admin/clinics/{clinic_id}` | Get Clinic |
 | EXISTS | PUT | `/api/admin/clinics/{clinic_id}` | Update Clinic |
 | EXISTS | GET | `/api/admin/clinics/{clinic_id}/config-overview` | Get Config Overview |
+| EXISTS | PATCH | `/api/admin/clinics/{clinic_id}/flag` | Set Clinic Flag |
 | EXISTS | GET | `/api/admin/clinics/{clinic_id}/insurance-companies` | Get Clinic Insurers |
 | EXISTS | PUT | `/api/admin/clinics/{clinic_id}/insurance-companies` | Set Clinic Insurers |
 | EXISTS | PATCH | `/api/admin/clinics/{clinic_id}/insurance-companies/{company_id}` | Toggle Company |
 | EXISTS | PUT | `/api/admin/clinics/{clinic_id}/insurance-companies/{company_id}/templates` | Set Company Templates — Renamed from .../companies/{company_id}/templates for consistency with the sibling insurance-companies routes; the demo backend still serves the old segment - the backend applies the rename (or an alias) at integration. |
 | EXISTS | PATCH | `/api/admin/clinics/{clinic_id}/status` | Update Status |
+| EXISTS | GET | `/api/admin/clinics/{clinic_id}/subscription` | Get Clinic Subscription |
+| EXISTS | PUT | `/api/admin/clinics/{clinic_id}/subscription` | Update Clinic Subscription |
+| EXISTS | PATCH | `/api/admin/clinics/{clinic_id}/subscription/note` | Update Clinic Subscription Note |
 | EXISTS | PATCH | `/api/admin/clinics/{clinic_id}/templates/{template_id}` | Toggle Template |
 | EXISTS | GET | `/api/admin/doctors` | List Doctors |
 | EXISTS | POST | `/api/admin/doctors` | Create Doctor |

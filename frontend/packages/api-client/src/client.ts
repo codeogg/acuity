@@ -210,6 +210,9 @@ export async function request<T>(
       // Send the httpOnly access_token cookie on every request.
       credentials: "include",
       signal: options.signal,
+      // Authenticated console reads must not reuse a Next.js Data Cache entry
+      // across keyword / filter URL changes.
+      cache: "no-store",
     });
   } catch (cause) {
     throw new ApiError({

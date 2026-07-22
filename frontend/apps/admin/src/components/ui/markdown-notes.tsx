@@ -1,14 +1,13 @@
 "use client";
 
-// Operator markdown notes (dev ADR 0041) — shared editor for the clinic and
-// doctor internal notes: rendered markdown at rest, textarea + live preview
-// while editing, committed through a server action. react-markdown escapes
-// raw HTML, so pasted content cannot inject markup.
+// Operator notes with markdown or sanitized HTML rendering. Edit remains a
+// plain source textarea + preview; HTML is never injected without DOMPurify.
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Markdown from "react-markdown";
+import DOMPurify from "isomorphic-dompurify";
 import { Button, Textarea } from "@acuity/ui";
 import { AcuityIcon } from "@acuity/ui";
 import { useToast } from "@acuity/ui";
@@ -23,23 +22,49 @@ const PROSE =
   "[&_a]:text-primary [&_a]:underline " +
   "[&_blockquote]:mb-2 [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground";
 
-export function MarkdownNotes({
+export type NoteFormat = "markdown" | "html";
+
+function renderNote(content: string, format: NoteFormat) {
+  if (format === "html") {
+    const safe = DOMPurify.sanitize(content, {
+      USE_PROFILES: { html: true },
+    });
+    return (
+      <div
+        className={PROSE}
+        data-testid="notes-rendered"
+        // Sanitized above — do not pass unsanitized storage content here.
+        dangerouslySetInnerHTML={{ __html: safe }}
+      />
+    );
+  }
+  return (
+    <div className={PROSE} data-testid="notes-rendered">
+      <Markdown>{content}</Markdown>
+    </div>
+  );
+}
+
+export function RichNotes({
   value,
+  format = "markdown",
   commit,
 }: {
   value: string;
-  commit: (next: string) => Promise<ActionResult<unknown>>;
+  format?: NoteFormat;
+  commit: (next: string, format: NoteFormat) => Promise<ActionResult<unknown>>;
 }) {
   const t = useTranslations("notes");
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
+  const [draftFormat, setDraftFormat] = useState<NoteFormat>(format);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
   const { showToast } = useToast();
 
   function save() {
     startTransition(async () => {
-      const result = await commit(draft);
+      const result = await commit(draft, draftFormat);
       if (result.ok) {
         showToast(t("saved"));
         setEditing(false);
@@ -54,9 +79,7 @@ export function MarkdownNotes({
     return (
       <div>
         {value.trim() ? (
-          <div className={PROSE} data-testid="notes-rendered">
-            <Markdown>{value}</Markdown>
-          </div>
+          renderNote(value, format)
         ) : (
           <p className="text-sm text-muted-foreground">{t("empty")}</p>
         )}
@@ -67,6 +90,7 @@ export function MarkdownNotes({
             size="sm"
             onClick={() => {
               setDraft(value);
+              setDraftFormat(format);
               setEditing(true);
             }}
           >
@@ -80,6 +104,19 @@ export function MarkdownNotes({
 
   return (
     <div>
+      <div className="mb-2 flex gap-2">
+        {(["markdown", "html"] as const).map((f) => (
+          <Button
+            key={f}
+            type="button"
+            size="sm"
+            variant={draftFormat === f ? "default" : "outline"}
+            onClick={() => setDraftFormat(f)}
+          >
+            {f === "markdown" ? t("format-markdown") : t("format-html")}
+          </Button>
+        ))}
+      </div>
       <Textarea
         value={draft}
         rows={6}
@@ -93,9 +130,7 @@ export function MarkdownNotes({
           {t("preview")}
         </div>
         {draft.trim() ? (
-          <div className={PROSE} data-testid="notes-preview">
-            <Markdown>{draft}</Markdown>
-          </div>
+          renderNote(draft, draftFormat)
         ) : (
           <p className="text-sm text-muted-foreground">{t("empty")}</p>
         )}
@@ -109,5 +144,22 @@ export function MarkdownNotes({
         </Button>
       </div>
     </div>
+  );
+}
+
+/** Backward-compatible markdown-only notes editor (doctor drawer etc.). */
+export function MarkdownNotes({
+  value,
+  commit,
+}: {
+  value: string;
+  commit: (next: string) => Promise<ActionResult<unknown>>;
+}) {
+  return (
+    <RichNotes
+      value={value}
+      format="markdown"
+      commit={(next) => commit(next)}
+    />
   );
 }

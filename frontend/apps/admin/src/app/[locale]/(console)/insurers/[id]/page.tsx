@@ -11,6 +11,7 @@ import { MetaBadge } from "@/components/ui/status-badge";
 import { AcuityIcon } from "@acuity/ui";
 import { ActionButton } from "@/components/ui/action-button";
 import { EditInsurerButton } from "@/components/drawers/edit-insurer-button";
+import { DeleteInsurerButton } from "@/components/drawers/delete-insurer-button";
 import { setCompanyStatusAction } from "@/lib/actions";
 import { getCompany, listTemplateRows } from "@/lib/data";
 import { enabledStatus, templateOpsStatusMeta } from "@/lib/status";
@@ -70,6 +71,13 @@ export default async function InsurerDetailPage({
                 action={setCompanyStatusAction.bind(null, company.id, company.status === 1 ? 0 : 1)}
                 successMessage={t("status-updated")}
               />
+              {templates.length === 0 ? (
+                <DeleteInsurerButton
+                  companyId={company.id}
+                  companyCode={company.company_code}
+                  companyName={pickName(locale, company.company_name, company.company_name_en)}
+                />
+              ) : null}
             </div>
           </section>
           <section className="rounded-lg border border-border bg-card p-6">

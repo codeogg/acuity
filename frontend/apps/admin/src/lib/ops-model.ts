@@ -15,8 +15,8 @@ import type { ClinicOut, DoctorOut, TemplateFieldType, TemplateOut } from "@acui
 
 export type ClinicOpsStatus = "provisioning" | "onboarding" | "active" | "needs-attention";
 export type Activation = "setup" | "onboarding" | "active";
-export type Payment = "paid" | "unpaid" | "overdue";
-export type Subscription = "trial" | "active" | "paused" | "churned";
+export type Payment = "paid" | "unpaid" | "overdue" | "refunded";
+export type Subscription = "trial" | "active" | "cancelled" | "expired";
 export type MfaState = "enrolled" | "mfa-pending" | "not-enrolled";
 
 export interface ClinicOps {
@@ -29,7 +29,7 @@ export interface ClinicOps {
   subscription: Subscription;
   plan: "starter" | "practice" | "group";
   price_hkd_month: number;
-  pay_method: "bank-transfer" | "fps" | "cheque" | "none";
+  pay_method: "bank-transfer" | "credit-card" | "cheque" | "other" | "fps" | "none";
   last_activity: string;
   insurer_tags: string[];
   real_forms: number;
@@ -209,12 +209,42 @@ const defaultClinicOps = (id: number): ClinicOps => ({
   onboarding_step: 0,
 });
 
-export function clinicOps(clinic: Pick<ClinicOut, "id">): ClinicOps {
+export function clinicOps(clinic: Pick<ClinicOut, "id"> & Partial<ClinicOut>): ClinicOps {
   let ops = clinicSeed.get(clinic.id);
   if (!ops) {
     ops = defaultClinicOps(clinic.id);
     clinicSeed.set(clinic.id, ops);
   }
+
+  // Live backend clinics are not in the fixture seed — derive CRM fields from
+  // the joined subscription snapshot so list tabs / status filters work.
+  const sub = clinic.subscription_status;
+  if (sub === "trial" || sub === "expired") {
+    ops.ops_status = "provisioning";
+    ops.activation = "setup";
+    ops.subscription = sub;
+  } else if (sub === "active" || sub === "cancelled") {
+    ops.ops_status = "active";
+    ops.activation = "active";
+    ops.subscription = sub;
+  }
+
+  const pay = clinic.payment_status;
+  if (pay === "paid" || pay === "unpaid" || pay === "overdue" || pay === "refunded") {
+    ops.payment = pay;
+  }
+
+  const plan = clinic.plan_code;
+  if (plan === "starter" || plan === "practice" || plan === "group") {
+    ops.plan = plan;
+  }
+
+  if (clinic.district_name_en) ops.district_en = clinic.district_name_en;
+  if (clinic.district_name_zh) ops.district_zh = clinic.district_name_zh;
+  if (typeof clinic.idle_lock_minutes === "number") {
+    ops.idle_lock_minutes = clinic.idle_lock_minutes;
+  }
+
   return ops;
 }
 

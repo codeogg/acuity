@@ -14,11 +14,14 @@ from src.db.models import (
     ClaimFieldChangeLog,
     Clinic,
     ClinicInsuranceCompany,
+    District,
     Doctor,
     DoctorClinicLink,
     FieldDomain,
+    FormTag,
     InsuranceCompany,
     StandardField,
+    TagVisibility,
     TemplateFieldMapping,
 )
 from src.db.session import async_session_factory
@@ -73,6 +76,37 @@ ENUM_OPTIONS: dict[str, list[str]] = {
 
 CANONICAL_FIELD_CODES = frozenset(code for code, *_ in STANDARD_FIELDS)
 CANONICAL_DOMAIN_CODES = frozenset(code for code, *_ in DOMAINS)
+
+# (name_zh, name_en, region)
+DISTRICTS = [
+    ("中環", "Central", "港島"),
+    ("灣仔", "Wan Chai", "港島"),
+    ("銅鑼灣", "Causeway Bay", "港島"),
+    ("半山", "Mid-Levels", "港島"),
+    ("太古", "Tai Koo", "港島"),
+    ("尖沙咀", "Tsim Sha Tsui", "九龍"),
+    ("旺角", "Mong Kok", "九龍"),
+    ("沙田", "Sha Tin", "新界"),
+]
+
+
+async def _sync_districts(db) -> dict[str, District]:
+    """按中文名幂等同步地区字典。"""
+    by_zh: dict[str, District] = {}
+    for name_zh, name_en, region in DISTRICTS:
+        existing = (
+            await db.execute(select(District).where(District.name_zh == name_zh))
+        ).scalar_one_or_none()
+        if existing:
+            existing.name_en = name_en
+            existing.region = region
+            by_zh[name_zh] = existing
+        else:
+            district = District(name_zh=name_zh, name_en=name_en, region=region)
+            db.add(district)
+            await db.flush()
+            by_zh[name_zh] = district
+    return by_zh
 
 
 async def _sync_domains(db, *, remove_stale: bool = True) -> dict[str, FieldDomain]:
@@ -181,6 +215,9 @@ async def seed() -> None:
         # 信息域 + 标准字段（以本文件为准全量同步）
         await sync_standard_catalog(db, remove_stale=True)
 
+        # 地区字典
+        districts = await _sync_districts(db)
+
         # 示例保险公司
         company = (
             await db.execute(
@@ -206,9 +243,12 @@ async def seed() -> None:
                 clinic_name="示例诊所",
                 clinic_name_en="Demo Clinic",
                 address="香港中环",
+                district_id=districts["中環"].id,
             )
             db.add(clinic)
             await db.flush()
+        elif clinic.district_id is None:
+            clinic.district_id = districts["中環"].id
 
         doctor = (
             await db.execute(select(Doctor).where(Doctor.login_account == "doctor"))
@@ -251,9 +291,12 @@ async def seed() -> None:
                 clinic_name="示例诊所（尖沙咀）",
                 clinic_name_en="Demo Clinic (TST)",
                 address="香港尖沙咀",
+                district_id=districts["尖沙咀"].id,
             )
             db.add(clinic_b)
             await db.flush()
+        elif clinic_b.district_id is None:
+            clinic_b.district_id = districts["尖沙咀"].id
 
         clinic_b_link = (
             await db.execute(
@@ -280,6 +323,64 @@ async def seed() -> None:
                 db.add(
                     ClinicInsuranceCompany(
                         clinic_id=linked_clinic.id, company_id=company.id
+                    )
+                )
+
+        # Forms library tags（对齐 frontend fixture universe.json）
+        seed_tags = [
+            ("type", "Outpatient", "門診", 1, False),
+            ("type", "Inpatient", "住院", 2, False),
+            ("type", "Accident", "意外", 3, False),
+            ("type", "Declaration", "聲明", 4, False),
+            ("insurer", "Demo Insurance", "示例保險", 1, False),
+            ("insurer", "Victoria Harbour", "維港健康", 2, False),
+            ("insurer", "Harbour Trust", "港安人壽", 3, False),
+            ("specialty", "General practice", "全科", 1, False),
+            ("specialty", "Cardiology", "心臟科", 2, False),
+            ("specialty", "Dermatology", "皮膚科", 3, True),
+        ]
+        tag_by_key: dict[tuple[str, str], FormTag] = {}
+        for kind, label_en, label_zh, sort_order, retired in seed_tags:
+            existing = (
+                await db.execute(
+                    select(FormTag).where(
+                        FormTag.kind == kind, FormTag.label_en == label_en
+                    )
+                )
+            ).scalar_one_or_none()
+            if existing:
+                existing.label_zh = label_zh
+                existing.sort_order = sort_order
+                existing.retired = retired
+                tag_by_key[(kind, label_en)] = existing
+            else:
+                tag = FormTag(
+                    kind=kind,
+                    label_en=label_en,
+                    label_zh=label_zh,
+                    parent_id=None,
+                    sort_order=sort_order,
+                    retired=retired,
+                )
+                db.add(tag)
+                await db.flush()
+                tag_by_key[(kind, label_en)] = tag
+
+        # Demo doctor visibility: outpatient/inpatient/accident visible
+        for label_en in ("Outpatient", "Inpatient", "Accident"):
+            tag = tag_by_key[("type", label_en)]
+            vis = (
+                await db.execute(
+                    select(TagVisibility).where(
+                        TagVisibility.doctor_id == doctor.id,
+                        TagVisibility.tag_id == tag.id,
+                    )
+                )
+            ).scalar_one_or_none()
+            if not vis:
+                db.add(
+                    TagVisibility(
+                        doctor_id=doctor.id, tag_id=tag.id, visible=True
                     )
                 )
 

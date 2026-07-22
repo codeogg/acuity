@@ -32,8 +32,8 @@ import {
 //   - BulkSelectionProvider / BulkSelectCheckbox / BulkSelectAllCheckbox /
 //     BulkActionBar: multi-select over a server-rendered OpsDataTable via a
 //     client context, with the contextual action bar that appears on selection.
-//   - DetailDrawer: the right-edge 560px detail overlay (close via the header
-//     button only — outside click and Escape do not dismiss).
+//   - DetailDrawer: the right-edge 560px detail overlay (Escape dismisses;
+//     outside click does not).
 //   - ConfirmGateDialog: the deliberate-confirm gate for high-consequence
 //     actions - "ack" (checkbox acknowledgement) or "paste" (the identifier
 //     must be pasted to proceed; typing friction is the point).
@@ -219,7 +219,7 @@ export function useOpsGridKeyboardNav(containerRef: RefObject<HTMLElement | null
 
 /**
  * Right-edge 560px detail overlay over a grid - the console's drawer pattern
- * for clinic/doctor/ticket detail. Dismiss only via the close button.
+ * for clinic/doctor/ticket detail. Escape dismisses; outside click does not.
  */
 export function DetailDrawer({
   open,
@@ -232,7 +232,7 @@ export function DetailDrawer({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  title: string;
+  title: ReactNode;
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
@@ -244,7 +244,6 @@ export function DetailDrawer({
         side="right"
         className={cn("w-full gap-0 p-0 sm:w-[560px] sm:max-w-[560px]", className)}
         onInteractOutside={(event) => event.preventDefault()}
-        onEscapeKeyDown={(event) => event.preventDefault()}
       >
         <SheetHeader className="border-b border-border px-6 py-4">
           <SheetTitle className="font-title text-xl">{title}</SheetTitle>

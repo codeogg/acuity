@@ -1,0 +1,1 @@
+"""Districts admin dictionary module."""

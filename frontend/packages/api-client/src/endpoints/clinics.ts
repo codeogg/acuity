@@ -8,6 +8,9 @@ import type {
   ClinicInsuranceUpdate,
   ClinicOut,
   ClinicStatusUpdate,
+  ClinicSubscriptionNoteUpdate,
+  ClinicSubscriptionOut,
+  ClinicSubscriptionUpdate,
   ClinicTemplatesSet,
   ClinicTemplatesSetResult,
   ClinicUpdate,
@@ -19,12 +22,20 @@ import type {
 } from "@acuity/types";
 import { api } from "../client";
 
+export type {
+  ClinicSubscriptionNoteUpdate,
+  ClinicSubscriptionOut,
+  ClinicSubscriptionUpdate,
+};
+
 // A type alias (not interface) so it is assignable to the client's query index
 // signature.
 export type ListClinicsQuery = {
   page?: number;
   page_size?: number;
   keyword?: string;
+  /** 1 = needs attention only; 0 = unflagged only */
+  is_flagged?: number;
   /** name | code | status | doctors | created_at; prefix - for descending */
   sort?: string;
 };
@@ -50,6 +61,13 @@ export function setClinicStatus(
   body: ClinicStatusUpdate,
 ): Promise<ClinicOut> {
   return api.patch<ClinicOut>(`/admin/clinics/${clinicId}/status`, body);
+}
+
+export function setClinicFlag(
+  clinicId: number,
+  body: { is_flagged: number },
+): Promise<ClinicOut> {
+  return api.patch<ClinicOut>(`/admin/clinics/${clinicId}/flag`, body);
 }
 
 // 204 No Content on success.
@@ -109,4 +127,24 @@ export function setClinicCompanyTemplates(
     `/admin/clinics/${clinicId}/insurance-companies/${companyId}/templates`,
     body,
   );
+}
+
+// --- subscription (1:1 commercial record) --------------------------------------
+
+export function getClinicSubscription(clinicId: number): Promise<ClinicSubscriptionOut> {
+  return api.get<ClinicSubscriptionOut>(`/admin/clinics/${clinicId}/subscription`);
+}
+
+export function updateClinicSubscription(
+  clinicId: number,
+  body: ClinicSubscriptionUpdate,
+): Promise<ClinicSubscriptionOut> {
+  return api.put<ClinicSubscriptionOut>(`/admin/clinics/${clinicId}/subscription`, body);
+}
+
+export function updateClinicSubscriptionNote(
+  clinicId: number,
+  body: ClinicSubscriptionNoteUpdate,
+): Promise<ClinicSubscriptionOut> {
+  return api.patch<ClinicSubscriptionOut>(`/admin/clinics/${clinicId}/subscription/note`, body);
 }
