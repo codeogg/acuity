@@ -82,7 +82,7 @@ async function InsurersGrid({ locale, sp }: { locale: string; sp: Search }) {
           <div className="truncate font-medium text-foreground">
             {pickName(locale, r.company_name, r.company_name_en)}
           </div>
-          <div className="font-mono text-xs text-muted-foreground">{r.company_code}</div>
+          <div className="t-id text-xs text-muted-foreground">{r.company_code}</div>
         </div>
       </div>,
       <span key="contact" className="text-muted-foreground">

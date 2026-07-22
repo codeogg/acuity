@@ -155,52 +155,54 @@ export function DoctorsBulkBar({ rows }: { rows: { id: number; login: string }[]
     <>
       <SelectionFilterSync />
       <BulkActionBar selectedLabel={tc("selected")} clearLabel={tc("clear")}>
-      <GateButton
-        buttonLabel={t("retag")}
-        buttonIcon="tag"
-        title={t("retag-title", { count: picked.length })}
-        description={t("retag-feedforward", { count: picked.length })}
-        variant="ack"
-        ackLabel={t("retag-ack", { count: picked.length })}
-        confirmLabel={t("retag-confirm")}
-        dryRun={dryRun}
-        dryRunSummary={tc("dry-run-summary", { count: picked.length })}
-        action={() => bulkDoctorsAction("retag", items())}
-        successMessage={t("retagged", { count: picked.length })}
-        onDone={clear}
-      />
-      <GateButton
-        buttonLabel={t("deactivate")}
-        buttonIcon="alert"
-        buttonVariant="destructive"
-        title={t("deactivate-title", { count: picked.length })}
-        description={t("deactivate-feedforward", { count: picked.length })}
-        variant="paste"
-        target={picked[0]?.login}
-        destructive
-        confirmLabel={t("deactivate-confirm")}
-        dryRun={dryRun}
-        dryRunSummary={tc("dry-run-summary", { count: picked.length })}
-        action={() => bulkDoctorsAction("deactivate", items())}
-        successMessage={t("deactivated", { count: picked.length })}
-        onDone={clear}
-      />
-      <GateButton
-        buttonLabel={t("delete")}
-        buttonIcon="trash"
-        buttonVariant="destructive"
-        title={t("delete-title", { count: picked.length })}
-        description={t("delete-feedforward", { count: picked.length })}
-        variant="paste"
-        target={picked[0]?.login.toUpperCase()}
-        destructive
-        confirmLabel={t("delete-confirm")}
-        dryRun={dryRun}
-        dryRunSummary={tc("dry-run-summary", { count: picked.length })}
-        action={() => bulkDoctorsAction("delete", items())}
-        successMessage={t("deleted", { count: picked.length })}
-        onDone={closeDrawerIfDeleted}
-      />
+        <GateButton
+          buttonLabel={t("retag")}
+          buttonIcon="tag"
+          title={t("retag-title", { count: picked.length })}
+          description={t("retag-feedforward", { count: picked.length })}
+          variant="ack"
+          ackLabel={t("retag-ack", { count: picked.length })}
+          confirmLabel={t("retag-confirm")}
+          dryRun={dryRun}
+          dryRunSummary={tc("dry-run-summary", { count: picked.length })}
+          action={() => bulkDoctorsAction("retag", items())}
+          successMessage={t("retagged", { count: picked.length })}
+          onDone={clear}
+        />
+        <GateButton
+          buttonLabel={t("deactivate")}
+          buttonIcon="alert"
+          buttonVariant="destructive"
+          title={t("deactivate-title", { count: picked.length })}
+          description={t("deactivate-feedforward", { count: picked.length })}
+          variant="paste"
+          target={picked[0]?.login}
+          destructive
+          confirmLabel={t("deactivate-confirm")}
+          dryRun={dryRun}
+          dryRunSummary={tc("dry-run-summary", { count: picked.length })}
+          action={() => bulkDoctorsAction("deactivate", items())}
+          successMessage={t("deactivated", { count: picked.length })}
+          onDone={clear}
+        />
+        {picked.length === 1 ? (
+          <GateButton
+            buttonLabel={t("delete")}
+            buttonIcon="trash"
+            buttonVariant="destructive"
+            title={t("delete-title", { count: 1 })}
+            description={t("delete-feedforward", { count: 1 })}
+            variant="paste"
+            target={picked[0]!.login.toUpperCase()}
+            destructive
+            confirmLabel={t("delete-confirm")}
+            dryRun={dryRun}
+            dryRunSummary={tc("dry-run-summary", { count: 1 })}
+            action={() => bulkDoctorsAction("delete", items())}
+            successMessage={t("deleted", { count: 1 })}
+            onDone={closeDrawerIfDeleted}
+          />
+        ) : null}
       </BulkActionBar>
     </>
   );

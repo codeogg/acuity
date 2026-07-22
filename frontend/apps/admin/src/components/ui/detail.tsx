@@ -4,12 +4,24 @@
 // FacetSection is an eyebrow-titled group.
 
 import type { ReactNode } from "react";
+import { cn } from "@acuity/ui";
 
-export function KeyVal({ label, children }: { label: string; children: ReactNode }) {
+export function KeyVal({
+  label,
+  children,
+  valueClassName,
+}: {
+  label: string;
+  children: ReactNode;
+  /** Overrides the default medium weight — use with `.t-id` for Latin codes. */
+  valueClassName?: string;
+}) {
   return (
     <div className="flex items-center justify-between gap-4 border-b border-border py-2.5 last:border-0">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-right text-sm font-medium text-foreground">{children}</span>
+      <span className={cn("text-right text-sm font-medium text-foreground", valueClassName)}>
+        {children}
+      </span>
     </div>
   );
 }

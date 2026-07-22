@@ -125,7 +125,7 @@ async function FormsGrid({ locale, sp }: { locale: string; sp: Search }) {
       <Thumb />
       <div>
         <div className="font-medium text-foreground">{r.template.template_name}</div>
-        <div className="font-mono text-xs text-muted-foreground">{r.template.template_code}</div>
+        <div className="t-id text-xs text-muted-foreground">{r.template.template_code}</div>
       </div>
     </div>
   );
@@ -197,7 +197,7 @@ async function FormsGrid({ locale, sp }: { locale: string; sp: Search }) {
       <StatusBadge tone="info" appearance="outline" label={locale.startsWith("zh") ? r.company_name_zh : r.company_name} />
       <StatusBadge tone="accent" appearance="outline" label={typeLabel(r)} />
     </div>,
-    <span key="version" className="font-mono text-sm">
+    <span key="version" className="t-id text-muted-foreground">
       {r.template.version}
     </span>,
     <span key="updated" className="text-muted-foreground">

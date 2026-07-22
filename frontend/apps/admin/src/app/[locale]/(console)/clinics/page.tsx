@@ -182,7 +182,7 @@ async function ClinicsGrid({
             ?? (locale.startsWith("zh") ? r.ops.district_zh : r.ops.district_en)}
         </div>
       </div>,
-      <span key="id" className="font-mono text-sm text-muted-foreground">
+      <span key="id" className="t-id text-muted-foreground">
         {r.clinic.clinic_code}
       </span>,
       <MetaBadge

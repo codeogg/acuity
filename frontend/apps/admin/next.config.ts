@@ -24,15 +24,14 @@ const nextConfig: NextConfig = {
   ],
   serverExternalPackages: ["msw"],
   env: {
-    // Server Components need an absolute base (Node fetch rejects "/api/...").
-    // Live local mode defaults to the FastAPI proxy target; mock mode loops
-    // back through this app's catch-all mock route.
+    // Browser: same-origin /api (rewritten to FastAPI). SSR absolute base is
+    // resolved in @acuity/api-client from API_PROXY_TARGET / API_SERVER_BASE.
     NEXT_PUBLIC_API_BASE:
       process.env.NEXT_PUBLIC_API_BASE ??
       (mocking
         ? "http://localhost:3002/api"
         : process.env.API_PROXY_TARGET
-          ? `${process.env.API_PROXY_TARGET.replace(/\/$/, "")}/api`
+          ? "/api"
           : "http://localhost:8000/api"),
   },
   // In live integration mode, keep browser requests same-origin so the

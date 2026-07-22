@@ -16,12 +16,37 @@ import type {
   HTTPValidationError,
 } from "@acuity/types";
 
-// Default base: same-origin "/api". Next.js apps proxy /api/* to the backend
-// (or MSW intercepts it in mock-first mode). Override with NEXT_PUBLIC_API_BASE.
+// Default base: same-origin "/api" in the browser. Next.js apps proxy /api/* to
+// the backend (or MSW intercepts it in mock-first mode).
+// Node SSR/Server Actions cannot fetch relative URLs — see resolveBaseUrl().
+function isAbsoluteUrl(base: string): boolean {
+  return /^https?:\/\//i.test(base);
+}
+
+/** Absolute API origin for Node (SSR, Server Actions). Not exposed to the browser. */
+function resolveServerBaseUrl(): string {
+  const explicit = process.env.API_SERVER_BASE?.trim();
+  if (explicit) return explicit.replace(/\/$/, "");
+
+  const proxyTarget = process.env.API_PROXY_TARGET?.trim();
+  if (proxyTarget) return `${proxyTarget.replace(/\/$/, "")}/api`;
+
+  return "http://localhost:8000/api";
+}
+
 function resolveBaseUrl(): string {
   const fromEnv =
     typeof process !== "undefined" ? process.env?.NEXT_PUBLIC_API_BASE : undefined;
-  return (fromEnv ?? "/api").replace(/\/$/, "");
+  const base = (fromEnv ?? "/api").replace(/\/$/, "");
+
+  // Browser: relative "/api" stays same-origin (cookie + Next rewrite).
+  // Server: Node fetch requires an absolute URL — derive from API_SERVER_BASE
+  // or API_PROXY_TARGET even when NEXT_PUBLIC_API_BASE is "/api".
+  if (typeof window === "undefined" && !isAbsoluteUrl(base)) {
+    return resolveServerBaseUrl();
+  }
+
+  return base;
 }
 
 export type ApiErrorKind =

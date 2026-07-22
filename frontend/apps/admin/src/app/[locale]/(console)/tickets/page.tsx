@@ -110,7 +110,7 @@ async function TicketsGrid({ locale, sp }: { locale: string; sp: Search }) {
     cells: [
       <div key="clinic">
         <div className="font-medium text-foreground">{clinicLabel(r.clinic_id)}</div>
-        <div className="font-mono text-xs text-muted-foreground">{clinicCode(r.clinic_id)}</div>
+        <div className="t-id text-xs text-muted-foreground">{clinicCode(r.clinic_id)}</div>
       </div>,
       <span key="step">{locale.startsWith("zh") ? r.next_step_zh : r.next_step_en}</span>,
       <span key="progress" className="tabular-nums">
@@ -143,9 +143,9 @@ async function TicketsGrid({ locale, sp }: { locale: string; sp: Search }) {
     cells: [
       <div key="issue">
         <div className="font-medium text-foreground">{locale.startsWith("zh") ? r.subject_zh : r.subject_en}</div>
-        <div className="font-mono text-xs text-muted-foreground">{r.id}</div>
+        <div className="t-id text-xs text-muted-foreground">{r.id}</div>
       </div>,
-      <span key="clinic" className="font-mono text-sm">
+      <span key="clinic" className="t-id text-muted-foreground">
         {clinicCode(r.clinic_id)}
       </span>,
       <MetaBadge key="status" meta={ticketStatus(r.status)} label={tRoot(ticketStatus(r.status).key)} />,

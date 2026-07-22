@@ -245,6 +245,24 @@
   letter-spacing: var(--tracking-eyebrow);
 }
 
+/* Surrogate identifier register — mono at 12px, normal weight, tabular digits.
+   Use for confirm-gate paste targets and audit codes, not grid ID columns. */
+.t-ref {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Grid ID / account / code column — Latin sans at inherited cell size (text-sm
+   in ops grids). Keeps ASCII identifiers on the English body face even when
+   the page root is zh-Hant. */
+.t-id {
+  font-family: var(--font-family-sans);
+  font-variant-numeric: tabular-nums;
+}
+
 /*
  * Checkbox visibility: the hairline border token vanishes on the accent hover
  * wash (row hover), so unchecked checkboxes take the steel border step —

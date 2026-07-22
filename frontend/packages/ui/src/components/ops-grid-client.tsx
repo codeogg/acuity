@@ -138,15 +138,17 @@ export function BulkActionBar({
     <div
       role="status"
       className={cn(
-        "sticky bottom-4 z-30 mx-6 flex items-center gap-3 rounded-md border border-border bg-card px-4 py-2.5 shadow-md",
+        "sticky bottom-4 z-30 mx-6 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md border border-border bg-card px-4 py-2.5 shadow-md",
         className,
       )}
     >
-      <span className="text-sm font-medium text-foreground tabular-nums">
+      <span className="shrink-0 text-sm font-medium text-foreground tabular-nums">
         {selected.size} {selectedLabel}
       </span>
-      <div className="flex flex-1 items-center gap-2">{children}</div>
-      <Button variant="ghost" size="sm" onClick={clear}>
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 [&>*]:shrink-0">
+        {children}
+      </div>
+      <Button variant="ghost" size="sm" className="shrink-0" onClick={clear}>
         {clearLabel}
       </Button>
     </div>

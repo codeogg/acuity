@@ -56,12 +56,12 @@ async function StandardFieldsGrid({ locale }: { locale: string }) {
   const gridRows: BridgeRow[] = fields.map((r) => ({
     key: String(r.id),
     cells: [
-      <span key="code" className="font-mono text-sm">
+      <span key="code" className="t-id text-foreground">
         {r.field_code}
       </span>,
       <span key="name">{zh ? r.field_name : (r.field_name_en ?? r.field_name)}</span>,
       <StatusBadge key="domain" tone="info" appearance="outline" label={domainName(r.domain_id)} />,
-      <span key="type" className="font-mono text-xs">
+      <span key="type" className="t-id text-xs text-muted-foreground">
         {r.data_type}
       </span>,
       r.is_required ? (

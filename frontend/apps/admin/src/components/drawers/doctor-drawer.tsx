@@ -164,12 +164,12 @@ export async function DoctorDrawer({
             {linkedClinics.length === 0 ? t("individual") : linkedClinics.map((c) => c.name).join(" · ")}
           </KeyVal>
           <KeyVal label={t("specialty")}>{specialty}</KeyVal>
-          <KeyVal label={t("account")}>
-            <span className="font-mono">{doctor.login_account}</span>
+          <KeyVal label={t("account")} valueClassName="font-normal">
+            <span className="t-id">{doctor.login_account}</span>
           </KeyVal>
           <KeyVal label={t("contact-email")}>{doctor.email ?? "—"}</KeyVal>
-          <KeyVal label={t("reg-no")}>
-            <span className="font-mono">{doctor.reg_no ?? "—"}</span>
+          <KeyVal label={t("reg-no")} valueClassName="font-normal">
+            <span className="t-id">{doctor.reg_no ?? "—"}</span>
           </KeyVal>
           <KeyVal label={t("activation")}>
             <MetaBadge meta={activationStatus(ops.activation)} label={tRoot(activationStatus(ops.activation).key)} />

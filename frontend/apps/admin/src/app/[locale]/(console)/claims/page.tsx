@@ -76,7 +76,7 @@ async function ClaimsGrid({ locale, sp }: { locale: string; sp: Search }) {
     key: String(r.id),
     href: `/${locale}/claims/${r.id}`,
     cells: [
-      <span key="sub" className="font-mono text-sm">
+      <span key="sub" className="t-id text-foreground">
         {r.submission_no}
       </span>,
       <span key="patient" className="text-muted-foreground">
