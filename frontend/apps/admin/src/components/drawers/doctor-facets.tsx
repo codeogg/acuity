@@ -53,6 +53,7 @@ export function DoctorAccountFacet({
   specialtyTags,
   locale,
   workspaceSeparation,
+  mfaEnabled,
   primaryClinicId,
   linkedClinics,
   linkableClinics,
@@ -67,6 +68,7 @@ export function DoctorAccountFacet({
   specialtyTags: Tag[];
   locale: string;
   workspaceSeparation: WorkspaceSeparation;
+  mfaEnabled: boolean;
   primaryClinicId: number | null;
   linkedClinics: LinkedClinicItem[];
   linkableClinics: LinkedClinicItem[];
@@ -117,6 +119,21 @@ export function DoctorAccountFacet({
       ) : null}
 
       <FacetSection title={t("sign-in-security")}>
+        <CrmFieldRow
+          label={t("mfa-opt-in")}
+          value={mfaEnabled ? "on" : "off"}
+          options={[
+            { value: "on", label: t("mfa-on") },
+            { value: "off", label: t("mfa-off") },
+          ]}
+          commit={(next) =>
+            updateDoctorAccountAction(doctorId, login, {
+              mfa_enabled: next === "on",
+            })
+          }
+          successMessage={t("mfa-opt-in-saved")}
+        />
+        <p className="mb-3 text-xs text-muted-foreground">{t("mfa-opt-in-caption")}</p>
         <div className="flex flex-wrap gap-2">
           <ActionButton
             label={t("unlock")}

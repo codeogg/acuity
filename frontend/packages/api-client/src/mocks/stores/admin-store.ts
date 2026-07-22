@@ -166,6 +166,7 @@ export function adminState(): AdminState {
         ...c,
         data_region: c.data_region ?? "香港",
         is_flagged: c.is_flagged ?? 0,
+        lifecycle_status: c.lifecycle_status ?? (c.status === 1 ? "active" : "provisioning"),
       })),
       doctors: structuredClone(demoDoctors),
       companies: structuredClone(demoCompaniesFull),

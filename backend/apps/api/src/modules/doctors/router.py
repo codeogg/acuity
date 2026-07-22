@@ -7,6 +7,7 @@ from src.modules.common import Page
 from src.modules.doctors import service
 from src.modules.doctors.schemas import (
     AccountNotesUpdate,
+    DoctorAccountModelUpdate,
     DoctorAccountOut,
     DoctorClinicLinkCreate,
     DoctorClinicLinkOut,
@@ -164,3 +165,21 @@ async def set_account_notes(
         db, doctor_id, body.notes, notes_format=body.notes_format
     )
     return DoctorOut.model_validate(await service.doctor_to_out(db, doctor))
+
+
+@router.patch("/{doctor_id}/account-model", response_model=DoctorAccountOut)
+async def update_account_model(
+    doctor_id: int,
+    body: DoctorAccountModelUpdate,
+    db: DbSession,
+    admin: AdminDep,
+) -> DoctorAccountOut:
+    await service.update_account_model(
+        db,
+        doctor_id,
+        notes=body.notes,
+        workspace_separation=body.workspace_separation,
+        mfa_enabled=body.mfa_enabled,
+        operator_id=admin.id,
+    )
+    return await service.get_doctor_account(db, doctor_id)

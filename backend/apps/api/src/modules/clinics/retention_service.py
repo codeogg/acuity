@@ -108,6 +108,9 @@ async def override_retention(
     row.overridden_at = now
 
     await db.flush()
+    from src.modules.clinics.lifecycle import sync_lifecycle
+
+    await sync_lifecycle(db, clinic)
     return await get_effective_retention(db, clinic_id)
 
 

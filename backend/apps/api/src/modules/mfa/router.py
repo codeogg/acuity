@@ -43,8 +43,29 @@ async def mfa_reset(
     return AdminMfaActionResponse()
 
 
+# OpenAPI / frontend-only aliases (same handlers, contract path names).
+@router.post("/{doctor_id}/reset-mfa", response_model=AdminMfaActionResponse)
+async def mfa_reset_alias(
+    doctor_id: int,
+    db: DbSession,
+    admin: SuperAdminDep,
+) -> AdminMfaActionResponse:
+    await service.admin_reset_mfa(db, doctor_id=doctor_id, operator_id=admin.id)
+    return AdminMfaActionResponse()
+
+
 @router.post("/{doctor_id}/account/unlock", response_model=AdminMfaActionResponse)
 async def account_unlock(
+    doctor_id: int,
+    db: DbSession,
+    admin: SuperAdminDep,
+) -> AdminMfaActionResponse:
+    await service.admin_unlock_account(db, doctor_id=doctor_id, operator_id=admin.id)
+    return AdminMfaActionResponse()
+
+
+@router.post("/{doctor_id}/unlock", response_model=AdminMfaActionResponse)
+async def account_unlock_alias(
     doctor_id: int,
     db: DbSession,
     admin: SuperAdminDep,

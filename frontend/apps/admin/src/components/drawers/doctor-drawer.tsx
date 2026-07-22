@@ -213,6 +213,7 @@ export async function DoctorDrawer({
           specialtyTags={specialtyTags}
           locale={locale}
           workspaceSeparation={account.workspace_separation}
+          mfaEnabled={account.mfa_enabled}
           primaryClinicId={primaryClinicId}
           linkedClinics={linkedClinics}
           linkableClinics={linkableClinics}

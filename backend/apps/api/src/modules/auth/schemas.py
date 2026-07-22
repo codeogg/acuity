@@ -16,8 +16,10 @@ class LoginResponse(BaseModel):
     clinic_id: int | None = None
     display_name: str | None = None
     mfa_required: bool = False
+    mfa_enrollment_required: bool = False
     mfa_token: str | None = None
     mfa_enabled: bool = False
+    backup_codes: list[str] | None = None
 
 
 class MeResponse(BaseModel):

@@ -7,6 +7,8 @@ export type AuthSurfaceKind = "doctor" | "operator";
 export type AuthScreen =
   | "identity"
   | "factor"
+  | "enroll"
+  | "backup"
   | "clinic"
   | "loading"
   | "landed"

@@ -140,7 +140,7 @@ async function DoctorsGrid({ locale, sp }: { locale: string; sp: Search }) {
         {pickName(locale, r.doctor.doctor_name, r.doctor.doctor_name_en)}
       </div>,
       <span key="id" className="t-id text-muted-foreground">
-        {r.doctor.login_account.toUpperCase()}
+        {r.doctor.login_account}
       </span>,
       <div key="clinic" className="flex flex-wrap items-center gap-1.5">
         {r.clinics.length === 0 ? (

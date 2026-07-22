@@ -39,6 +39,10 @@ class Clinic(Base, TimestampMixin):
     data_region: Mapped[str] = mapped_column(String(20), default="香港")
     # 1 = 需要關注（运营手动标记）
     is_flagged: Mapped[int] = mapped_column(SmallInteger, default=0, index=True)
+    # provisioning → onboarding → active（开通 / 导入 / 已启用）
+    lifecycle_status: Mapped[str] = mapped_column(
+        String(20), default="provisioning", server_default="provisioning"
+    )
     district_id: Mapped[int | None] = mapped_column(
         ForeignKey("districts.id"), nullable=True, index=True
     )

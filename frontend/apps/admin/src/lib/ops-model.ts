@@ -1,15 +1,9 @@
-// Console operational model — mock-first enrichment over the contract entities.
+// Console operational model — enrichment over contract entities.
 //
-// The reference console's operational vocabulary (clinic lifecycle status,
-// payment/subscription record, activation, doctor MFA state, specialty,
-// per-template confidence and usage, operator profile + hardware keys) has no
-// backend fields yet — the contract carries only the 0/1 status SMALLINT and
-// parse_status (gaps registered in the data layer's frontend-only registry).
-// This module joins a deterministic seed keyed by the shared fixture
-// universe's real entity ids onto the contract reads, and holds console-side
-// writes in server-process memory (the same lifetime as the MSW stores it
-// sits beside). When the backend grows these fields, delete this module and
-// read them from the API instead.
+// Clinic lifecycle_status + activation now come from the API
+// (provisioning → onboarding → active). Payment/subscription/plan still join
+// from clinic_subscriptions; doctor MFA specialty / template confidence remain
+// seed-backed until those fields land on the contract.
 
 import type { ClinicOut, DoctorOut, TemplateFieldType, TemplateOut } from "@acuity/types";
 
@@ -216,16 +210,17 @@ export function clinicOps(clinic: Pick<ClinicOut, "id"> & Partial<ClinicOut>): C
     clinicSeed.set(clinic.id, ops);
   }
 
-  // Live backend clinics are not in the fixture seed — derive CRM fields from
-  // the joined subscription snapshot so list tabs / status filters work.
+  // Authoritative lifecycle from the API (provisioning → onboarding → active).
+  // Needs-attention is a separate manual flag (is_flagged), not ops_status.
+  const lifecycle = clinic.lifecycle_status;
+  if (lifecycle === "provisioning" || lifecycle === "onboarding" || lifecycle === "active") {
+    ops.ops_status = lifecycle;
+    ops.activation =
+      lifecycle === "provisioning" ? "setup" : lifecycle === "onboarding" ? "onboarding" : "active";
+  }
+
   const sub = clinic.subscription_status;
-  if (sub === "trial" || sub === "expired") {
-    ops.ops_status = "provisioning";
-    ops.activation = "setup";
-    ops.subscription = sub;
-  } else if (sub === "active" || sub === "cancelled") {
-    ops.ops_status = "active";
-    ops.activation = "active";
+  if (sub === "trial" || sub === "expired" || sub === "active" || sub === "cancelled") {
     ops.subscription = sub;
   }
 

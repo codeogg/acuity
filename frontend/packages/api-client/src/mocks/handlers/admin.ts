@@ -263,6 +263,7 @@ export const adminHandlers = [
       idle_lock_minutes: 10,
       data_region: body.data_region ?? "香港",
       is_flagged: 0,
+      lifecycle_status: "provisioning",
       district_id: districtId,
       district_name_zh: district?.name_zh ?? null,
       district_name_en: district?.name_en ?? null,

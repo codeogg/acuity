@@ -1,7 +1,7 @@
-// Forms — the template destination: Intake / Library / Failed / All saved-view
-// tabs with counts, the upload dropzone (blank insurer forms only — no PHI),
-// per-row retry for failed parses, intake vs library column sets, bulk
-// re-tag / archive, and row-open into the confirmation field-map editor.
+// Forms — policy-template library: Intake / Library / All saved-view tabs
+// with counts, upload dropzone (blank insurer forms only — no PHI), per-row
+// retry for failed parses (All tab), intake vs library column sets, pagination,
+// bulk re-tag / archive, and row-open into the field-map editor.
 
 import { Suspense } from "react";
 import { pickName } from "@acuity/i18n/names";
@@ -15,6 +15,7 @@ import { MetaBadge } from "@/components/ui/status-badge";
 import { Empty } from "@/components/ui/empty";
 import { GridSkeleton } from "@/components/ui/skeletons";
 import { FormsBulkBar } from "@/components/grid/bulk-bars";
+import { PaginationBar } from "@/components/grid/pagination-bar";
 import { UploadDropzone } from "@/components/ui/upload-dropzone";
 import { FormsParsePoller } from "@/components/forms/forms-parse-poller";
 import { ActionButton } from "@/components/ui/action-button";
@@ -22,18 +23,19 @@ import { reparseTemplateAction } from "@/lib/actions";
 import {
   FORMS_TABS,
   listCompanies,
-  listTags,
   listTemplateRows,
   sortTemplateRows,
   templateMatchesTab,
   type FormsTab,
   type TemplateRow,
 } from "@/lib/data";
-import { confidenceStatus, templateOpsStatusMeta } from "@/lib/status";
+import { templateOpsStatusMeta } from "@/lib/status";
 import { columnSort, parseSort } from "@/lib/table";
 import { formatRelative } from "@acuity/i18n/format";
 
-type Search = { tab?: string; keyword?: string; sort?: string };
+type Search = { tab?: string; keyword?: string; sort?: string; page?: string };
+
+const PAGE_SIZE = 20;
 
 function Thumb() {
   return (
@@ -67,7 +69,7 @@ export default async function FormsPage({
           fallback={
             <>
               <SectionTopBar eyebrow={t("eyebrow")} title={t("title")} />
-              <GridSkeleton cols={7} />
+              <GridSkeleton cols={5} />
             </>
           }
         >
@@ -84,30 +86,23 @@ async function FormsGrid({ locale, sp }: { locale: string; sp: Search }) {
   const urlParams = new URLSearchParams();
   for (const [k, v] of Object.entries(sp)) if (v) urlParams.set(k, v);
 
-  const [t, tRoot, allRows, companiesPage, tags] = await Promise.all([
+  const [t, tRoot, allRows, companiesPage] = await Promise.all([
     getTranslations("forms"),
     getTranslations(),
     listTemplateRows(sp.keyword),
     listCompanies({ page_size: 100 }),
-    listTags("type"),
   ]);
 
   const counts = Object.fromEntries(FORMS_TABS.map((tb) => [tb, allRows.filter((r) => templateMatchesTab(r, tb)).length]));
   const sort = parseSort(sp.sort);
-  // Queue-age default: the intake and failed worklists order waiting-longest
-  // first (oldest upload at the top) so nothing starves; an explicit column
-  // sort overrides per visit.
-  const effectiveSort =
-    sort ?? (tab === "intake" || tab === "failed" ? { key: "uploaded", direction: "asc" as const } : null);
-  const rows = sortTemplateRows(
+  // Intake queue: oldest upload first so nothing starves; explicit column sort overrides.
+  const effectiveSort = sort ?? (tab === "intake" ? { key: "uploaded", direction: "asc" as const } : null);
+  const filtered = sortTemplateRows(
     allRows.filter((r) => templateMatchesTab(r, tab)),
     effectiveSort,
   );
-
-  const typeLabel = (r: TemplateRow) => {
-    const tag = tags.find((x) => x.id === r.ops.type_tag_id);
-    return tag ? (locale.startsWith("zh") ? tag.label_zh : tag.label_en) : "—";
-  };
+  const page = Math.max(1, Number(sp.page) || 1);
+  const rows = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const tabs: CountTab[] = FORMS_TABS.map((tb) => ({
     key: tb,
@@ -134,8 +129,7 @@ async function FormsGrid({ locale, sp }: { locale: string; sp: Search }) {
     { header: t("col.name"), sort: colSort("name") },
     { header: t("col.status"), sort: colSort("status") },
     { header: t("col.fields"), align: "right", width: "8rem", sort: colSort("fields") },
-    { header: t("col.confidence") },
-    { header: t("col.insurer-type") },
+    { header: t("col.insurer") },
     { header: t("col.uploaded"), width: "8rem", sort: colSort("uploaded") },
     { header: t("col.actions"), headerVisuallyHidden: true, width: "6.5rem" },
   ];
@@ -161,21 +155,12 @@ async function FormsGrid({ locale, sp }: { locale: string; sp: Search }) {
     <span key="fields" className="tabular-nums">
       {r.field_count || "—"}
     </span>,
-    r.ops.confidence == null ? (
-      <span key="conf" className="text-muted-foreground">
-        —
-      </span>
-    ) : (
-      <MetaBadge
-        key="conf"
-        meta={confidenceStatus(r.ops.confidence)}
-        label={`${tRoot(confidenceStatus(r.ops.confidence).key)} ${Math.round(r.ops.confidence * 100)}%`}
-      />
-    ),
-    <div key="insurer" className="flex flex-wrap items-center gap-1">
-      <StatusBadge tone="info" appearance="outline" label={locale.startsWith("zh") ? r.company_name_zh : r.company_name} />
-      <span className="text-xs text-muted-foreground">{typeLabel(r)}</span>
-    </div>,
+    <StatusBadge
+      key="insurer"
+      tone="info"
+      appearance="outline"
+      label={locale.startsWith("zh") ? r.company_name_zh : r.company_name}
+    />,
     <span key="uploaded" className="text-muted-foreground">
       {formatRelative(r.template.created_at, locale, Date.now())}
     </span>,
@@ -193,10 +178,12 @@ async function FormsGrid({ locale, sp }: { locale: string; sp: Search }) {
   ];
   const libraryCells = (r: TemplateRow) => [
     nameCell(r),
-    <div key="tags" className="flex flex-wrap gap-1">
-      <StatusBadge tone="info" appearance="outline" label={locale.startsWith("zh") ? r.company_name_zh : r.company_name} />
-      <StatusBadge tone="accent" appearance="outline" label={typeLabel(r)} />
-    </div>,
+    <StatusBadge
+      key="tags"
+      tone="info"
+      appearance="outline"
+      label={locale.startsWith("zh") ? r.company_name_zh : r.company_name}
+    />,
     <span key="version" className="t-id text-muted-foreground">
       {r.template.version}
     </span>,
@@ -249,20 +236,23 @@ async function FormsGrid({ locale, sp }: { locale: string; sp: Search }) {
         </div>
       ) : null}
       <div className="slim-scroll min-h-0 flex-1 overflow-y-auto pb-6 pt-2">
-        {rows.length === 0 ? (
+        {filtered.length === 0 ? (
           <Empty
             icon="template"
             title={t(`empty.${tab}-title`)}
             description={t("empty.description")}
           />
         ) : (
-          <OpsGridBridge
-            columns={columns}
-            rows={gridRows}
-            caption={t("title")}
-            openLabel={t("open")}
-            selectAllLabel={t("select-all")}
-          />
+          <>
+            <OpsGridBridge
+              columns={columns}
+              rows={gridRows}
+              caption={t("title")}
+              openLabel={t("open")}
+              selectAllLabel={t("select-all")}
+            />
+            <PaginationBar page={page} pageSize={PAGE_SIZE} total={filtered.length} />
+          </>
         )}
         <FormsBulkBar
           rows={rows.map((r) => ({ id: r.template.id, code: r.template.template_code, name: r.template.template_name }))}

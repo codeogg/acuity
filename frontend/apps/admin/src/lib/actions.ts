@@ -396,8 +396,17 @@ export async function updateDoctorAccountAction(
   patch: Partial<Pick<DoctorAccountExtension, "workspace_separation" | "mfa_enabled">>,
 ) {
   return run(async () => {
-    const out = await accountManagement.updateDoctorAccountModel(doctorId, patch);
-    await logAudit("crm_billing_edit", `${login} · account model`);
+    const out = await clinicMutation<DoctorAccountOut>(
+      "patch",
+      `/admin/doctors/${doctorId}/account-model`,
+      patch,
+    );
+    await logAudit(
+      "crm_billing_edit",
+      patch.mfa_enabled === undefined
+        ? `${login} · account model`
+        : `${login} · MFA ${patch.mfa_enabled ? "on" : "off"}`,
+    );
     return out;
   }, ["/"]);
 }
@@ -606,7 +615,7 @@ export async function publishTemplateAction(templateId: number) {
 
 export async function archiveTemplateAction(templateId: number, code: string) {
   return run(async () => {
-    await templates.deleteTemplate(templateId);
+    await api.delete<void>(`/admin/templates/${templateId}`, await liveRequestOptions());
     await logAudit("template_archive", code);
   }, ["/"]);
 }
@@ -616,14 +625,14 @@ export async function previewFillAction(templateId: number) {
 }
 
 export async function bulkTemplatesAction(
-  op: "retag" | "archive",
+  op: "retag" | "archive" | "delete",
   items: { id: number; code: string }[],
 ) {
   return run(async () => {
-    if (op === "archive") {
+    if (op === "archive" || op === "delete") {
       for (const item of items) {
-        await templates.deleteTemplate(item.id);
-        await logAudit("template_archive", item.code);
+        await api.delete<void>(`/admin/templates/${item.id}`, await liveRequestOptions());
+        if (op === "archive") await logAudit("template_archive", item.code);
       }
     }
     await logAudit("batch_operation", `templates · ${op} ×${items.length}`);

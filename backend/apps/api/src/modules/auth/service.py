@@ -57,7 +57,7 @@ async def login(db: AsyncSession, username: str, password: str) -> LoginResponse
     if not clinic or clinic.status != 1:
         raise ForbiddenException("所属诊所已停用")
 
-    if doctor.mfa_enabled:
+    if doctor.mfa_enabled and doctor.mfa_secret:
         mfa_token = create_mfa_pending_token(
             user_id=doctor.id, role="DOCTOR", clinic_id=doctor.clinic_id
         )
@@ -68,6 +68,22 @@ async def login(db: AsyncSession, username: str, password: str) -> LoginResponse
             clinic_id=doctor.clinic_id,
             display_name=doctor.doctor_name,
             mfa_required=True,
+            mfa_token=mfa_token,
+            mfa_enabled=True,
+        )
+
+    if doctor.mfa_enabled and not doctor.mfa_secret:
+        # MFA policy on, not yet enrolled — force setup before issuing a session.
+        mfa_token = create_mfa_pending_token(
+            user_id=doctor.id, role="DOCTOR", clinic_id=doctor.clinic_id
+        )
+        return LoginResponse(
+            access_token=None,
+            role="DOCTOR",
+            user_id=doctor.id,
+            clinic_id=doctor.clinic_id,
+            display_name=doctor.doctor_name,
+            mfa_enrollment_required=True,
             mfa_token=mfa_token,
             mfa_enabled=True,
         )

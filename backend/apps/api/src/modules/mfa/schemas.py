@@ -1,6 +1,10 @@
 from pydantic import BaseModel, Field
 
 
+class MfaEnrollInitRequest(BaseModel):
+    mfa_token: str | None = None
+
+
 class MfaEnrollInitResponse(BaseModel):
     qr_code_base64: str
     provisioning_uri: str
@@ -9,6 +13,7 @@ class MfaEnrollInitResponse(BaseModel):
 
 class MfaEnrollConfirmRequest(BaseModel):
     code: str
+    mfa_token: str | None = None
 
 
 class MfaEnrollConfirmResponse(BaseModel):

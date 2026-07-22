@@ -15,7 +15,13 @@ from src.modules.auth.schemas import (
     SuccessResponse,
 )
 from src.modules.mfa import service as mfa_service
-from src.modules.mfa.schemas import MfaBackupCodeVerifyRequest, MfaVerifyRequest
+from src.modules.mfa.schemas import (
+    MfaBackupCodeVerifyRequest,
+    MfaEnrollConfirmRequest,
+    MfaEnrollInitRequest,
+    MfaEnrollInitResponse,
+    MfaVerifyRequest,
+)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -106,6 +112,41 @@ def _extract_mfa_token(body_token: str | None, request: Request) -> str:
     if cookie:
         return cookie
     raise AuthException("缺少 MFA 会话凭证")
+
+
+@router.post("/mfa/enroll/init", response_model=MfaEnrollInitResponse)
+async def mfa_enroll_init(
+    body: MfaEnrollInitRequest,
+    db: DbSession,
+    request: Request,
+) -> MfaEnrollInitResponse:
+    """First-login MFA setup — requires the pending mfa_token from /auth/login."""
+    token = _extract_mfa_token(body.mfa_token, request)
+    payload = decode_mfa_pending_token(token)
+    if payload.get("role") != "DOCTOR":
+        raise AuthException("无效的 MFA 会话")
+    data = await mfa_service.enroll_init(db, int(payload["sub"]))
+    return MfaEnrollInitResponse.model_validate(data)
+
+
+@router.post("/mfa/enroll/confirm", response_model=LoginResponse)
+async def mfa_enroll_confirm(
+    body: MfaEnrollConfirmRequest,
+    db: DbSession,
+    response: Response,
+    request: Request,
+) -> LoginResponse:
+    """Confirm TOTP during first-login enrollment; issues session + backup codes."""
+    token = _extract_mfa_token(body.mfa_token, request)
+    payload = decode_mfa_pending_token(token)
+    if payload.get("role") != "DOCTOR":
+        raise AuthException("无效的 MFA 会话")
+    result = await mfa_service.enroll_confirm_and_login(
+        db, doctor_id=int(payload["sub"]), code=body.code
+    )
+    if result.access_token:
+        _set_access_cookie(response, result.access_token)
+    return result
 
 
 @router.post("/mfa/verify", response_model=LoginResponse)

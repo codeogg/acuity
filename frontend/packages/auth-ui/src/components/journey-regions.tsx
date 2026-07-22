@@ -115,14 +115,111 @@ export function IdentityRegion({
 }
 
 // Doctor passkey / device confirm — a calm recessed prompt (SC 3.3.8: never a
-// sole cognitive-function test).
-export function DoctorFactorRegion({ hint }: { hint: string }) {
+// sole cognitive-function test). Live TOTP also accepts a 6-digit code.
+export function DoctorFactorRegion({
+  hint,
+  code,
+  onCodeChange,
+  codeLabel,
+}: {
+  hint: string;
+  code?: string;
+  onCodeChange?: (value: string) => void;
+  codeLabel?: string;
+}) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-md border border-border bg-cream-contrast p-6 text-center">
-      <span className="text-venice">
-        <ScanFaceIcon size={32} />
-      </span>
-      <span className="text-sm text-foreground">{hint}</span>
+    <div className="flex w-full flex-col gap-3 rounded-md border border-border bg-cream-contrast p-6">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <span className="text-venice">
+          <ScanFaceIcon size={32} />
+        </span>
+        <span className="text-sm text-foreground">{hint}</span>
+      </div>
+      {onCodeChange ? (
+        <label className="flex w-full flex-col gap-1.5 text-left">
+          <span className="text-sm font-medium text-foreground">{codeLabel}</span>
+          <Input
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={code ?? ""}
+            onChange={(event) => onCodeChange(event.target.value.replace(/\D/g, "").slice(0, 6))}
+            className="h-11 w-full min-w-0 text-center font-mono text-base tracking-[0.35em]"
+            placeholder="000000"
+            aria-label={codeLabel}
+          />
+        </label>
+      ) : null}
+    </div>
+  );
+}
+
+export function MfaEnrollRegion({
+  qrDataUrl,
+  secret,
+  code,
+  onCodeChange,
+  scanLabel,
+  secretLabel,
+  codeLabel,
+}: {
+  qrDataUrl: string | null;
+  secret: string;
+  code: string;
+  onCodeChange: (value: string) => void;
+  scanLabel: string;
+  secretLabel: string;
+  codeLabel: string;
+}) {
+  return (
+    <div className="flex w-full flex-col gap-4">
+      <p className="text-sm text-foreground">{scanLabel}</p>
+      <div className="flex w-full flex-col items-center gap-3 rounded-md border border-border bg-cream-contrast p-4">
+        {qrDataUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={qrDataUrl} alt="" className="size-44 rounded-sm bg-white p-2" />
+        ) : (
+          <div className="flex size-44 items-center justify-center text-xs text-muted-foreground">…</div>
+        )}
+        <div className="w-full min-w-0 text-left">
+          <div className="mb-1 text-xs font-medium text-muted-foreground">{secretLabel}</div>
+          <code className="block break-all rounded-md border border-border bg-background px-3 py-2 font-mono text-xs">
+            {secret || "—"}
+          </code>
+        </div>
+      </div>
+      <label className="flex w-full flex-col gap-1.5">
+        <span className="text-sm font-medium text-foreground">{codeLabel}</span>
+        <Input
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          value={code}
+          onChange={(event) => onCodeChange(event.target.value.replace(/\D/g, "").slice(0, 6))}
+          className="h-11 w-full min-w-0 text-center font-mono text-base tracking-[0.35em]"
+          placeholder="000000"
+          aria-label={codeLabel}
+        />
+      </label>
+    </div>
+  );
+}
+
+export function MfaBackupRegion({
+  codes,
+  caption,
+}: {
+  codes: string[];
+  caption: string;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-foreground">{caption}</p>
+      <ul className="grid grid-cols-2 gap-2 rounded-md border border-border bg-cream-contrast p-3 font-mono text-xs">
+        {codes.map((code) => (
+          <li key={code} className="rounded bg-background px-2 py-1.5 text-foreground">
+            {code}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -52,7 +52,6 @@ import {
   type TemplateOpsStatus,
   clinicOps,
   doctorOps,
-  intakeStatuses,
   templateOps,
   templateOpsStatus,
 } from "./ops-model";
@@ -373,8 +372,21 @@ export async function listClinicRows(keyword?: string, sort?: string): Promise<C
   }));
 }
 
-export type ClinicTab = "needs-attention" | "provisioning" | "active" | "overdue" | "all";
-export const CLINIC_TABS: ClinicTab[] = ["needs-attention", "provisioning", "active", "overdue", "all"];
+export type ClinicTab =
+  | "needs-attention"
+  | "provisioning"
+  | "onboarding"
+  | "active"
+  | "overdue"
+  | "all";
+export const CLINIC_TABS: ClinicTab[] = [
+  "needs-attention",
+  "provisioning",
+  "onboarding",
+  "active",
+  "overdue",
+  "all",
+];
 
 export function clinicMatchesTab(row: ClinicRow, tab: ClinicTab): boolean {
   if (tab === "all") return true;
@@ -493,14 +505,14 @@ export function sortDoctorRows(rows: DoctorRow[], sort: SortState | null): Docto
   );
 }
 
-export type FormsTab = "intake" | "library" | "failed" | "all";
-export const FORMS_TABS: FormsTab[] = ["intake", "library", "failed", "all"];
+export type FormsTab = "intake" | "library" | "all";
+export const FORMS_TABS: FormsTab[] = ["intake", "library", "all"];
 
 export function templateMatchesTab(row: TemplateRow, tab: FormsTab): boolean {
   if (tab === "all") return true;
-  if (tab === "intake") return intakeStatuses().includes(row.ops_status);
   if (tab === "library") return row.ops_status === "confirmed";
-  return row.ops_status === "failed";
+  // Intake: in-flight pipeline work — excludes published (library) and failed parses.
+  return row.ops_status !== "confirmed" && row.ops_status !== "failed";
 }
 
 export async function listTemplateRows(keyword?: string): Promise<TemplateRow[]> {
@@ -640,7 +652,7 @@ export async function getWorklist(): Promise<WorklistItem[]> {
       label_key: "worklist.template-failed",
       label_args: { name: r.template.template_name },
       target: r.template.template_code,
-      href: `/forms?tab=failed`,
+      href: `/forms/${r.template.id}`,
     });
   }
   const openTickets = ticketsPage.items.filter((t) => t.status !== "resolved");

@@ -107,6 +107,7 @@
     "tab": {
       "needs-attention": "Needs attention",
       "provisioning": "Provisioning",
+      "onboarding": "Onboarding",
       "active": "Active",
       "overdue": "Overdue payment",
       "all": "All"
@@ -470,6 +471,7 @@
     "mfa-on": "On — required at sign-in",
     "mfa-off": "Off",
     "mfa-opt-in-saved": "MFA preference saved",
+    "mfa-opt-in-caption": "When on, the doctor must enrol MFA on next sign-in. Turning off clears any enrolled MFA.",
     "unlock": "Unlock account",
     "unlock-done": "Account unlocked · logged",
     "resend-invite": "Resend invite",
@@ -537,15 +539,13 @@
     "tab": {
       "intake": "Intake",
       "library": "Library",
-      "failed": "Failed",
       "all": "All"
     },
     "col": {
       "name": "Display name",
       "status": "Status",
       "fields": "Detected fields",
-      "confidence": "Confidence",
-      "insurer-type": "Insurer / type",
+      "insurer": "Insurer",
       "uploaded": "Upload time",
       "tags": "Tags",
       "version": "Version",
@@ -556,7 +556,6 @@
     "empty": {
       "intake-title": "No forms waiting — upload insurer forms to begin",
       "library-title": "No published templates yet",
-      "failed-title": "No failed parses",
       "all-title": "Nothing here",
       "description": "Upload a blank insurer-form PDF to start the pipeline."
     },
@@ -584,7 +583,12 @@
       "archive-title": "Archive {count} templates",
       "archive-feedforward": "Archiving removes these {count} templates from the doctor-fillable library ({usage} uses to date across the selection's tabs). Archived templates are tombstoned, not destroyed. Paste the first template identifier to confirm.",
       "archive-confirm": "Archive",
-      "archived": "{count} templates archived · logged"
+      "archived": "{count} templates archived · logged",
+      "delete": "Delete",
+      "delete-title": "Delete {count} templates",
+      "delete-feedforward": "Permanently deletes these {count} templates and their field mappings. Templates already used by claims cannot be deleted. This cannot be undone and is logged. Paste the first template identifier to confirm.",
+      "delete-confirm": "Delete",
+      "deleted": "{count} templates deleted · logged"
     }
   },
   "editor": {

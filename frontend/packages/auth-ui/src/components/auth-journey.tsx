@@ -61,6 +61,8 @@ import {
   LoadingRegion,
   NOTE_ID,
   IdentityRegion,
+  MfaBackupRegion,
+  MfaEnrollRegion,
   OperatorFactorRegion,
   PermissionRegion,
   PrimaryButton,
@@ -127,6 +129,10 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
   // ADR 0040: email + password is the first-class first factor on this surface.
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [totpCode, setTotpCode] = useState("");
+  const [enrollQr, setEnrollQr] = useState<string | null>(null);
+  const [enrollSecret, setEnrollSecret] = useState("");
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
 
   // Sequence guard so a superseded async flow can't commit stale state.
   const seq = useRef(0);
@@ -286,11 +292,33 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
           (response as LoginResponseExtended).mfa_token ?? undefined;
         const mfaRequired =
           (response as LoginResponseExtended).mfa_required === true;
+        const mfaEnrollmentRequired =
+          (response as LoginResponseExtended).mfa_enrollment_required === true;
         const requiresFactor =
           !isOperator &&
           !config.skipMfa &&
           (mfaRequired || demoMfaRef.current != null);
-        if (requiresFactor) {
+        if (!isOperator && !config.skipMfa && mfaEnrollmentRequired) {
+          await delay(T.redirect);
+          if (!alive()) return;
+          try {
+            const init = await authFlow.beginMfaEnroll({
+              mfa_token: mfaTokenRef.current,
+            });
+            if (!alive()) return;
+            const qr = init.qr_code_base64?.startsWith("data:")
+              ? init.qr_code_base64
+              : `data:image/png;base64,${init.qr_code_base64}`;
+            setEnrollQr(qr);
+            setEnrollSecret(init.secret);
+            setTotpCode("");
+            setScreen("enroll");
+          } catch {
+            if (!alive()) return;
+            setNote({ kind: "error", messageKey: "states.mfaFailed" });
+            setScreen("identity");
+          }
+        } else if (requiresFactor) {
           if (!mfaRequired && mocksActive) {
             try {
               const challenge = await authFlow.beginMfaChallenge();
@@ -302,6 +330,7 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
           await delay(T.redirect);
           if (!alive()) return;
           setOperatorStep(0);
+          setTotpCode("");
           setScreen("factor");
         } else {
           await delay(T.redirect);
@@ -356,7 +385,7 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
         await authFlow.verifyMfa({
           challenge_id: challengeRef.current,
           method: "totp",
-          code: demo === "fail" ? "000000" : totpRef.current,
+          code: demo === "fail" ? "000000" : totpCode || totpRef.current,
           mfa_token: mfaTokenRef.current,
         });
         await delay(T.press);
@@ -373,6 +402,56 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
         setNote(resolveErrorNote(cause, "factor", surface));
         setScreen("factor");
       }
+    })();
+  }
+
+  function confirmMfaEnroll() {
+    const my = ++seq.current;
+    const alive = () => my === seq.current;
+    void (async () => {
+      if (totpCode.trim().length < 6) {
+        setNote({ kind: "error", messageKey: "states.mfaFailed" });
+        return;
+      }
+      setNote(null);
+      setBtnBusy(true);
+      try {
+        const result = await authFlow.confirmMfaEnroll({
+          code: totpCode.trim(),
+          mfa_token: mfaTokenRef.current,
+        });
+        await delay(T.press);
+        if (!alive()) return;
+        setBtnBusy(false);
+        const codes = result.backup_codes ?? [];
+        if (codes.length > 0) {
+          setBackupCodes(codes);
+          setScreen("backup");
+          return;
+        }
+        setLoadingKey("loading");
+        setScreen("loading");
+        await delay(T.redirect);
+        if (!alive()) return;
+        await proceedToClinicOrLand(alive);
+      } catch (cause) {
+        if (!alive()) return;
+        setBtnBusy(false);
+        setNote(resolveErrorNote(cause, "factor", surface));
+        setScreen("enroll");
+      }
+    })();
+  }
+
+  function continueAfterBackup() {
+    const my = ++seq.current;
+    const alive = () => my === seq.current;
+    void (async () => {
+      setLoadingKey("loading");
+      setScreen("loading");
+      await delay(T.redirect);
+      if (!alive()) return;
+      await proceedToClinicOrLand(alive);
     })();
   }
 
@@ -575,6 +654,12 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
   if (screen === "factor") {
     heading = s("factorHeading");
     support = isOperator ? null : s("factorSupport");
+  } else if (screen === "enroll") {
+    heading = s("enrollHeading");
+    support = s("enrollSupport");
+  } else if (screen === "backup") {
+    heading = s("backupHeading");
+    support = null;
   } else if (screen === "clinic") {
     heading = s("clinicHeading");
     support = s("clinicSupport");
@@ -602,6 +687,10 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
               busyTone: "navy",
             }
           : { label: common("confirm"), onClick: confirmDoctorFactor };
+      case "enroll":
+        return { label: s("enrollAction"), onClick: confirmMfaEnroll };
+      case "backup":
+        return { label: common("continue"), onClick: continueAfterBackup };
       case "clinic":
         return { label: common("continue"), onClick: confirmClinic };
       case "recovery":
@@ -643,8 +732,27 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
         current={operatorStep}
       />
     ) : (
-      <DoctorFactorRegion hint={s("factorHint")} />
+      <DoctorFactorRegion
+        hint={s("factorHint")}
+        code={totpCode}
+        onCodeChange={setTotpCode}
+        codeLabel={s("totpLabel")}
+      />
     );
+  } else if (screen === "enroll") {
+    region = (
+      <MfaEnrollRegion
+        qrDataUrl={enrollQr}
+        secret={enrollSecret}
+        code={totpCode}
+        onCodeChange={setTotpCode}
+        scanLabel={s("enrollScan")}
+        secretLabel={s("enrollSecret")}
+        codeLabel={s("totpLabel")}
+      />
+    );
+  } else if (screen === "backup") {
+    region = <MfaBackupRegion codes={backupCodes} caption={s("backupCaption")} />;
   } else if (screen === "clinic") {
     region = (
       <ClinicRegion
@@ -740,7 +848,9 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
                   describedBy={noteVisible ? NOTE_ID : undefined}
                   disabled={
                     !ready ||
-                    (screen === "identity" && (!email.trim() || !password))
+                    (screen === "identity" && (!email.trim() || !password)) ||
+                    (screen === "enroll" && totpCode.trim().length < 6) ||
+                    (screen === "factor" && !isOperator && totpCode.trim().length < 6 && !mocksActive)
                   }
                 />
               </div>
@@ -829,7 +939,7 @@ function SecondaryLinks({
   // (+ the language toggle on doctor)
   return (
     <LinkRow>
-      {(screen === "factor" || screen === "clinic") && (
+      {(screen === "factor" || screen === "clinic" || screen === "enroll" || screen === "backup") && (
         <>
           <LinkButton onClick={onBack}>{backLabel}</LinkButton>
           <LinkDot />

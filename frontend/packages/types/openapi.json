@@ -7888,6 +7888,11 @@
             "title": "Is Flagged",
             "description": "1 = needs attention (operator flag), 0 = not flagged."
           },
+          "lifecycle_status": {
+            "type": "string",
+            "title": "Lifecycle Status",
+            "description": "Operational lifecycle: provisioning | onboarding | active. Needs-attention is is_flagged, not a lifecycle value."
+          },
           "subscription_status": {
             "type": "string",
             "nullable": true,
@@ -7920,6 +7925,7 @@
           "idle_lock_minutes",
           "data_region",
           "is_flagged",
+          "lifecycle_status",
           "created_at"
         ],
         "title": "ClinicOut"

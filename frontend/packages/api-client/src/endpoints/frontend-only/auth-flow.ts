@@ -46,8 +46,17 @@ export type MfaMethod = MfaChallenge["methods"][number];
 // workspace) are folded into the canonical LoginResponse/MeResponse as
 // optional declared backend asks; aliases kept for existing imports.
 export type AccountSessionExtension = Pick<LoginResponse, "mfa_enabled" | "merged_workspace">;
-export type LoginResponseExtended = LoginResponse;
+export type LoginResponseExtended = LoginResponse & {
+  mfa_enrollment_required?: boolean;
+  backup_codes?: string[] | null;
+};
 export type MeResponseExtended = MeResponse;
+
+export interface MfaEnrollInitResult {
+  qr_code_base64: string;
+  provisioning_uri: string;
+  secret: string;
+}
 
 // --- MFA -----------------------------------------------------------------------
 
@@ -64,6 +73,17 @@ export function verifyMfaBackupCode(body: {
   mfa_token?: string | null;
 }): Promise<LoginResponse> {
   return api.post<LoginResponse>("/auth/mfa/verify-backup-code", body);
+}
+
+export function beginMfaEnroll(body: { mfa_token?: string | null }): Promise<MfaEnrollInitResult> {
+  return api.post<MfaEnrollInitResult>("/auth/mfa/enroll/init", body);
+}
+
+export function confirmMfaEnroll(body: {
+  code: string;
+  mfa_token?: string | null;
+}): Promise<LoginResponseExtended> {
+  return api.post<LoginResponseExtended>("/auth/mfa/enroll/confirm", body);
 }
 
 // --- recovery --------------------------------------------------------------------

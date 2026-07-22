@@ -64,6 +64,7 @@ def clinic_to_out(clinic: Clinic) -> ClinicOut:
         idle_lock_minutes=clinic.idle_lock_minutes,
         data_region=clinic.data_region or "香港",
         is_flagged=int(clinic.is_flagged or 0),
+        lifecycle_status=clinic.lifecycle_status or "provisioning",
         district_id=clinic.district_id,
         district_name_zh=clinic.district.name_zh if clinic.district else None,
         district_name_en=clinic.district.name_en if clinic.district else None,
@@ -186,6 +187,7 @@ async def create_clinic(db: AsyncSession, data: ClinicCreate) -> Clinic:
         district_id=district_id,
         data_region=data_region,
         is_flagged=0,
+        lifecycle_status="provisioning",
     )
     db.add(clinic)
     try:
@@ -231,6 +233,11 @@ async def list_clinics(
     stmt = _apply_clinic_sort(stmt, sort)
     stmt = stmt.offset((page - 1) * page_size).limit(page_size)
     items = list((await db.execute(stmt)).scalars().unique().all())
+    from src.modules.clinics.lifecycle import sync_lifecycle
+
+    for clinic in items:
+        if (clinic.lifecycle_status or "provisioning") == "provisioning":
+            await sync_lifecycle(db, clinic)
     return items, total
 
 
@@ -242,7 +249,9 @@ async def get_clinic(db: AsyncSession, clinic_id: int) -> Clinic:
     ).scalar_one_or_none()
     if not clinic:
         raise NotFoundException("诊所不存在")
-    return clinic
+    from src.modules.clinics.lifecycle import sync_lifecycle
+
+    return await sync_lifecycle(db, clinic)
 
 
 async def update_clinic(db: AsyncSession, clinic_id: int, data: ClinicUpdate) -> Clinic:
@@ -273,6 +282,9 @@ async def update_clinic(db: AsyncSession, clinic_id: int, data: ClinicUpdate) ->
     except IntegrityError as exc:
         raise ConflictException("诊所名称或编码已存在") from exc
     await db.refresh(clinic, attribute_names=["district"])
+    from src.modules.clinics.lifecycle import sync_lifecycle
+
+    await sync_lifecycle(db, clinic)
     return clinic
 
 
@@ -360,6 +372,9 @@ async def set_insurance_companies(
     for cid in set(company_ids):
         db.add(ClinicInsuranceCompany(clinic_id=clinic_id, company_id=cid))
     await db.flush()
+    from src.modules.clinics.lifecycle import sync_lifecycle_by_id
+
+    await sync_lifecycle_by_id(db, clinic_id)
     return sorted(set(company_ids))
 
 
@@ -482,6 +497,9 @@ async def set_company_enabled(
             )
         )
     await db.flush()
+    from src.modules.clinics.lifecycle import sync_lifecycle_by_id
+
+    await sync_lifecycle_by_id(db, clinic_id)
 
 
 async def set_template_enabled(

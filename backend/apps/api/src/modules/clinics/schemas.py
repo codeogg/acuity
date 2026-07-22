@@ -51,6 +51,8 @@ class ClinicOut(BaseModel):
     idle_lock_minutes: int
     data_region: str
     is_flagged: int
+    # provisioning | onboarding | active — operational lifecycle (not is_flagged).
+    lifecycle_status: str = "provisioning"
     district_id: int | None = None
     district_name_zh: str | None = None
     district_name_en: str | None = None

@@ -61,6 +61,14 @@ class AccountNotesUpdate(BaseModel):
     notes_format: NoteFormat | None = None
 
 
+class DoctorAccountModelUpdate(BaseModel):
+    """ADR 0041 account-model fields (notes / workspace / MFA policy)."""
+
+    notes: str | None = None
+    workspace_separation: Literal["separated", "merged"] | None = None
+    mfa_enabled: bool | None = None
+
+
 class DoctorOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

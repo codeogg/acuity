@@ -60,7 +60,7 @@ async def _get_doctor(db: AsyncSession, doctor_id: int) -> Doctor:
 
 async def enroll_init(db: AsyncSession, doctor_id: int) -> dict[str, str]:
     doctor = await _get_doctor(db, doctor_id)
-    if doctor.mfa_enabled:
+    if doctor.mfa_enabled and doctor.mfa_secret:
         raise ValidationException("该医生已启用 MFA，请先重置后再绑定")
 
     secret = generate_totp_secret()
@@ -101,6 +101,27 @@ async def enroll_confirm(db: AsyncSession, doctor_id: int, code: str) -> list[st
         )
     await db.flush()
     return plain_codes
+
+
+async def enroll_confirm_and_login(
+    db: AsyncSession, *, doctor_id: int, code: str
+) -> LoginResponse:
+    """Complete first-login enrollment and issue a session cookie payload."""
+    backup_codes = await enroll_confirm(db, doctor_id, code)
+    doctor = await _get_doctor(db, doctor_id)
+    token = create_access_token(
+        user_id=doctor.id, role="DOCTOR", clinic_id=doctor.clinic_id
+    )
+    return LoginResponse(
+        access_token=token,
+        role="DOCTOR",
+        user_id=doctor.id,
+        clinic_id=doctor.clinic_id,
+        display_name=doctor.doctor_name,
+        mfa_required=False,
+        mfa_enabled=True,
+        backup_codes=backup_codes,
+    )
 
 
 async def _doctor_login_response(doctor: Doctor) -> LoginResponse:

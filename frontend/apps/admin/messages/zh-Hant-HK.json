@@ -107,6 +107,7 @@
     "tab": {
       "needs-attention": "需要關注",
       "provisioning": "開通中",
+      "onboarding": "導入中",
       "active": "活躍",
       "overdue": "付款逾期",
       "all": "全部"
@@ -470,6 +471,7 @@
     "mfa-on": "開啟 — 登入時必須",
     "mfa-off": "關閉",
     "mfa-opt-in-saved": "已儲存 MFA 偏好",
+    "mfa-opt-in-caption": "開啟後，醫生下次登入必須先完成 MFA 綁定；關閉會清除已綁定的 MFA。",
     "unlock": "解鎖帳戶",
     "unlock-done": "帳戶已解鎖 · 已記錄",
     "resend-invite": "重發邀請",
@@ -537,15 +539,13 @@
     "tab": {
       "intake": "收件",
       "library": "資料庫",
-      "failed": "失敗",
       "all": "全部"
     },
     "col": {
       "name": "顯示名稱",
       "status": "狀態",
       "fields": "偵測欄位",
-      "confidence": "信心度",
-      "insurer-type": "保險公司／類型",
+      "insurer": "保險公司",
       "uploaded": "上載時間",
       "tags": "標籤",
       "version": "版本",
@@ -556,7 +556,6 @@
     "empty": {
       "intake-title": "沒有等候中的表格——上載保險公司表格以開始",
       "library-title": "尚未有已發佈的範本",
-      "failed-title": "沒有失敗的解析",
       "all-title": "沒有項目",
       "description": "上載空白的保險公司表格 PDF 以啟動管線。"
     },
@@ -584,7 +583,12 @@
       "archive-title": "封存 {count} 個範本",
       "archive-feedforward": "封存會將這 {count} 個範本從醫生可填寫的資料庫移除（所選項目至今共 {usage} 次使用）。封存的範本會留檔，不會銷毀。請貼上第一個範本的識別碼以確認。",
       "archive-confirm": "封存",
-      "archived": "已封存 {count} 個範本 · 已記錄"
+      "archived": "已封存 {count} 個範本 · 已記錄",
+      "delete": "刪除",
+      "delete-title": "刪除 {count} 個範本",
+      "delete-feedforward": "永久刪除這 {count} 個範本及其欄位對應。若範本已被理賠單使用將無法刪除。此操作無法復原並會被記錄。請貼上第一個範本的識別碼以確認。",
+      "delete-confirm": "刪除",
+      "deleted": "已刪除 {count} 個範本 · 已記錄"
     }
   },
   "editor": {

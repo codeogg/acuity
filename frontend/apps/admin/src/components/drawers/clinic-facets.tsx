@@ -100,7 +100,7 @@ export function ProvisioningFacet({
   const districtOptions = useDistrictOptions();
   const checklist: { label: string; done: boolean }[] = [
     { label: t("check-basics"), done: Boolean(clinic.name && clinic.address) },
-    { label: t("check-residency"), done: true },
+    { label: t("check-residency"), done: Boolean(clinic.data_region) },
     { label: t("check-doctor"), done: doctorCount >= 1 },
     { label: t("check-defaults"), done: insurers.length > 0 },
   ];

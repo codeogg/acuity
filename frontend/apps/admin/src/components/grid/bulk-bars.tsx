@@ -260,6 +260,22 @@ export function FormsBulkBar({
         successMessage={t("archived", { count: picked.length })}
         onDone={clear}
       />
+      <GateButton
+        buttonLabel={t("delete")}
+        buttonIcon="trash"
+        buttonVariant="destructive"
+        title={t("delete-title", { count: picked.length })}
+        description={t("delete-feedforward", { count: picked.length })}
+        variant="paste"
+        target={picked[0]?.code}
+        destructive
+        confirmLabel={t("delete-confirm")}
+        dryRun={dryRun}
+        dryRunSummary={tc("dry-run-summary", { count: picked.length })}
+        action={() => bulkTemplatesAction("delete", items())}
+        successMessage={t("deleted", { count: picked.length })}
+        onDone={clear}
+      />
       </BulkActionBar>
     </>
   );

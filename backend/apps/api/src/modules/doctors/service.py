@@ -1,6 +1,6 @@
 import secrets
 
-from sqlalchemy import func, or_, select
+from sqlalchemy import delete, func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -11,9 +11,11 @@ from src.db.models import (
     Clinic,
     Doctor,
     DoctorClinicLink,
+    DoctorMfaBackupCode,
     ExtractionReviewOutput,
     ExtractionTask,
     FormTag,
+    TagVisibility,
 )
 from src.modules.doctors import clinic_links as clinic_link_service
 from src.modules.doctors.clinic_links import ensure_primary_clinic_link
@@ -194,6 +196,10 @@ async def set_doctor_clinics_account(
     await clinic_link_service.set_doctor_clinics(
         db, doctor_id=doctor_id, clinic_ids=clinic_ids
     )
+    from src.modules.clinics.lifecycle import sync_lifecycle_by_id
+
+    for cid in clinic_ids:
+        await sync_lifecycle_by_id(db, cid)
     return await get_doctor_account(db, doctor_id)
 
 
@@ -258,6 +264,9 @@ async def create_doctor(db: AsyncSession, data: DoctorCreate) -> Doctor:
         await ensure_primary_clinic_link(
             db, doctor_id=doctor.id, clinic_id=data.clinic_id
         )
+        from src.modules.clinics.lifecycle import sync_lifecycle_by_id
+
+        await sync_lifecycle_by_id(db, data.clinic_id)
     return doctor
 
 
@@ -265,9 +274,13 @@ async def link_clinic(
     db: AsyncSession, doctor_id: int, clinic_id: int
 ) -> DoctorClinicLink:
     await get_doctor(db, doctor_id)
-    return await clinic_link_service.link_clinic(
+    link = await clinic_link_service.link_clinic(
         db, doctor_id=doctor_id, clinic_id=clinic_id
     )
+    from src.modules.clinics.lifecycle import sync_lifecycle_by_id
+
+    await sync_lifecycle_by_id(db, clinic_id)
+    return link
 
 
 async def unlink_clinic(db: AsyncSession, doctor_id: int, clinic_id: int) -> None:
@@ -309,6 +322,44 @@ async def set_account_notes(
         if notes_format not in NOTE_FORMATS:
             raise ValidationException("备注格式仅支持 html / markdown")
         doctor.account_notes_format = notes_format
+    await db.flush()
+    return doctor
+
+
+async def update_account_model(
+    db: AsyncSession,
+    doctor_id: int,
+    *,
+    notes: str | None = None,
+    workspace_separation: str | None = None,
+    mfa_enabled: bool | None = None,
+    operator_id: int | None = None,
+) -> Doctor:
+    """Patch ADR 0041 account-model fields (notes / workspace / MFA policy)."""
+    doctor = await get_doctor(db, doctor_id)
+    if notes is not None:
+        doctor.account_notes = notes
+    if workspace_separation is not None:
+        if workspace_separation not in ("separated", "merged"):
+            raise ValidationException("workspace_separation 仅支持 separated / merged")
+        link_count = await clinic_link_service.count_clinic_links(db, doctor_id)
+        if link_count <= 1 and workspace_separation == "merged":
+            raise ValidationException("仅关联多个诊所时可设置合并工作区")
+        doctor.workspace_mode = workspace_separation
+    if mfa_enabled is not None:
+        if mfa_enabled:
+            # Policy on: require MFA once enrolled. Login only challenges when
+            # a secret exists; enrollment can complete later.
+            doctor.mfa_enabled = True
+        else:
+            from src.modules.mfa import service as mfa_service
+
+            await mfa_service.admin_reset_mfa(
+                db,
+                doctor_id=doctor_id,
+                operator_id=operator_id or 0,
+            )
+            doctor = await get_doctor(db, doctor_id)
     await db.flush()
     return doctor
 
@@ -401,7 +452,7 @@ async def set_status(db: AsyncSession, doctor_id: int, status: int) -> Doctor:
 
 
 async def delete_doctor(db: AsyncSession, doctor_id: int) -> None:
-    """删除医生。存在关联理赔单或 PDF 提取任务时拒绝删除。"""
+    """删除医生。存在关联理赔单 / 提取任务 / 审核记录时拒绝；标签可见性与 MFA 备用码先清后删。"""
     doctor = await get_doctor(db, doctor_id)
     claim_count = (
         await db.execute(
@@ -433,17 +484,14 @@ async def delete_doctor(db: AsyncSession, doctor_id: int) -> None:
     if review_count:
         raise ConflictException("该医生存在关联审核记录，无法删除，可改为停用")
 
-    links = list(
-        (
-            await db.execute(
-                select(DoctorClinicLink).where(DoctorClinicLink.doctor_id == doctor_id)
-            )
-        )
-        .scalars()
-        .all()
+    # Soft account-model rows — safe to remove with the doctor.
+    await db.execute(delete(TagVisibility).where(TagVisibility.doctor_id == doctor_id))
+    await db.execute(
+        delete(DoctorMfaBackupCode).where(DoctorMfaBackupCode.doctor_id == doctor_id)
     )
-    for link in links:
-        await db.delete(link)
+    await db.execute(
+        delete(DoctorClinicLink).where(DoctorClinicLink.doctor_id == doctor_id)
+    )
 
     try:
         await db.delete(doctor)
