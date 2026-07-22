@@ -104,7 +104,15 @@ export const authHandlers = [
     if (outcome === "invalid-code") {
       return errorEnvelope("VALIDATION_ERROR", "驗證碼不正確，請再試一次。", 422);
     }
-    return HttpResponse.json({ success: true });
+    const session = authStore.currentSession();
+    if (!session) {
+      return errorEnvelope("UNAUTHORIZED", "請先輸入帳戶及密碼。", 401);
+    }
+    return HttpResponse.json(loginResponseFor(session), {
+      headers: {
+        "Set-Cookie": "access_token=mock-jwt-token; HttpOnly; Path=/; SameSite=Lax",
+      },
+    });
   }),
 
   // --- frontend-only: recovery ---------------------------------------------------

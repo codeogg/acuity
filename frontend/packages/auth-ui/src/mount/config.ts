@@ -58,7 +58,7 @@ export const operatorAuthMount: AuthMountConfig = {
   surface: "operator",
   signInPath: "/sign-in",
   landingPath: "/clinics",
-  allowedRoles: ["OPERATOR", "SUPER_ADMIN", "SUPPORT", "READ_ONLY"],
+  allowedRoles: ["OPERATOR", "SUPER_ADMIN", "ANNOTATOR", "SUPPORT", "READ_ONLY"],
   privacyHref: "/privacy",
   termsHref: "/terms",
 };

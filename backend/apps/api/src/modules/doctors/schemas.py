@@ -90,6 +90,8 @@ class DoctorAccountOut(DoctorOut):
     notes_format: str
     workspace_separation: Literal["separated", "merged"]
     mfa_enabled: bool = False
+    account_locked: bool = False
+    registration_status: str = "registered"
 
 
 class ResetPasswordResponse(BaseModel):

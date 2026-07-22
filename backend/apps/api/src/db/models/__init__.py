@@ -14,6 +14,7 @@ from src.db.models.extraction import (
     OcrResult,
 )
 from src.db.models.districts import District
+from src.db.models.mfa import DoctorMfaBackupCode
 from src.db.models.org import (
     Clinic,
     ClinicInsuranceCompany,
@@ -56,6 +57,7 @@ __all__ = [
     "Clinic",
     "Doctor",
     "DoctorClinicLink",
+    "DoctorMfaBackupCode",
     "InsuranceCompany",
     "ClinicInsuranceCompany",
     "District",

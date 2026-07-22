@@ -9,12 +9,15 @@ class LoginRequest(BaseModel):
 
 
 class LoginResponse(BaseModel):
-    access_token: str
+    access_token: str | None = None
     token_type: str = "bearer"
     role: str
     user_id: int
     clinic_id: int | None = None
     display_name: str | None = None
+    mfa_required: bool = False
+    mfa_token: str | None = None
+    mfa_enabled: bool = False
 
 
 class MeResponse(BaseModel):

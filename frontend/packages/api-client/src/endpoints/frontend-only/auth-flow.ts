@@ -55,8 +55,15 @@ export function beginMfaChallenge(): Promise<MfaChallenge> {
   return api.post<MfaChallenge>("/auth/mfa/challenge");
 }
 
-export function verifyMfa(body: MfaVerifyRequest): Promise<SuccessResponse> {
-  return api.post<SuccessResponse>("/auth/mfa/verify", body);
+export function verifyMfa(body: MfaVerifyRequest & { mfa_token?: string | null }): Promise<LoginResponse> {
+  return api.post<LoginResponse>("/auth/mfa/verify", body);
+}
+
+export function verifyMfaBackupCode(body: {
+  code: string;
+  mfa_token?: string | null;
+}): Promise<LoginResponse> {
+  return api.post<LoginResponse>("/auth/mfa/verify-backup-code", body);
 }
 
 // --- recovery --------------------------------------------------------------------

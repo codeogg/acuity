@@ -1,8 +1,7 @@
 import { createAuthPage, operatorAuthMount } from "@acuity/auth-ui";
 
 // Operator sign-in — the hardened console entry from the shared auth journey
-// package. MFA is temporarily skipped product-wide; re-enable later via
-// skipMfa: false once backend MFA endpoints ship.
+// package. Operators/admins never require MFA; only doctor accounts opt in.
 export default createAuthPage({
   ...operatorAuthMount,
   landingPath: "/clinics",

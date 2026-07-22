@@ -19,6 +19,7 @@ from src.db.base import Base, TimestampMixin
 
 if TYPE_CHECKING:
     from src.db.models.districts import District
+    from src.db.models.mfa import DoctorMfaBackupCode
     from src.db.models.subscriptions import ClinicSubscription
 
 
@@ -76,9 +77,21 @@ class Doctor(Base, TimestampMixin):
         ForeignKey("form_tag.id"), index=True
     )
     account_notes_format: Mapped[str] = mapped_column(String(20), default="markdown")
+    mfa_enabled: Mapped[bool] = mapped_column(Boolean, default=False)
+    mfa_secret: Mapped[str | None] = mapped_column(Text, nullable=True)
+    mfa_enrolled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    failed_mfa_attempts: Mapped[int] = mapped_column(SmallInteger, default=0)
+    account_locked: Mapped[bool] = mapped_column(Boolean, default=False)
+    # registered = 已完成首次激活；unregistered = 待首次登入/改密
+    registration_status: Mapped[str] = mapped_column(String(20), default="registered")
 
     clinic: Mapped["Clinic | None"] = relationship(back_populates="doctors")
     clinic_links: Mapped[list["DoctorClinicLink"]] = relationship(
+        back_populates="doctor", cascade="all, delete-orphan"
+    )
+    mfa_backup_codes: Mapped[list["DoctorMfaBackupCode"]] = relationship(
         back_populates="doctor", cascade="all, delete-orphan"
     )
 

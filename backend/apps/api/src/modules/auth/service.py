@@ -9,7 +9,12 @@ from src.core.exceptions import (
     NotFoundException,
     ValidationException,
 )
-from src.core.security import create_access_token, hash_password, verify_password
+from src.core.security import (
+    create_access_token,
+    create_mfa_pending_token,
+    hash_password,
+    verify_password,
+)
 from src.db.models import AdminUser, Clinic, Doctor
 from src.modules.auth.schemas import (
     AuthClinicList,
@@ -35,6 +40,8 @@ async def login(db: AsyncSession, username: str, password: str) -> LoginResponse
             role=admin.role,
             user_id=admin.id,
             display_name=admin.real_name or admin.username,
+            mfa_required=False,
+            mfa_enabled=False,
         )
 
     doctor = (
@@ -44,9 +51,26 @@ async def login(db: AsyncSession, username: str, password: str) -> LoginResponse
         raise AuthException("账号或密码错误")
     if doctor.status != 1:
         raise ForbiddenException("账号已停用")
+    if doctor.account_locked:
+        raise ForbiddenException("账户已锁定，请联系管理员解锁")
     clinic = await db.get(Clinic, doctor.clinic_id) if doctor.clinic_id else None
     if not clinic or clinic.status != 1:
         raise ForbiddenException("所属诊所已停用")
+
+    if doctor.mfa_enabled:
+        mfa_token = create_mfa_pending_token(
+            user_id=doctor.id, role="DOCTOR", clinic_id=doctor.clinic_id
+        )
+        return LoginResponse(
+            access_token=None,
+            role="DOCTOR",
+            user_id=doctor.id,
+            clinic_id=doctor.clinic_id,
+            display_name=doctor.doctor_name,
+            mfa_required=True,
+            mfa_token=mfa_token,
+            mfa_enabled=True,
+        )
 
     # 多诊所时先签发主诊所会话；前端再走 /auth/clinics 选择本次诊所并重签 JWT。
     token = create_access_token(
@@ -58,6 +82,7 @@ async def login(db: AsyncSession, username: str, password: str) -> LoginResponse
         user_id=doctor.id,
         clinic_id=doctor.clinic_id,
         display_name=doctor.doctor_name,
+        mfa_enabled=False,
     )
 
 
@@ -162,6 +187,8 @@ async def change_password(
     if not verify_password(current_password, account.password_hash):
         raise ValidationException("当前密码不正确")
     account.password_hash = hash_password(new_password)
+    if role == "DOCTOR" and isinstance(account, Doctor):
+        account.registration_status = "registered"
     await db.flush()
 
 

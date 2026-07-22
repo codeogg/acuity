@@ -73,7 +73,7 @@ describe("auth journey over the stateful mock store", () => {
       method: "totp",
       code: "246810",
     });
-    expect(ok.success).toBe(true);
+    expect(ok.access_token).toBeTruthy();
     const clinics = await authFlow.listAccountClinics();
     expect(clinics.items.length).toBeGreaterThan(1);
     const first = clinics.items[0];

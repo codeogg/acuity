@@ -25,6 +25,8 @@ class Settings(BaseSettings):
 
     # 病历字段级加密（Fernet key）。留空则运行时自动生成（仅开发用，重启后旧数据无法解密）
     FIELD_ENCRYPTION_KEY: str = ""
+    # MFA TOTP 密钥 AES 加密（Fernet key，独立于病历加密）
+    MFA_ENCRYPTION_KEY: str = ""
 
     # 对象存储（S3 协议）
     S3_BUCKET: str = "insurance"

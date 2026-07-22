@@ -117,7 +117,9 @@ async def to_doctor_account_out(
     return {
         **_doctor_base_out(doctor, specialty_tag),
         "clinic_ids": clinic_ids,
-        "mfa_enabled": False,
+        "mfa_enabled": doctor.mfa_enabled,
+        "account_locked": doctor.account_locked,
+        "registration_status": doctor.registration_status,
     }
 
 
@@ -454,5 +456,6 @@ async def reset_password(db: AsyncSession, doctor_id: int) -> str:
     doctor = await get_doctor(db, doctor_id)
     temp = secrets.token_urlsafe(9)
     doctor.password_hash = hash_password(temp)
+    doctor.registration_status = "unregistered"
     await db.flush()
     return temp

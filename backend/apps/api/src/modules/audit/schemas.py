@@ -17,6 +17,9 @@ ActionType = Literal[
     "batch_operation",
     "export",
     "patient_data_view",
+    "mfa_reset",
+    "account_unlock",
+    "invite_resend",
 ]
 
 ACTION_TYPES: frozenset[str] = frozenset(
@@ -34,6 +37,9 @@ ACTION_TYPES: frozenset[str] = frozenset(
         "batch_operation",
         "export",
         "patient_data_view",
+        "mfa_reset",
+        "account_unlock",
+        "invite_resend",
     }
 )
 

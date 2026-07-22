@@ -138,6 +138,7 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
   const credentialsRef = useRef<Map<string, string>>(new Map());
   const totpRef = useRef<string>("");
   const challengeRef = useRef<string | undefined>(undefined);
+  const mfaTokenRef = useRef<string | undefined>(undefined);
   const deepLinkRef = useRef<string | null>(null);
   const mocksActive = config.mocks !== false;
 
@@ -279,20 +280,24 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
         setBtnBusy(false);
         setLoadingKey("loading");
         setScreen("loading");
-        // ADR 0040: the second factor is OPT-IN for doctors (mfa_enabled body
-        // extension, absent = false) and mandatory for operators; a demo
-        // factor state (?demo-mfa=) always routes through the step-up so
-        // every MFA state stays review-reachable.
-        const mfaEnabled =
-          (response as LoginResponseExtended).mfa_enabled === true;
+        // MFA is doctor-only (opt-in via mfa_enabled). Operators/admins never
+        // step through the second factor on this surface.
+        mfaTokenRef.current =
+          (response as LoginResponseExtended).mfa_token ?? undefined;
+        const mfaRequired =
+          (response as LoginResponseExtended).mfa_required === true;
         const requiresFactor =
-          !config.skipMfa && (isOperator || mfaEnabled || demoMfaRef.current != null);
+          !isOperator &&
+          !config.skipMfa &&
+          (mfaRequired || demoMfaRef.current != null);
         if (requiresFactor) {
-          try {
-            const challenge = await authFlow.beginMfaChallenge();
-            challengeRef.current = challenge.challenge_id;
-          } catch {
-            challengeRef.current = undefined;
+          if (!mfaRequired && mocksActive) {
+            try {
+              const challenge = await authFlow.beginMfaChallenge();
+              challengeRef.current = challenge.challenge_id;
+            } catch {
+              challengeRef.current = undefined;
+            }
           }
           await delay(T.redirect);
           if (!alive()) return;
@@ -352,6 +357,7 @@ function JourneyCard({ config, displayLocale, onLocaleChange }: JourneyCardProps
           challenge_id: challengeRef.current,
           method: "totp",
           code: demo === "fail" ? "000000" : totpRef.current,
+          mfa_token: mfaTokenRef.current,
         });
         await delay(T.press);
         if (!alive()) return;
