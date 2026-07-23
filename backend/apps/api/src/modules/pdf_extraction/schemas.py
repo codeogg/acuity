@@ -1,6 +1,6 @@
 """PDF 提取流水线各 Step 的 JSON 契约（Pydantic）。"""
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, field_serializer
 
@@ -203,7 +203,14 @@ class Step5SelectVisitOutput(BaseModel):
     selected_visit: VisitCandidateOut
 
 
-FieldExtractionStatus = Literal["extracted", "missing", "low_confidence"]
+FieldExtractionStatus = Literal[
+    "extracted",
+    "missing",
+    "low_confidence",
+    "ambiguous",
+    "conflict_between_models",
+    "conflict",
+]
 
 
 class ExtractedFieldValueOut(BaseModel):
@@ -350,8 +357,11 @@ class ReviewFieldValueOut(BaseModel):
     confidence: float
     validation_error: str | None = None
     page: int | None = None
+    source_page: int | None = None
     bbox: list[float] | None = None
     source_text: str | None = None
+    raw_label: str | None = None
+    candidates: list[Any] | None = None
 
     @field_serializer("validation_error")
     def serialize_validation_error(self, value: str | None) -> str | None:

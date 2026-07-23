@@ -285,8 +285,12 @@ export interface ReviewFieldValue {
   confidence: number;
   validation_error?: string | null;
   page?: number | null;
+  source_page?: number | null;
   bbox?: number[] | null;
   source_text?: string | null;
+  raw_label?: string | null;
+  /** Present when status is ambiguous / conflict (forward-compatible). */
+  candidates?: Array<string | { value?: string | null }> | null;
 }
 
 export interface ExtractionReviewOutput {

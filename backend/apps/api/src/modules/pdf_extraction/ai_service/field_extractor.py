@@ -7,7 +7,14 @@ from pydantic import BaseModel, Field
 
 from src.modules.pdf_extraction.extractable_field import ExtractableField
 
-FieldExtractionStatus = Literal["extracted", "missing", "low_confidence"]
+FieldExtractionStatus = Literal[
+    "extracted",
+    "missing",
+    "low_confidence",
+    "ambiguous",
+    "conflict_between_models",
+    "conflict",
+]
 
 
 class ExtractedFieldValue(BaseModel):

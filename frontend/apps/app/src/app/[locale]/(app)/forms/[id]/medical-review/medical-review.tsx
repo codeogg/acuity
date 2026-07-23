@@ -501,6 +501,18 @@ export function MedicalReview({ claimId }: { claimId: number }) {
                     patientLabel={formatPatientDisplay(claimState.data ?? {}) || "—"}
                     templateSpecificFieldCodes={reviewTemplateCodes}
                     fieldLabels={reviewFieldLabels}
+                    aiRawResult={
+                      (claimState.data?.ai_raw_result as
+                        | Record<string, string | { value?: string | null } | null>
+                        | null
+                        | undefined) ?? null
+                    }
+                    standardFields={review.standard_fields ?? null}
+                    snapshotKey={
+                      claimState.data
+                        ? `${claimState.data.id}:${claimState.data.extraction_task_no ?? ""}`
+                        : undefined
+                    }
                   />
                 ) : (
                   <div className="flex h-full min-h-0 flex-col">

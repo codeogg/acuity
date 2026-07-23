@@ -22,19 +22,17 @@ import {
   type FieldGroup,
 } from "./field-catalog";
 import { formatPatientDisplay } from "@/lib/patient-name";
+import {
+  FieldStatusBadge,
+  aiOriginalFromRaw,
+  fieldCandidates,
+  fieldSourceParts,
+  resolveFieldBadge,
+  type AiRawResultMap,
+  type ReviewFieldMeta,
+} from "./field-status-badge";
 
-export type ReviewFieldValue = {
-  value: string | null;
-  status: string;
-  confidence: number;
-  validation_error?: string | null;
-};
-
-const REVIEW_CONFIDENCE_THRESHOLD = 0.8;
-
-function needsHighlight(field: ReviewFieldValue): boolean {
-  return field.status !== "extracted" || field.confidence < REVIEW_CONFIDENCE_THRESHOLD;
-}
+export type ReviewFieldValue = ReviewFieldMeta;
 
 function fieldLabelFor(
   code: string,
@@ -72,6 +70,9 @@ export function ExtractionReviewForm({
   patientLabel,
   templateSpecificFieldCodes = [],
   fieldLabels,
+  aiRawResult,
+  standardFields,
+  snapshotKey,
 }: {
   fields: Record<string, ReviewFieldValue>;
   fieldOrder: string[];
@@ -85,6 +86,12 @@ export function ExtractionReviewForm({
   patientLabel?: string;
   templateSpecificFieldCodes?: string[];
   fieldLabels?: Record<string, string> | null;
+  /** Claim-level AI originals for “已修改” detection. */
+  aiRawResult?: AiRawResultMap;
+  /** Review standard_fields before doctor edits (fallback when ai_raw missing). */
+  standardFields?: Record<string, ReviewFieldValue> | null;
+  /** Reset AI original snapshot when review/claim identity changes. */
+  snapshotKey?: string;
 }) {
   const t = useTranslations("medical-review");
   const tReview = useTranslations("review");
@@ -105,6 +112,30 @@ export function ExtractionReviewForm({
   const [signOffOpen, setSignOffOpen] = useState(false);
   const initialKey = useMemo(() => JSON.stringify(initial), [initial]);
   const dirtyRef = useRef(false);
+  const [aiOriginals, setAiOriginals] = useState<Record<string, string | null>>({});
+  const aiSnapshotDoneRef = useRef(false);
+
+  useEffect(() => {
+    aiSnapshotDoneRef.current = false;
+  }, [snapshotKey]);
+
+  useEffect(() => {
+    if (aiSnapshotDoneRef.current || codes.length === 0) return;
+    const next: Record<string, string | null> = {};
+    for (const code of codes) {
+      const fromRaw = aiOriginalFromRaw(aiRawResult, code);
+      if (fromRaw !== undefined) {
+        next[code] = fromRaw;
+      } else if (standardFields?.[code]) {
+        next[code] = standardFields[code]!.value ?? null;
+      } else {
+        next[code] = fields[code]?.value ?? null;
+      }
+    }
+    setAiOriginals(next);
+    aiSnapshotDoneRef.current = true;
+  }, [codes, aiRawResult, standardFields, fields, snapshotKey]);
+
   useEffect(() => {
     if (dirtyRef.current) return;
     setValues(initial);
@@ -114,6 +145,28 @@ export function ExtractionReviewForm({
   function updateValue(code: string, value: string | null) {
     dirtyRef.current = true;
     setValues((prev) => ({ ...prev, [code]: value }));
+  }
+
+  const badgeLabels = useMemo(
+    () => ({
+      missing: t("badge-missing"),
+      ambiguous: t("badge-ambiguous"),
+      conflict: t("badge-conflict"),
+      modified: t("badge-modified"),
+      extractedLow: (percent: number) => t("badge-extracted-low", { percent }),
+      extractedOk: (percent: number) => t("badge-extracted-ok", { percent }),
+    }),
+    [t],
+  );
+
+  function sourceTooltipFor(field: ReviewFieldValue): string | null {
+    const { page, rawLabel } = fieldSourceParts(field);
+    if (page == null && !rawLabel) return null;
+    if (page != null && rawLabel) {
+      return t("source-tooltip", { page, rawLabel });
+    }
+    if (page != null) return t("source-tooltip-page", { page });
+    return t("source-tooltip-label", { rawLabel: rawLabel! });
   }
 
   const missingRequiredLabels = useMemo(() => {
@@ -174,7 +227,13 @@ export function ExtractionReviewForm({
           {sections.map(({ group, codes: groupCodes }) => {
             const needReviewCount = groupCodes.filter((code) => {
               const f = fields[code];
-              return f && needsHighlight(f);
+              if (!f) return false;
+              return resolveFieldBadge({
+                status: f.status,
+                confidence: f.confidence,
+                currentValue: values[code],
+                aiOriginalValue: aiOriginals[code] ?? null,
+              }).needsAttention;
             }).length;
             return (
               <section key={group.domainCode} className="flex flex-col gap-3">
@@ -195,22 +254,36 @@ export function ExtractionReviewForm({
                   {groupCodes.map((code) => {
                     const field = fields[code];
                     if (!field) return null;
-                    const highlight = needsHighlight(field);
+                    const badge = resolveFieldBadge({
+                      status: field.status,
+                      confidence: field.confidence,
+                      currentValue: values[code],
+                      aiOriginalValue: aiOriginals[code] ?? null,
+                    });
                     const label = fieldLabelFor(code, locale, fieldLabels);
                     const emptyRequired =
                       REQUIRED_FIELDS.has(code) &&
                       (!values[code] || values[code]!.trim() === "");
+                    const candidates = fieldCandidates(field);
+                    const showCandidates =
+                      (badge.kind === "ambiguous" || badge.kind === "conflict") &&
+                      candidates.length > 0;
+                    const cardTone = emptyRequired
+                      ? "border-destructive/50 bg-destructive/5"
+                      : badge.kind === "missing" || badge.kind === "conflict"
+                        ? "border-destructive/40 bg-destructive/5"
+                        : badge.needsAttention
+                          ? "border-amber-400/60 bg-amber-50/40"
+                          : "border-border";
+                    const inputTone = emptyRequired
+                      ? "border-destructive/60"
+                      : badge.needsAttention
+                        ? "border-amber-400"
+                        : "border-border";
                     return (
                       <div
                         key={code}
-                        className={cn(
-                          "flex flex-col gap-1.5 rounded-md border p-3",
-                          emptyRequired
-                            ? "border-destructive/50 bg-destructive/5"
-                            : highlight
-                              ? "border-amber-400/60 bg-amber-50/40"
-                              : "border-border",
-                        )}
+                        className={cn("flex flex-col gap-1.5 rounded-md border p-3", cardTone)}
                       >
                         <div className="flex flex-wrap items-center gap-2 text-sm">
                           <span className="font-medium text-foreground">
@@ -219,34 +292,57 @@ export function ExtractionReviewForm({
                               <span className="ml-1 text-destructive">*</span>
                             ) : null}
                           </span>
-                          <span className="font-mono text-[10px] text-muted-foreground">{code}</span>
-                          <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                            {t(`status-${field.status}` as "status-extracted")}
+                          <span className="font-mono text-[10px] text-muted-foreground">
+                            {code}
                           </span>
-                          {highlight ? (
-                            <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-800">
-                              {t("needs-review")}
-                              {field.confidence < REVIEW_CONFIDENCE_THRESHOLD
-                                ? ` · ${t("confidence", {
-                                    percent: Math.round(field.confidence * 100),
-                                  })}`
-                                : ""}
-                            </span>
-                          ) : null}
+                          <FieldStatusBadge
+                            kind={badge.kind}
+                            tone={badge.tone}
+                            subtle={badge.subtle}
+                            confidencePercent={badge.confidencePercent}
+                            tooltip={sourceTooltipFor(field)}
+                            labels={badgeLabels}
+                          />
                         </div>
                         <input
                           value={values[code] ?? ""}
                           onChange={(e) => updateValue(code, e.target.value || null)}
                           className={cn(
                             "h-9 w-full rounded-md border bg-background px-3 text-sm text-foreground",
-                            emptyRequired
-                              ? "border-destructive/60"
-                              : highlight
-                                ? "border-amber-400"
-                                : "border-border",
+                            inputTone,
                           )}
                           aria-label={label}
                         />
+                        {showCandidates ? (
+                          <div className="flex flex-col gap-1.5">
+                            <p className="text-[11px] text-muted-foreground">
+                              {badge.kind === "ambiguous"
+                                ? t("candidates-hint-ambiguous")
+                                : t("candidates-hint-conflict")}
+                            </p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {candidates.map((candidate) => {
+                                const selected =
+                                  (values[code] ?? "").trim() === candidate.trim();
+                                return (
+                                  <button
+                                    key={candidate}
+                                    type="button"
+                                    onClick={() => updateValue(code, candidate)}
+                                    className={cn(
+                                      "rounded-md border px-2 py-1 text-xs transition-colors",
+                                      selected
+                                        ? "border-foreground bg-foreground text-background"
+                                        : "border-border bg-background text-foreground hover:bg-muted",
+                                    )}
+                                  >
+                                    {candidate}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : null}
                         {field.validation_error ? (
                           <p className="text-xs text-destructive">{field.validation_error}</p>
                         ) : null}

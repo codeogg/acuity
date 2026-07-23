@@ -3,11 +3,11 @@ from __future__ import annotations
 
 from typing import Any
 
-REVIEW_CONFIDENCE_THRESHOLD = 0.8
+REVIEW_CONFIDENCE_THRESHOLD = 0.7
 
 
 def needs_review_highlight(field: dict[str, Any]) -> bool:
-    """confidence < 0.8 或 status != extracted 时需前端标黄。"""
+    """confidence < 0.7 或 status != extracted 时需前端标黄。"""
     status = field.get("status")
     confidence = float(field.get("confidence") or 0.0)
     return status != "extracted" or confidence < REVIEW_CONFIDENCE_THRESHOLD
