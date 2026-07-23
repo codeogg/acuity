@@ -50,6 +50,7 @@ export function Settings() {
   const { showToast } = useToast();
 
   const [idleDraft, setIdleDraft] = useState<number | null>(null);
+  const [signatureUploading, setSignatureUploading] = useState(false);
   const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const idleLock = idleDraft ?? settings?.idle_lock_minutes ?? 10;
@@ -67,14 +68,17 @@ export function Settings() {
     }
   }
 
-  function handleSignature(file: File) {
-    // The image persists as a data URL on the mock settings record and is
-    // applied by the produce facsimile.
-    const reader = new FileReader();
-    reader.onload = () => {
-      void persist({ signature_image_url: String(reader.result) });
-    };
-    reader.readAsDataURL(file);
+  async function handleSignature(file: File) {
+    setSignatureUploading(true);
+    try {
+      const next = await frontendOnly.doctorSettings.uploadDoctorSignature(file, file.name);
+      updateSettings(next);
+      showToast(t("signature-uploaded"));
+    } catch {
+      showToast(t("signature-upload-failed"));
+    } finally {
+      setSignatureUploading(false);
+    }
   }
 
   function handleIdleChange(value: number) {
@@ -119,7 +123,7 @@ export function Settings() {
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-4">
                 <div className="flex h-16 w-44 items-center justify-center overflow-hidden rounded-md border border-border bg-background p-2">
-                  {/* A data-URL signature preview, not an optimisable asset. */}
+                  {/* Stored signature is a /local-storage proxy URL, not an optimisable asset. */}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={settings.signature_image_url}
@@ -131,16 +135,23 @@ export function Settings() {
                   {t("signature-hint")}
                 </p>
               </div>
-              <label className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-md border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors duration-[120ms] hover:bg-accent">
+              <label
+                className={cn(
+                  "inline-flex h-11 cursor-pointer items-center gap-2 rounded-md border border-border bg-card px-4 text-sm font-medium text-foreground transition-colors duration-[120ms] hover:bg-accent",
+                  signatureUploading && "pointer-events-none opacity-60",
+                )}
+              >
                 <UploadIcon size={18} aria-hidden />
-                {t("signature-replace")}
+                {signatureUploading ? t("signature-uploading") : t("signature-replace")}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/png,image/jpeg,image/webp"
                   className="sr-only"
+                  disabled={signatureUploading}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) handleSignature(file);
+                    e.target.value = "";
+                    if (file) void handleSignature(file);
                   }}
                 />
               </label>
@@ -148,16 +159,23 @@ export function Settings() {
           ) : (
             <div className="rounded-md border border-dashed border-[var(--color-border-strong)] px-6 py-7 text-center">
               <p className="mb-3.5 text-sm text-muted-foreground">{t("signature-empty")}</p>
-              <label className="inline-flex h-11 cursor-pointer items-center gap-2 rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors duration-[120ms] hover:bg-[var(--color-action-bg-hover)]">
+              <label
+                className={cn(
+                  "inline-flex h-11 cursor-pointer items-center gap-2 rounded-md bg-primary px-5 text-sm font-medium text-primary-foreground transition-colors duration-[120ms] hover:bg-[var(--color-action-bg-hover)]",
+                  signatureUploading && "pointer-events-none opacity-60",
+                )}
+              >
                 <UploadIcon size={18} aria-hidden />
-                {t("signature-upload")}
+                {signatureUploading ? t("signature-uploading") : t("signature-upload")}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/png,image/jpeg,image/webp"
                   className="sr-only"
+                  disabled={signatureUploading}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) handleSignature(file);
+                    e.target.value = "";
+                    if (file) void handleSignature(file);
                   }}
                 />
               </label>

@@ -77,6 +77,8 @@ class Doctor(Base, TimestampMixin):
     account_notes: Mapped[str | None] = mapped_column(Text)
     # 个人覆盖；NULL 时继承主诊所 clinic.idle_lock_minutes
     idle_lock_minutes: Mapped[int | None] = mapped_column(SmallInteger, nullable=True)
+    # 预设界面语言（与前端 next-intl：zh-Hant-HK / en-HK）
+    language: Mapped[str] = mapped_column(String(20), default="zh-Hant-HK")
     specialty_tag_id: Mapped[int] = mapped_column(
         ForeignKey("form_tag.id"), index=True
     )

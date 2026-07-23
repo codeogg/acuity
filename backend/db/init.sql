@@ -98,10 +98,13 @@ CREATE TABLE IF NOT EXISTS doctor (
     workspace_mode  VARCHAR(20) NOT NULL DEFAULT 'separated',
     account_notes   TEXT,
     idle_lock_minutes SMALLINT,
+    language        VARCHAR(20) NOT NULL DEFAULT 'zh-Hant-HK',
     created_at      TIMESTAMPTZ DEFAULT NOW(),
     updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
 COMMENT ON TABLE doctor IS '医生信息表；clinic_id 镜像主诊所（doctor_clinic_link.is_primary），无关联时为 NULL';
+COMMENT ON COLUMN doctor.idle_lock_minutes IS '医生个人闲置锁屏分钟数；NULL 时继承主诊所';
+COMMENT ON COLUMN doctor.language IS '医生预设界面语言（zh-Hant-HK / en-HK）';
 CREATE INDEX IF NOT EXISTS idx_doctor_clinic ON doctor(clinic_id);
 DROP TRIGGER IF EXISTS set_updated_at ON doctor;
 CREATE TRIGGER set_updated_at BEFORE UPDATE ON doctor

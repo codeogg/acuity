@@ -22,7 +22,11 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const target = process.env.API_PROXY_TARGET;
     if (!target) return [];
-    return [{ source: "/api/:path*", destination: `${target}/api/:path*` }];
+    return [
+      { source: "/api/:path*", destination: `${target}/api/:path*` },
+      // Signature / PDF assets use /local-storage/{key} proxy paths from FastAPI.
+      { source: "/local-storage/:path*", destination: `${target}/local-storage/:path*` },
+    ];
   },
 };
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, File, UploadFile
 
 from src.deps import DbSession, DoctorDep
 from src.modules.doctor_settings import service
@@ -19,3 +19,20 @@ async def update_settings(
 ) -> DoctorSettingsOut:
     doctor = await service.get_doctor(db, current.id)
     return await service.update_settings(db, doctor, body)
+
+
+@router.post("/settings/signature", response_model=DoctorSettingsOut)
+async def upload_signature(
+    db: DbSession,
+    current: DoctorDep,
+    file: UploadFile = File(...),
+) -> DoctorSettingsOut:
+    doctor = await service.get_doctor(db, current.id)
+    content = await file.read()
+    return await service.upload_signature(
+        db,
+        doctor,
+        filename=file.filename,
+        content_type=file.content_type,
+        content=content,
+    )

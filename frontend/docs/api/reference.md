@@ -3840,8 +3840,8 @@ Enum: `download`, `send`
 |---|---|---|---|
 | `doctor_id` | integer | yes |  |
 | `signature_image_url` | string \| null | yes |  |
-| `language` | string | yes |  |
-| `idle_lock_minutes` | integer | yes |  |
+| `language` | string (`zh-Hant-HK` \| `en-HK`) | yes | Persisted on `doctor.language`. |
+| `idle_lock_minutes` | integer (2–30) | yes | Resolved: doctor override → clinic default → 10. |
 | `delivery_default` | [DeliveryDefault](#deliverydefault) | yes |  |
 | `trusted_devices` | array of [TrustedDevice](#trusteddevice) | yes |  |
 
@@ -3850,8 +3850,8 @@ Enum: `download`, `send`
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `signature_image_url` | string \| null | no |  |
-| `language` | string | no |  |
-| `idle_lock_minutes` | integer | no |  |
+| `language` | string (`zh-Hant-HK` \| `en-HK`) | no | Writes `doctor.language`. |
+| `idle_lock_minutes` | integer (2–30) | no | Writes `doctor.idle_lock_minutes` personal override. |
 | `delivery_default` | [DeliveryDefault](#deliverydefault) | no |  |
 | `remove_device_ids` | array of string | no |  |
 

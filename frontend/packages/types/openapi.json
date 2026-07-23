@@ -11777,10 +11777,18 @@
             ]
           },
           "language": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "zh-Hant-HK",
+              "en-HK"
+            ],
+            "description": "Doctor preferred UI locale (persisted on doctor.language)."
           },
           "idle_lock_minutes": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 30,
+            "description": "Resolved idle lock threshold in minutes (doctor override, else clinic default, else 10)."
           },
           "delivery_default": {
             "$ref": "#/components/schemas/DeliveryDefault"
@@ -11815,10 +11823,18 @@
             ]
           },
           "language": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "zh-Hant-HK",
+              "en-HK"
+            ],
+            "description": "Doctor preferred UI locale (zh-Hant-HK | en-HK)."
           },
           "idle_lock_minutes": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 30,
+            "description": "Personal idle lock override (2–30). Persisted on doctor.idle_lock_minutes."
           },
           "delivery_default": {
             "$ref": "#/components/schemas/DeliveryDefault"
