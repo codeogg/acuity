@@ -13,7 +13,6 @@ import {
   SettingsIcon,
   ShellAccountMenu,
   SignOutIcon,
-  UsersIcon,
   type ShellNavSection,
 } from "@acuity/ui";
 import { SignOutButton, signOut } from "@acuity/auth-ui";
@@ -25,10 +24,11 @@ import { Avatar } from "@acuity/ui";
 import { LanguageToggle } from "./language-toggle";
 
 // The doctor-app shell over the shared AcuityShell (overview.md §Finalised
-// shell): primary action, WORK / PATIENTS sections with distinct per-item
-// icons, the pinned identity block resolved from /auth/me (never hardcoded),
-// and the always-visible ACCOUNT group (Preferences · Language · Help · Sign
-// out). Help/sign-out act (toast-confirmed against the mock boundary).
+// shell): primary action, WORK section with distinct per-item icons, the
+// pinned identity block resolved from /auth/me (never hardcoded), and the
+// always-visible ACCOUNT group (Preferences · Language · Help · Sign out).
+// Patients nav is temporarily hidden. Help/sign-out act (toast-confirmed
+// against the mock boundary).
 
 export function AppShell({
   children,
@@ -63,16 +63,6 @@ export function AppShell({
           href: `${base}/history`,
           label: t("nav-completed"),
           icon: <CheckCircleIcon size={18} />,
-        },
-      ],
-    },
-    {
-      heading: t("section-patients"),
-      items: [
-        {
-          href: `${base}/patients`,
-          label: t("nav-patients"),
-          icon: <UsersIcon size={18} />,
         },
       ],
     },
@@ -163,7 +153,6 @@ export function AppShell({
       tabBar={[
         { href: base, label: t("nav-in-progress"), icon: <ClockIcon size={20} />, exact: true },
         { href: `${base}/history`, label: t("nav-completed"), icon: <CheckCircleIcon size={20} /> },
-        { href: `${base}/patients`, label: t("nav-patients"), icon: <UsersIcon size={20} /> },
         { href: `${base}/settings`, label: t("nav-preferences"), icon: <SettingsIcon size={20} /> },
       ]}
       tabBarPrimary={{

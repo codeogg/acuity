@@ -372,7 +372,6 @@ async def generate_filled_pdf(
         )
 
     render_fields: list[FieldRenderContext] = []
-    missing_required: list[str] = []
 
     for tf in mappings:
         if tf.field_status != "MAPPED":
@@ -382,11 +381,7 @@ async def generate_filled_pdf(
             continue
 
         value = _resolve_value(mapping, sf_map, final_values)
-        sf = sf_map.get(mapping.standard_field_id) if mapping.standard_field_id else None
-        if value is None and sf and sf.is_required:
-            missing_required.append(sf.field_code)
-            continue
-
+        # 必填缺失由医生端核对页提示；确认后仍按已有值生成 PDF（空值跳过填充）
         value = _apply_rule(value, mapping.transform_rule_id, rule_map)
 
         image_bytes = None
@@ -402,9 +397,6 @@ async def generate_filled_pdf(
                 image_bytes=image_bytes,
             )
         )
-
-    if missing_required:
-        raise ValidationException(f"必填字段缺失，无法生成: {missing_required}")
 
     fontname = resolve_chinese_fontname(use_simplified=use_simplified_font)
     output_bytes = fill_pdf_bytes(

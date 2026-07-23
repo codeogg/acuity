@@ -102,6 +102,8 @@ export function createClaimEntry(
     template_id: templateId,
     template_version: owner.templateVersion ?? "V1",
     patient_name: null,
+    patient_name_cn: null,
+    patient_name_en: null,
     ai_raw_result: null,
     final_field_values: null,
     ai_token_usage: null,

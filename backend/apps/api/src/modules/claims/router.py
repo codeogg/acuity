@@ -249,8 +249,9 @@ async def generate_pdf(
     claim_id: int, db: DbSession, doctor: DoctorDep
 ) -> GeneratePdfResponse:
     claim = await service.get_claim(db, claim_id, doctor.clinic_id)
-    if claim.status not in ("CONFIRMED", "PRINTED"):
-        raise ValidationException("仅已确认或已打印状态可生成保单 PDF")
+    # 允许核对中草稿预览（AI_FILLED/DRAFT）以及确认后再生；作废记录不可生成。
+    if claim.status == "CANCELLED":
+        raise ValidationException("已作废的填报不可生成保单 PDF")
     url = await pdf_service.generate_for_submission(db, claim_id, doctor.clinic_id)
     return GeneratePdfResponse(pdf_url=url, generated_at=pdf_service.build_generated_at())
 
@@ -320,6 +321,7 @@ async def list_claims(
     doctor: DoctorDep,
     patient_name: str | None = None,
     status: str | None = None,
+    status_ne: str | None = None,
     date_from: datetime | None = None,
     date_to: datetime | None = None,
     page: int = Query(1, ge=1),
@@ -331,13 +333,14 @@ async def list_claims(
         doctor_id=doctor.id,
         patient_name=patient_name,
         status=status,
+        status_ne=status_ne,
         date_from=date_from,
         date_to=date_to,
         page=page,
         page_size=page_size,
     )
     return Page(
-        items=[ClaimListItem.model_validate(i) for i in items],
+        items=items,
         total=total,
         page=page,
         page_size=page_size,

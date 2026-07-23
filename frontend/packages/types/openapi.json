@@ -7460,6 +7460,28 @@
             ],
             "title": "Patient Name"
           },
+          "patient_name_cn": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Name Cn"
+          },
+          "patient_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Name En"
+          },
           "company_id": {
             "type": "integer",
             "title": "Company Id"
@@ -7475,6 +7497,50 @@
             "type": "string",
             "format": "date-time",
             "title": "Created At"
+          },
+          "generated_pdf_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated Pdf Url"
+          },
+          "company_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name"
+          },
+          "company_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company Name En"
+          },
+          "template_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Name"
           },
           "clinic_id": {
             "type": "integer",
@@ -7551,6 +7617,28 @@
               }
             ],
             "title": "Patient Name"
+          },
+          "patient_name_cn": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Name Cn"
+          },
+          "patient_name_en": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Patient Name En"
           },
           "ai_raw_result": {
             "anyOf": [

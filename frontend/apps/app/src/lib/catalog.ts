@@ -1,27 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { frontendOnly } from "@acuity/api-client";
+import { claims } from "@acuity/api-client";
 import type { Locale } from "@/i18n/routing";
 
-// Insurer + form display names resolved from API responses (the coverage
-// registry carries both locales' names per company/template), replacing the
-// direct fixture lookups the surfaces previously imported. Cached at module
-// scope: one fetch serves every consumer for the session.
+// Insurer + form display names from the live doctor catalog endpoints
+// (`/doctor/insurance-companies` + templates), not the mock coverage-registry.
 
-export type CoverageInsurer = Awaited<
-  ReturnType<typeof frontendOnly.coverageRegistry.getCoverageRegistry>
->[number];
+export interface CatalogInsurer {
+  company_id: number;
+  company_name_en: string;
+  company_name_zh: string;
+  forms: Array<{
+    template_id: number;
+    form_name_en: string;
+    form_name_zh: string;
+    page_count: number;
+  }>;
+}
 
 export interface Catalog {
-  insurers: CoverageInsurer[];
+  insurers: CatalogInsurer[];
   companyName: (companyId: number, locale: Locale) => string;
   formName: (templateId: number, locale: Locale) => string;
   formPageCount: (templateId: number) => number | null;
 }
 
-function buildCatalog(insurers: CoverageInsurer[]): Catalog {
-  const companies = new Map<number, CoverageInsurer>();
+function buildCatalog(insurers: CatalogInsurer[]): Catalog {
+  const companies = new Map<number, CatalogInsurer>();
   const forms = new Map<number, { en: string; zh: string; pages: number }>();
   for (const insurer of insurers) {
     companies.set(insurer.company_id, insurer);
@@ -54,10 +60,32 @@ const EMPTY = buildCatalog([]);
 let cached: Catalog | null = null;
 let pending: Promise<Catalog> | null = null;
 
+async function fetchLiveCatalog(): Promise<CatalogInsurer[]> {
+  const companies = await claims.listEnabledCompanies();
+  return Promise.all(
+    companies.map(async (company) => {
+      const templates = await claims.listCompanyTemplates(company.id);
+      const nameZh = company.company_name;
+      const nameEn = company.company_name_en?.trim() || company.company_name;
+      return {
+        company_id: company.id,
+        company_name_en: nameEn,
+        company_name_zh: nameZh,
+        forms: templates.map((tpl) => ({
+          template_id: tpl.id,
+          // Templates currently ship a single display name.
+          form_name_en: tpl.template_name,
+          form_name_zh: tpl.template_name,
+          page_count: tpl.page_count,
+        })),
+      };
+    }),
+  );
+}
+
 export function loadCatalog(): Promise<Catalog> {
   if (cached) return Promise.resolve(cached);
-  pending ??= frontendOnly.coverageRegistry
-    .getCoverageRegistry()
+  pending ??= fetchLiveCatalog()
     .then((insurers) => {
       cached = buildCatalog(insurers);
       return cached;

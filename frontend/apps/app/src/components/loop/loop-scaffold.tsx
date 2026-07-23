@@ -16,13 +16,10 @@ import {
   XIcon,
 } from "@acuity/ui";
 import { PageContainer, PageHeading } from "@/components/ui/page";
-import { LoopSteps, type LoopStep } from "./loop-steps";
+import { LOOP_STEP_TOTAL, LoopSteps, type LoopStep } from "./loop-steps";
 
-// The shared chrome of the five loop screens: the step indicator, the
-// "New form · step N of 5" eyebrow + serif heading, the persistent ghost
-// "Leave form" affordance (with a your-draft-is-saved confirmation), and the
-// sticky footer bar (status text left, primary action right). One scaffold,
-// five surfaces — no per-screen chrome forks.
+// Shared chrome of the loop screens: step indicator, "New form · step N of 4"
+// eyebrow + serif heading, persistent ghost "Leave form", sticky footer.
 
 export function LoopScaffold({
   step,
@@ -35,7 +32,7 @@ export function LoopScaffold({
   wide,
 }: {
   step: LoopStep;
-  /** Serif page heading; the eyebrow renders "New form · step N of 5". */
+  /** Serif page heading; the eyebrow renders "New form · step N of 4". */
   heading?: string;
   /** Render the heading for screen readers only (review's dense layout). */
   headingHidden?: boolean;
@@ -83,7 +80,7 @@ export function LoopScaffold({
             <h1 className="sr-only">{heading}</h1>
           ) : (
             <PageHeading
-              eyebrow={t("step-eyebrow", { step: step + 1, total: 5 })}
+              eyebrow={t("step-eyebrow", { step: step + 1, total: LOOP_STEP_TOTAL })}
               title={heading}
             />
           ))}

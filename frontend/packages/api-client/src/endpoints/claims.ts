@@ -49,15 +49,35 @@ export function createClaim(body: ClaimCreate): Promise<ClaimOut> {
 // signature.
 export type ListClaimsQuery = {
   patient_name?: string;
+  /** Single status or comma-separated list, e.g. `PRINTED` or `DRAFT,AI_FILLED`. */
   status?: string;
+  /** Exclude status(es), e.g. `PRINTED` for in-progress lists. */
+  status_ne?: string;
   date_from?: string;
   date_to?: string;
   page?: number;
   page_size?: number;
 };
 
+/** 已完成：已打印。 */
+export const CLAIM_STATUS_COMPLETED = "PRINTED";
+
 export function listClaims(query: ListClaimsQuery = {}): Promise<Page<ClaimListItem>> {
   return api.get<Page<ClaimListItem>>("/doctor/claims", { query });
+}
+
+/** 进行中：非 PRINTED。 */
+export function listInProgressClaims(
+  query: Omit<ListClaimsQuery, "status" | "status_ne"> = {},
+): Promise<Page<ClaimListItem>> {
+  return listClaims({ ...query, status_ne: CLAIM_STATUS_COMPLETED });
+}
+
+/** 已完成：仅 PRINTED。 */
+export function listCompletedClaims(
+  query: Omit<ListClaimsQuery, "status" | "status_ne"> = {},
+): Promise<Page<ClaimListItem>> {
+  return listClaims({ ...query, status: CLAIM_STATUS_COMPLETED });
 }
 
 export function getClaim(claimId: number): Promise<ClaimOut> {
@@ -87,7 +107,7 @@ export function updateClaimFields(claimId: number, body: FieldsUpdate): Promise<
   return api.put<ClaimOut>(`/doctor/claims/${claimId}/fields`, body);
 }
 
-// Validate required + confirm (-> CONFIRMED).
+// Validate required + confirm (-> CONFIRMED). Generates filled PDF.
 export function confirmClaim(claimId: number): Promise<ClaimOut> {
   return api.post<ClaimOut>(`/doctor/claims/${claimId}/confirm`);
 }
@@ -95,6 +115,11 @@ export function confirmClaim(claimId: number): Promise<ClaimOut> {
 // Render filled PDF.
 export function generateClaimPdf(claimId: number): Promise<GeneratePdfResponse> {
   return api.post<GeneratePdfResponse>(`/doctor/claims/${claimId}/generate-pdf`);
+}
+
+/** Back from preview to field review (CONFIRMED → AI_FILLED). */
+export function revertClaimToReview(claimId: number): Promise<ClaimOut> {
+  return api.post<ClaimOut>(`/doctor/claims/${claimId}/revert-to-review`);
 }
 
 // Mark printed (-> PRINTED).
@@ -105,6 +130,11 @@ export function markClaimPrinted(claimId: number): Promise<ClaimOut> {
 // Void (-> CANCELLED).
 export function cancelClaim(claimId: number): Promise<ClaimOut> {
   return api.post<ClaimOut>(`/doctor/claims/${claimId}/cancel`);
+}
+
+/** Permanently delete a claim (204). */
+export function deleteClaim(claimId: number): Promise<void> {
+  return api.delete<void>(`/doctor/claims/${claimId}`);
 }
 
 // Clone claim values into a new template.
@@ -149,6 +179,33 @@ export function medicalPdfPreviewUrl(taskNo: string): string {
 export function claimFormPdfUrl(claimId: number): string {
   const base = (typeof process !== "undefined" ? process.env?.NEXT_PUBLIC_API_BASE : undefined) ?? "/api";
   return `${base.replace(/\/$/, "")}/doctor/claims/${claimId}/pdf`;
+}
+
+/** Fetch the filled claim PDF and trigger a browser file download. */
+export async function downloadClaimFormPdf(
+  claimId: number,
+  fileName = `claim-${claimId}.pdf`,
+): Promise<void> {
+  const response = await fetch(claimFormPdfUrl(claimId), {
+    credentials: "include",
+    headers: { Accept: "application/pdf" },
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to download PDF (${response.status})`);
+  }
+  const blob = await response.blob();
+  const objectUrl = URL.createObjectURL(blob);
+  try {
+    const anchor = document.createElement("a");
+    anchor.href = objectUrl;
+    anchor.download = fileName.endsWith(".pdf") ? fileName : `${fileName}.pdf`;
+    anchor.rel = "noopener";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
 }
 
 export type ExtractProgressStage =
@@ -245,6 +302,18 @@ export function getExtractionReviewOutput(taskNo: string): Promise<ExtractionRev
   return api.get<ExtractionReviewOutput>(
     `/doctor/extraction-tasks/${encodeURIComponent(taskNo)}/review-output`,
   );
+}
+
+/** Persist doctor edits into extraction review-output (edited_fields). */
+export function saveExtractionReviewOutput(
+  taskNo: string,
+  values: Record<string, string | null>,
+): Promise<{ task_id: string; status: string; review: ExtractionReviewOutput }> {
+  return api.put(`/doctor/extraction-tasks/${encodeURIComponent(taskNo)}/review-output`, {
+    fields: Object.fromEntries(
+      Object.entries(values).map(([code, value]) => [code, { value }]),
+    ),
+  });
 }
 
 export interface TemplateSpecificAiField {

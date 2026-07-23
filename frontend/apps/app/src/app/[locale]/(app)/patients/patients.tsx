@@ -56,7 +56,9 @@ function derivePatients(items: ClaimListItem[]): PatientRow[] {
       };
     existing.formCount += 1;
     if (claim.status === "AI_FILLED") existing.needsSignOff += 1;
-    if (claim.status === "DRAFT" || claim.status === "AI_FILLED") existing.inProgress += 1;
+    if (claim.status === "DRAFT" || claim.status === "AI_FILLED" || claim.status === "CONFIRMED") {
+      existing.inProgress += 1;
+    }
     if (claim.created_at >= existing.mostRecent) {
       existing.mostRecent = claim.created_at;
       existing.latestClaimId = claim.id;

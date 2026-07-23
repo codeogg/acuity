@@ -12,7 +12,7 @@ export function resumeHref(claim: Pick<ClaimListItem, "id" | "status">): string 
     case "DRAFT":
       return `/forms/${claim.id}/intake`;
     case "AI_FILLED":
-      return `/forms/${claim.id}/review`;
+      return `/forms/${claim.id}/medical-review`;
     case "CONFIRMED":
     case "PRINTED":
       return `/forms/${claim.id}/produce`;
@@ -21,8 +21,7 @@ export function resumeHref(claim: Pick<ClaimListItem, "id" | "status">): string 
   }
 }
 
-/** Whether a claim is resumable mid-loop (drafts + AI-drafted). */
+/** Whether a claim is still mid-loop (not yet printed / completed). */
 export function isInProgress(status: string): boolean {
-  const s = toClaimStatus(status);
-  return s === "DRAFT" || s === "AI_FILLED";
+  return toClaimStatus(status) !== "PRINTED";
 }

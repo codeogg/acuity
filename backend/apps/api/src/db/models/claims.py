@@ -27,7 +27,10 @@ class ClaimSubmission(Base, TimestampMixin):
     company_id: Mapped[int] = mapped_column(ForeignKey("insurance_company.id"))
     template_id: Mapped[int] = mapped_column(ForeignKey("policy_template.id"))
     template_version: Mapped[str | None] = mapped_column(String(20))
+    # Legacy single display/search field; kept in sync with cn/en.
     patient_name: Mapped[str | None] = mapped_column(String(100))
+    patient_name_cn: Mapped[str | None] = mapped_column(String(100))
+    patient_name_en: Mapped[str | None] = mapped_column(String(100))
     # 存储前应用层加密（core.encryption）
     medical_record_text: Mapped[str | None] = mapped_column(Text)
     ai_raw_result: Mapped[dict | None] = mapped_column(JSONB)

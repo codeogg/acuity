@@ -6,7 +6,6 @@ import { useSearchParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import {
   claims,
-  frontendOnly,
   type ClaimListItemWithClinic,
 } from "@acuity/api-client";
 import type { ClaimListItem, Page } from "@acuity/types";
@@ -27,7 +26,7 @@ import {
   SearchIcon,
   TrashIcon,
   XIcon,
-  cn,
+  useToast,
 } from "@acuity/ui";
 import { formatDate } from "@acuity/i18n/format";
 import type { Locale } from "@/i18n/routing";
@@ -36,18 +35,34 @@ import { useSession } from "@/lib/session";
 import { localeName } from "@acuity/i18n/names";
 import { useApiErrorMessage } from "@/lib/api-error";
 import { useCatalog } from "@/lib/catalog";
-import { resumeHref, isInProgress } from "@/lib/resume";
+import { formatPatientDisplay } from "@/lib/patient-name";
+import { isInProgress, resumeHref } from "@/lib/resume";
 import { PageContainer, PageHeading } from "@/components/ui/page";
 import { CardListSkeleton } from "@/components/ui/loaders";
 import { EmptyPanel, ErrorPanel } from "@/components/ui/states";
 import { ClaimStatusBadge, toClaimStatus } from "@/components/ui/status-badge";
 
-type StatusFilter = "all" | "DRAFT" | "AI_FILLED" | "PRINTED";
+type ClaimListRow = ClaimListItem & {
+  company_name?: string | null;
+  company_name_en?: string | null;
+  template_name?: string | null;
+  patient_name_cn?: string | null;
+  patient_name_en?: string | null;
+};
 
-// History (WORK -> Completed). Search across patient, insurer, and form names
-// (both locales), the four reference filter chips, a visible "Resume ›" cue on
-// drafts, re-download, permanent delete with confirmation, and the ?patient=
-// filter the patients surface links with (echoed + clearable).
+function claimCompanyLabel(claim: ClaimListRow, locale: Locale, fallback: string): string {
+  if (locale === "zh-Hant-HK") {
+    return claim.company_name?.trim() || claim.company_name_en?.trim() || fallback;
+  }
+  return claim.company_name_en?.trim() || claim.company_name?.trim() || fallback;
+}
+
+function claimFormLabel(claim: ClaimListRow, fallback: string): string {
+  return claim.template_name?.trim() || fallback;
+}
+
+// History (WORK -> Completed). Lists printed (PRINTED) claims from the live API.
+// Search across patient / insurer / form names; ?patient= filter from patients.
 
 export function History() {
   const t = useTranslations("history");
@@ -61,23 +76,31 @@ export function History() {
   const [query, setQuery] = useState("");
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
-  const [status, setStatus] = useState<StatusFilter>("all");
   const [patientFilter, setPatientFilter] = useState<string | null>(patientParam);
 
-  const list = useApi<Page<ClaimListItem>>(() => claims.listClaims(), []);
+  const list = useApi<Page<ClaimListRow>>(
+    () => claims.listCompletedClaims({ page_size: 50 }),
+    [],
+  );
+  const { showToast } = useToast();
 
   const filtered = useMemo(() => {
     let items = list.data?.items ?? [];
     if (patientFilter) {
-      items = items.filter((c) => c.patient_name === patientFilter);
+      items = items.filter((c) => formatPatientDisplay(c) === patientFilter);
     }
-    if (status !== "all") items = items.filter((c) => c.status === status);
     if (query.trim()) {
       const needle = query.trim().toLowerCase();
       items = items.filter((c) =>
         [
+          formatPatientDisplay(c),
+          c.patient_name_cn ?? "",
+          c.patient_name_en ?? "",
           c.patient_name ?? "",
           c.submission_no,
+          claimCompanyLabel(c, "en-HK", ""),
+          claimCompanyLabel(c, "zh-Hant-HK", ""),
+          claimFormLabel(c, ""),
           catalog.companyName(c.company_id, "en-HK"),
           catalog.companyName(c.company_id, "zh-Hant-HK"),
           catalog.formName(c.template_id, "en-HK"),
@@ -89,16 +112,17 @@ export function History() {
       );
     }
     return items;
-  }, [list.data, status, query, patientFilter, catalog]);
+  }, [list.data, query, patientFilter, catalog]);
 
-  const hasFilters = query.trim() !== "" || status !== "all" || patientFilter !== null;
+  const hasFilters = query.trim() !== "" || patientFilter !== null;
 
   async function handleDelete(id: number) {
     try {
-      await frontendOnly.claimExtensions.deleteClaim(id);
+      await claims.deleteClaim(id);
+      showToast(t("delete-success"));
       list.refetch();
     } catch {
-      /* surfaced by the row on next load */
+      showToast(t("delete-failed"));
     }
   }
 
@@ -135,17 +159,7 @@ export function History() {
     }
   }, []);
 
-  const statusLabels: Record<StatusFilter, string> = {
-    all: t("filter-all"),
-    DRAFT: t("filter-draft"),
-    AI_FILLED: t("filter-needs-sign-off"),
-    PRINTED: t("filter-submitted"),
-  };
-  const activeFilterEcho = [
-    query.trim() && `"${query.trim()}"`,
-    status !== "all" && statusLabels[status],
-    patientFilter,
-  ]
+  const activeFilterEcho = [query.trim() && `"${query.trim()}"`, patientFilter]
     .filter(Boolean)
     .join(" · ");
 
@@ -174,36 +188,8 @@ export function History() {
         />
       </div>
 
-      {/* Filter chips + the patient filter echo */}
-      <div className="mb-6 flex flex-wrap items-center gap-2">
-        {(
-          [
-            ["all", t("filter-all")],
-            ["PRINTED", t("filter-submitted")],
-            ["DRAFT", t("filter-draft")],
-            ["AI_FILLED", t("filter-needs-sign-off")],
-          ] as [StatusFilter, string][]
-        ).map(([value, label]) => {
-          const active = status === value;
-          return (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={active}
-              onClick={() => setStatus(value)}
-              className={cn(
-                "inline-flex min-h-11 items-center rounded-full border px-3.5 text-sm transition-colors duration-[120ms]",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-                active
-                  ? "border-primary bg-muted text-primary"
-                  : "border-border bg-card text-foreground hover:bg-accent",
-              )}
-            >
-              {label}
-            </button>
-          );
-        })}
-        {patientFilter && (
+      {patientFilter ? (
+        <div className="mb-6 flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => setPatientFilter(null)}
@@ -212,8 +198,8 @@ export function History() {
             {t("patient-filter", { patient: patientFilter })}
             <XIcon size={14} aria-hidden />
           </button>
-        )}
-      </div>
+        </div>
+      ) : null}
 
       {list.error ? (
         <ErrorPanel
@@ -239,7 +225,6 @@ export function History() {
                 variant="outline"
                 onClick={() => {
                   setQuery("");
-                  setStatus("all");
                   setPatientFilter(null);
                 }}
               >
@@ -260,8 +245,15 @@ export function History() {
               key={claim.id}
               claim={claim}
               locale={locale}
-              companyLabel={catalog.companyName(claim.company_id, locale)}
-              formLabel={catalog.formName(claim.template_id, locale)}
+              companyLabel={claimCompanyLabel(
+                claim,
+                locale,
+                catalog.companyName(claim.company_id, locale),
+              )}
+              formLabel={claimFormLabel(
+                claim,
+                catalog.formName(claim.template_id, locale),
+              )}
               // ADR 0041 §6: a merged workspace mixes clinics in one list, so
               // each row names its clinic (attribution rides the list items).
               clinicLabel={
@@ -294,7 +286,7 @@ function HistoryRow({
   clinicLabel,
   onDelete,
 }: {
-  claim: ClaimListItem;
+  claim: ClaimListRow;
   locale: Locale;
   companyLabel: string;
   formLabel: string;
@@ -303,10 +295,30 @@ function HistoryRow({
 }) {
   const t = useTranslations("history");
   const status = useTranslations("status");
+  const { showToast } = useToast();
   const claimStatus = toClaimStatus(claim.status);
   const resumable = isInProgress(claim.status);
   const completed = claimStatus === "PRINTED" || claimStatus === "CONFIRMED";
   const target = resumeHref(claim);
+  const [downloading, setDownloading] = useState(false);
+
+  async function handleDownload() {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      try {
+        await claims.downloadClaimFormPdf(claim.id, `${claim.submission_no}.pdf`);
+      } catch {
+        // PDF may be missing — regenerate then retry once.
+        await claims.generateClaimPdf(claim.id);
+        await claims.downloadClaimFormPdf(claim.id, `${claim.submission_no}.pdf`);
+      }
+    } catch {
+      showToast(t("download-failed"));
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   return (
     <div className="flex items-center gap-3 px-4 py-3">
@@ -316,7 +328,7 @@ function HistoryRow({
         className="min-w-0 flex-1 rounded-md py-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
       >
         <p className="truncate text-sm font-medium text-foreground">
-          {claim.patient_name ?? t("no-patient")}
+          {formatPatientDisplay(claim) || t("no-patient")}
         </p>
         <p className="truncate text-xs text-muted-foreground">
           {clinicLabel ? `${clinicLabel} · ` : ""}
@@ -341,14 +353,16 @@ function HistoryRow({
           </Link>
         )}
         {completed && (
-          <Link
-            href={target}
+          <button
+            type="button"
             aria-label={t("re-download")}
             title={t("re-download")}
-            className="flex size-11 items-center justify-center rounded-md text-muted-foreground transition-colors duration-[120ms] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+            disabled={downloading}
+            onClick={() => void handleDownload()}
+            className="flex size-11 items-center justify-center rounded-md text-muted-foreground transition-colors duration-[120ms] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:opacity-50"
           >
             <DownloadIcon size={18} />
-          </Link>
+          </button>
         )}
         <AlertDialog>
           <AlertDialogTrigger asChild>

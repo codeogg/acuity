@@ -38,6 +38,7 @@ import type { FieldStatus } from "@acuity/api-client/mocks/fixtures";
 import { useApi } from "@/lib/use-api";
 import { useApiErrorMessage, notifySessionExpired } from "@/lib/api-error";
 import { useCatalog } from "@/lib/catalog";
+import { formatPatientDisplay } from "@/lib/patient-name";
 import { useSession } from "@/lib/session";
 import { useClaimHandoff } from "@/lib/claim-hints";
 import { LoopScaffold } from "@/components/loop/loop-scaffold";
@@ -481,7 +482,7 @@ export function Review({ claimId }: { claimId: number }) {
 
   if (notFound) {
     return (
-      <LoopScaffold step={3} heading={t("step-heading")} headingHidden confirmLeave={false}>
+      <LoopScaffold step={2} heading={t("step-heading")} headingHidden confirmLeave={false}>
         <ClaimNotFound />
       </LoopScaffold>
     );
@@ -760,7 +761,7 @@ export function Review({ claimId }: { claimId: number }) {
 
   return (
     <LoopScaffold
-      step={3}
+      step={2}
       heading={t("step-heading")}
       headingHidden
       wide
@@ -874,7 +875,10 @@ export function Review({ claimId }: { claimId: number }) {
           </DialogHeader>
           <div className="rounded-md border border-border bg-muted p-4">
             <PvLine k={t("sign-off-row-form")} val={formLabel} />
-            <PvLine k={t("sign-off-row-patient")} val={claimState.data?.patient_name ?? "—"} />
+            <PvLine
+              k={t("sign-off-row-patient")}
+              val={formatPatientDisplay(claimState.data ?? {}) || "—"}
+            />
             <PvLine k={t("sign-off-row-insurer")} val={companyLabel} />
             <PvLine
               k={t("sign-off-row-delivery")}

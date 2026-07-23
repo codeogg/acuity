@@ -30,10 +30,15 @@ export function useApi<T>(
   const [error, setError] = useState<ApiError | undefined>(undefined);
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
+  const dataRef = useRef(data);
+  dataRef.current = data;
 
   const load = useCallback(() => {
     let cancelled = false;
-    setLoading(true);
+    // Soft refetch: keep existing data mounted so forms are not wiped.
+    if (dataRef.current === undefined) {
+      setLoading(true);
+    }
     setError(undefined);
     fetcherRef
       .current()

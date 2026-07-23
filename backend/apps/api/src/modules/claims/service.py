@@ -3,12 +3,13 @@ import secrets
 from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.encryption import decrypt_text, encrypt_text
 from src.core.exceptions import ConflictException, NotFoundException, ValidationException
 from src.core.i18n import translate_message
+from src.core.logging import get_logger
 from src.db.models import (
     ClaimFieldChangeLog,
     ClaimSubmission,
@@ -16,6 +17,7 @@ from src.db.models import (
     ClinicInsuranceCompany,
     ClinicPolicyTemplate,
     Doctor,
+    DocumentPage,
     ExtractionResult,
     ExtractionReviewOutput,
     ExtractionTask,
@@ -28,6 +30,7 @@ from src.db.models import (
 from src.modules.ai_extraction import service as ai_service
 from src.modules.claims.schemas import (
     ClaimCreate,
+    ClaimListItem,
     ClaimOut,
     ExtractProgressOut,
     ExtractProgressVisit,
@@ -44,6 +47,9 @@ from src.tasks.extraction_progress import (
     get_extraction_progress_cached,
 )
 from src.tasks.queue import abort_arq_job, enqueue_extraction_pipeline
+from src.utils import storage
+
+logger = get_logger(__name__)
 
 _HK = ZoneInfo("Asia/Hong_Kong")
 
@@ -59,7 +65,8 @@ _STATUS_LABELS = {
 _ALLOWED_TRANSITIONS = {
     "DRAFT": {"AI_FILLED", "CANCELLED"},
     "AI_FILLED": {"DRAFT", "AI_FILLED", "CONFIRMED", "CANCELLED"},
-    "CONFIRMED": {"AI_FILLED", "CONFIRMED", "PRINTED", "CANCELLED"},
+    # CONFIRMED → DRAFT：核对页「重新上载病历」需退回草稿重跑提取
+    "CONFIRMED": {"AI_FILLED", "CONFIRMED", "PRINTED", "CANCELLED", "DRAFT"},
     "PRINTED": {"CANCELLED"},
     "CANCELLED": set(),
 }
@@ -79,6 +86,52 @@ def _flatten_field_values(values: dict | None) -> dict[str, str | None]:
         else:
             flat[code] = str(raw)
     return flat
+
+
+def _clean_patient_name(value: str | None) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def format_patient_display(
+    patient_name_cn: str | None,
+    patient_name_en: str | None,
+    legacy: str | None = None,
+) -> str | None:
+    """列表/页脚展示：中英都有则「中文 / English」，否则取有值的一侧。"""
+    cn = _clean_patient_name(patient_name_cn)
+    en = _clean_patient_name(patient_name_en)
+    if cn and en:
+        return f"{cn} / {en}"
+    return cn or en or _clean_patient_name(legacy)
+
+
+def sync_claim_patient_names(
+    claim: ClaimSubmission,
+    *,
+    values: dict | None = None,
+) -> None:
+    """从 final_field_values（或传入 values）同步绑定到 claim 的中英姓名列。"""
+    flat = _flatten_field_values(values if values is not None else claim.final_field_values)
+    if "patient_name_cn" in flat:
+        claim.patient_name_cn = _clean_patient_name(flat.get("patient_name_cn"))
+    if "patient_name_en" in flat:
+        claim.patient_name_en = _clean_patient_name(flat.get("patient_name_en"))
+    # 旧单字段回退：仅当中英都空时写入一侧
+    legacy = _clean_patient_name(flat.get("patient_name"))
+    if legacy and not claim.patient_name_cn and not claim.patient_name_en:
+        # 含汉字 → cn，否则 → en
+        if any("\u4e00" <= ch <= "\u9fff" for ch in legacy):
+            claim.patient_name_cn = legacy
+        else:
+            claim.patient_name_en = legacy
+    claim.patient_name = format_patient_display(
+        claim.patient_name_cn,
+        claim.patient_name_en,
+        claim.patient_name,
+    )
 
 
 def _gen_submission_no() -> str:
@@ -219,13 +272,16 @@ async def reset_medical_upload(
 ) -> ClaimSubmission:
     """退回上传病历步骤：清空提取任务与已填字段，状态回到草稿。"""
     claim = await get_claim(db, claim_id, clinic_id)
-    if claim.status not in ("DRAFT", "AI_FILLED"):
+    # AI 识别后为 AI_FILLED；点过「完成核对」后为 CONFIRMED——均允许重新上载
+    if claim.status not in ("DRAFT", "AI_FILLED", "CONFIRMED"):
         raise ValidationException("当前状态不可重新上传病历")
 
     await _clear_claim_medical_extraction(db, claim)
-    if claim.status == "AI_FILLED":
+    if claim.status in ("AI_FILLED", "CONFIRMED"):
         _ensure_transition(claim.status, "DRAFT")
         claim.status = "DRAFT"
+    claim.field_confirmations = None
+    claim.generated_pdf_url = None
     await db.commit()
     await db.refresh(claim)
     return claim
@@ -468,17 +524,13 @@ async def apply_extraction(
         }
         for code, field in display_fields.items()
     }
-    claim.final_field_values = {
+    from_review = {
         code: field.get("value") for code, field in display_fields.items()
     }
-    if not claim.patient_name:
-        patient_value = (
-            claim.final_field_values.get("patient_name_cn")
-            or claim.final_field_values.get("patient_name_en")
-            or claim.final_field_values.get("patient_name")
-        )
-        if patient_value:
-            claim.patient_name = str(patient_value)
+    # Late apply must not wipe values the doctor already saved (save-draft race).
+    existing = _flatten_field_values(claim.final_field_values)
+    claim.final_field_values = {**from_review, **existing}
+    sync_claim_patient_names(claim)
 
     if result_row:
         claim.ai_token_usage = result_row.token_usage
@@ -764,6 +816,7 @@ async def update_fields(
             **(claim.field_confirmations or {}),
             **confirmed,
         }
+    sync_claim_patient_names(claim, values=claim.final_field_values)
     # Increment on every accepted write, including legacy clients which do not
     # yet send the cursor, so the next cursor-aware save remains protected.
     claim.row_version += 1
@@ -774,8 +827,7 @@ async def update_fields(
 async def confirm(db: AsyncSession, *, claim_id: int, clinic_id: int) -> ClaimSubmission:
     claim = await get_claim(db, claim_id, clinic_id)
     claim.final_field_values = _flatten_field_values(claim.final_field_values)
-    await _validate_required(db, claim)
-    # 按模板字段映射自动填充原始 PDF 并保存（失败则保持 AI_FILLED，不进入下一步）
+    # 必填缺失由前端提示；医生确认后仍可填入模板 PDF 并进入预览
     await generate_filled_pdf(db, claim_id, clinic_id)
     _ensure_transition(claim.status, "CONFIRMED")
     claim.status = "CONFIRMED"
@@ -813,21 +865,55 @@ async def cancel(db: AsyncSession, *, claim_id: int, clinic_id: int) -> ClaimSub
 
 
 async def delete_claim(db: AsyncSession, *, claim_id: int, clinic_id: int) -> None:
-    """彻底删除填报记录（仅草稿/待核对状态可用）：同时删除关联提取任务及所有子记录。"""
+    """硬删除填报记录（含已完成 PRINTED）：DB 记录 + MinIO/本地对象存储文件。"""
     claim = await get_claim(db, claim_id, clinic_id)
-    if claim.status not in ("DRAFT", "AI_FILLED"):
-        raise ValidationException("仅草稿或待核对状态的填报可以删除")
+    # 允许进行中与已完成硬删；作废记录同样可清掉。
+    if claim.status not in ("DRAFT", "AI_FILLED", "CONFIRMED", "PRINTED", "CANCELLED"):
+        raise ValidationException("当前状态的填报不可删除")
 
-    # 删除关联提取任务（级联删除所有提取子表记录）
+    storage_keys: list[str] = []
+    if claim.generated_pdf_url:
+        storage_keys.append(claim.generated_pdf_url)
+
+    task: ExtractionTask | None = None
     if claim.extraction_task_id is not None:
         task = await db.get(ExtractionTask, claim.extraction_task_id)
         if task:
-            await db.delete(task)
-            await db.flush()
+            if task.pdf_url:
+                storage_keys.append(task.pdf_url)
+            page_paths = (
+                await db.execute(
+                    select(DocumentPage.image_path).where(
+                        DocumentPage.task_id == task.id,
+                        DocumentPage.image_path.is_not(None),
+                    )
+                )
+            ).scalars().all()
+            storage_keys.extend(path for path in page_paths if path)
 
-    # 删除填报记录（级联删除 claim_field_change_log）
+    await clear_extraction_progress_cached(claim.id)
+
+    # FK: claim.extraction_task_id ON DELETE SET NULL — delete task first.
+    if task is not None:
+        await db.delete(task)
+        await db.flush()
+
     await db.delete(claim)
     await db.flush()
+
+    # Best-effort object cleanup after DB commit path (flush is enough here;
+    # router commits via session dependency). Missing objects are ignored.
+    for key in dict.fromkeys(storage_keys):
+        try:
+            storage.delete_bytes(key)
+            logger.info("claim_storage_deleted", claim_id=claim_id, key=key)
+        except Exception as exc:
+            logger.warning(
+                "claim_storage_delete_failed",
+                claim_id=claim_id,
+                key=key,
+                error=str(exc),
+            )
 
 
 async def list_claims(
@@ -837,16 +923,36 @@ async def list_claims(
     doctor_id: int,
     patient_name: str | None,
     status: str | None,
+    status_ne: str | None,
     date_from: datetime | None,
     date_to: datetime | None,
     page: int,
     page_size: int,
-) -> tuple[list[ClaimSubmission], int]:
+) -> tuple[list[ClaimListItem], int]:
     conds = [ClaimSubmission.clinic_id == clinic_id, ClaimSubmission.doctor_id == doctor_id]
     if patient_name:
-        conds.append(ClaimSubmission.patient_name.ilike(f"%{patient_name}%"))
+        needle = f"%{patient_name}%"
+        conds.append(
+            or_(
+                ClaimSubmission.patient_name.ilike(needle),
+                ClaimSubmission.patient_name_cn.ilike(needle),
+                ClaimSubmission.patient_name_en.ilike(needle),
+            )
+        )
     if status:
-        conds.append(ClaimSubmission.status == status)
+        # 支持单个或多个状态：status=PRINTED 或 status=DRAFT,AI_FILLED,CONFIRMED
+        statuses = [s.strip() for s in status.split(",") if s.strip()]
+        if len(statuses) == 1:
+            conds.append(ClaimSubmission.status == statuses[0])
+        elif statuses:
+            conds.append(ClaimSubmission.status.in_(statuses))
+    if status_ne:
+        # 进行中：排除已打印等，status_ne=PRINTED
+        excluded = [s.strip() for s in status_ne.split(",") if s.strip()]
+        if len(excluded) == 1:
+            conds.append(ClaimSubmission.status != excluded[0])
+        elif excluded:
+            conds.append(ClaimSubmission.status.not_in(excluded))
     if date_from:
         conds.append(ClaimSubmission.created_at >= date_from)
     if date_to:
@@ -857,13 +963,52 @@ async def list_claims(
         await db.execute(select(func.count()).select_from(ClaimSubmission).where(where))
     ).scalar_one()
     stmt = (
-        select(ClaimSubmission)
+        select(
+            ClaimSubmission,
+            InsuranceCompany.company_name,
+            InsuranceCompany.company_name_en,
+            PolicyTemplate.template_name,
+            Clinic.clinic_name,
+            Clinic.clinic_name_en,
+        )
+        .outerjoin(InsuranceCompany, InsuranceCompany.id == ClaimSubmission.company_id)
+        .outerjoin(PolicyTemplate, PolicyTemplate.id == ClaimSubmission.template_id)
+        .outerjoin(Clinic, Clinic.id == ClaimSubmission.clinic_id)
         .where(where)
         .order_by(ClaimSubmission.id.desc())
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
-    return list((await db.execute(stmt)).scalars().all()), total
+    rows = (await db.execute(stmt)).all()
+    items: list[ClaimListItem] = []
+    for claim, company_name, company_name_en, template_name, clinic_name, clinic_name_en in rows:
+        display_clinic = " ".join(
+            part for part in (clinic_name, clinic_name_en or "") if part
+        ).strip() or None
+        items.append(
+            ClaimListItem(
+                id=claim.id,
+                submission_no=claim.submission_no,
+                patient_name=format_patient_display(
+                    claim.patient_name_cn,
+                    claim.patient_name_en,
+                    claim.patient_name,
+                ),
+                patient_name_cn=claim.patient_name_cn,
+                patient_name_en=claim.patient_name_en,
+                company_id=claim.company_id,
+                template_id=claim.template_id,
+                generated_pdf_url=claim.generated_pdf_url,
+                status=claim.status,
+                created_at=claim.created_at,
+                company_name=company_name,
+                company_name_en=company_name_en,
+                template_name=template_name,
+                clinic_id=claim.clinic_id,
+                clinic_name=display_clinic,
+            )
+        )
+    return items, total
 
 
 async def get_medical_record_plain(
@@ -899,10 +1044,14 @@ async def reuse_for_template(
         template_id=new_template_id,
         template_version=new_template.version,
         patient_name=source.patient_name,
+        patient_name_cn=source.patient_name_cn,
+        patient_name_en=source.patient_name_en,
         final_field_values=prefilled,
         status="DRAFT",
     )
     db.add(new_claim)
+    await db.flush()
+    sync_claim_patient_names(new_claim)
     await db.flush()
     return new_claim, prefilled, missing
 

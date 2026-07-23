@@ -79,18 +79,29 @@ function clinicDisplayName(clinicId: number): string | null {
 }
 
 function toListItem(claim: ClaimOut): ClaimListItem {
+  const company = demoCompanies.find((c) => c.id === claim.company_id);
+  const template = Object.values(demoTemplatesByCompany)
+    .flat()
+    .find((t) => t.id === claim.template_id);
+  const cn = (claim as ClaimOut & { patient_name_cn?: string | null }).patient_name_cn ?? null;
+  const en = (claim as ClaimOut & { patient_name_en?: string | null }).patient_name_en ?? null;
+  const display =
+    cn && en ? `${cn} / ${en}` : cn || en || claim.patient_name;
   return {
     id: claim.id,
     submission_no: claim.submission_no,
-    patient_name: claim.patient_name,
+    patient_name: display,
+    patient_name_cn: cn,
+    patient_name_en: en,
     company_id: claim.company_id,
     template_id: claim.template_id,
     status: claim.status,
     created_at: claim.created_at,
-    // ClaimListItemClinic extension (ADR 0041): clinic attribution so a merged
-    // workspace's mixed-clinic list stays legible.
     clinic_id: claim.clinic_id,
     clinic_name: clinicDisplayName(claim.clinic_id),
+    company_name: company?.company_name ?? null,
+    company_name_en: company?.company_name_en ?? null,
+    template_name: template?.template_name ?? null,
   } as ClaimListItem;
 }
 
@@ -160,11 +171,29 @@ export const doctorHandlers = [
     if (deny) return deny;
     const url = new URL(request.url);
     const status = url.searchParams.get("status");
+    const statusNe = url.searchParams.get("status_ne");
     const patientName = url.searchParams.get("patient_name");
     let items = listClaimEntries({ clinicIds: activeClinicScope() }).map((e) =>
       toListItem(e.claim),
     );
-    if (status) items = items.filter((c) => c.status === status);
+    if (status) {
+      const allowed = new Set(
+        status
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+      );
+      items = items.filter((c) => allowed.has(c.status));
+    }
+    if (statusNe) {
+      const excluded = new Set(
+        statusNe
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+      );
+      items = items.filter((c) => !excluded.has(c.status));
+    }
     if (patientName) {
       const needle = patientName.toLowerCase();
       items = items.filter((c) => (c.patient_name ?? "").toLowerCase().includes(needle));
@@ -419,6 +448,16 @@ export const doctorHandlers = [
         };
       }
     }
+    // Prefer claim.final_field_values so save-draft → refresh keeps doctor edits.
+    for (const [code, value] of Object.entries(entry.claim.final_field_values ?? {})) {
+      const existing = display_fields[code];
+      display_fields[code] = {
+        value: value ?? null,
+        status: existing?.status === "missing" ? "edited" : (existing?.status ?? "edited"),
+        confidence: existing?.confidence ?? 1,
+        validation_error: existing?.validation_error ?? null,
+      };
+    }
     return HttpResponse.json({
       task_id: taskNo,
       display_fields,
@@ -426,6 +465,50 @@ export const doctorHandlers = [
       template_specific_field_codes: [],
       field_labels: null,
       is_confirmed: false,
+    });
+  }),
+
+  http.put(`${API}/doctor/extraction-tasks/:taskNo/review-output`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const taskNo = String(params.taskNo);
+    const entry = listClaimEntries({ clinicIds: activeClinicScope() }).find(
+      (e) => e.extractionTaskNo === taskNo,
+    );
+    if (!entry) return notFoundZh("提取任务不存在");
+    const body = (await request.json()) as {
+      fields?: Record<string, { value?: string | null }>;
+    };
+    const edits = body.fields ?? {};
+    updateClaimEntry(entry.claim.id, (e) => {
+      const next = { ...(e.claim.final_field_values ?? {}) };
+      for (const [code, field] of Object.entries(edits)) {
+        next[code] = field?.value ?? null;
+      }
+      e.claim.final_field_values = next;
+    });
+    const display_fields = Object.fromEntries(
+      Object.entries(edits).map(([code, field]) => [
+        code,
+        {
+          value: field?.value ?? null,
+          status: "edited",
+          confidence: 1,
+          validation_error: null,
+        },
+      ]),
+    );
+    return HttpResponse.json({
+      task_id: taskNo,
+      status: "REVIEW",
+      review: {
+        task_id: taskNo,
+        display_fields,
+        standard_fields: display_fields,
+        template_specific_field_codes: [],
+        field_labels: null,
+        is_confirmed: false,
+      },
     });
   }),
 
@@ -480,6 +563,18 @@ export const doctorHandlers = [
         ...(e.claim.final_field_values ?? {}),
         ...body.final_field_values,
       };
+      const values = e.claim.final_field_values ?? {};
+      const cn =
+        typeof values.patient_name_cn === "string" ? values.patient_name_cn.trim() : "";
+      const en =
+        typeof values.patient_name_en === "string" ? values.patient_name_en.trim() : "";
+      const claimExt = e.claim as ClaimOut & {
+        patient_name_cn?: string | null;
+        patient_name_en?: string | null;
+      };
+      claimExt.patient_name_cn = cn || null;
+      claimExt.patient_name_en = en || null;
+      e.claim.patient_name = cn && en ? `${cn} / ${en}` : cn || en || e.claim.patient_name;
       if (body.confirmed) e.confirmed = { ...e.confirmed, ...body.confirmed };
     });
     return HttpResponse.json(updated!.claim);

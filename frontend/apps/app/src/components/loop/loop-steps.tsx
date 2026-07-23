@@ -3,11 +3,12 @@
 import { useTranslations } from "next-intl";
 import { StepIndicator, type Step } from "@acuity/ui";
 
-// The 5-step form-fill loop location signal (Select -> Import -> Extract ->
-// Review -> PDF). Wraps the design-kit StepIndicator with the loop's labels.
-// The sidebar recedes to context inside the loop; this is the in-loop signal.
+// 4-step form-fill loop: Select → Import → Extract & review → PDF.
+// The former separate "Review" step is merged into Extract & review.
 
-export type LoopStep = 0 | 1 | 2 | 3 | 4;
+export type LoopStep = 0 | 1 | 2 | 3;
+
+export const LOOP_STEP_TOTAL = 4;
 
 export function LoopSteps({ current }: { current: LoopStep }) {
   const t = useTranslations("common");
@@ -15,21 +16,20 @@ export function LoopSteps({ current }: { current: LoopStep }) {
     { id: "select", label: t("step-select") },
     { id: "import", label: t("step-import") },
     { id: "extract", label: t("step-extract") },
-    { id: "review", label: t("step-review") },
     { id: "pdf", label: t("step-pdf") },
   ];
   return (
     <>
-      {/* Full indicator from tablet up; a compact "Step N of 5" label below. */}
+      {/* Full indicator from tablet up; a compact "Step N of 4" label below. */}
       <div className="hidden md:block">
         <StepIndicator
           steps={steps}
           current={current}
-          aria-label={t("step-of", { current: current + 1, total: 5 })}
+          aria-label={t("step-of", { current: current + 1, total: LOOP_STEP_TOTAL })}
         />
       </div>
       <p className="t-eyebrow text-muted-foreground md:hidden">
-        {t("step-of", { current: current + 1, total: 5 })}
+        {t("step-of", { current: current + 1, total: LOOP_STEP_TOTAL })}
       </p>
     </>
   );

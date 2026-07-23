@@ -50,6 +50,8 @@ class ClaimOut(BaseModel):
     template_id: int
     template_version: str | None
     patient_name: str | None
+    patient_name_cn: str | None = None
+    patient_name_en: str | None = None
     extraction_task_id: int | None = None
     extraction_task_no: str | None = None
     ai_raw_result: dict | None
@@ -70,11 +72,20 @@ class ClaimListItem(BaseModel):
     id: int
     submission_no: str
     patient_name: str | None
+    patient_name_cn: str | None = None
+    patient_name_en: str | None = None
     company_id: int
     template_id: int
     generated_pdf_url: str | None
     status: str
     created_at: datetime
+    # Display labels joined for list UIs (Completed / home). Optional so older
+    # clients keep working; populated by list_claims.
+    company_name: str | None = None
+    company_name_en: str | None = None
+    template_name: str | None = None
+    clinic_id: int | None = None
+    clinic_name: str | None = None
 
 
 class GeneratePdfResponse(BaseModel):

@@ -22,7 +22,8 @@ import { greetingKeyNow, relativeFromNow } from "@/lib/clock";
 import { useCatalog } from "@/lib/catalog";
 import { useSession } from "@/lib/session";
 import { doctorShortName } from "@acuity/i18n/names";
-import { resumeHref, isInProgress } from "@/lib/resume";
+import { formatPatientDisplay } from "@/lib/patient-name";
+import { resumeHref } from "@/lib/resume";
 import { useResumeHints, usePendingHandoffs } from "@/lib/claim-hints";
 import { PageContainer, Eyebrow } from "@/components/ui/page";
 import { CardListSkeleton } from "@/components/ui/loaders";
@@ -44,21 +45,24 @@ export function WorkHome() {
   const { me } = useSession();
 
   const overview = useApi<HomeOverview>(() => claims.getHomeOverview());
-  const list = useApi<Page<ClaimListItem>>(() => claims.listClaims());
+  const list = useApi<Page<ClaimListItem>>(
+    () => claims.listInProgressClaims({ page_size: 50 }),
+    [],
+  );
+  const recentCompleted = useApi<Page<ClaimListItem>>(
+    () => claims.listCompletedClaims({ page_size: 5 }),
+    [],
+  );
   const { handoffs } = usePendingHandoffs();
 
-  const loading = overview.loading || list.loading;
-  const error = overview.error ?? list.error;
+  const loading = overview.loading || list.loading || recentCompleted.loading;
+  const error = overview.error ?? list.error ?? recentCompleted.error;
 
-  const items = list.data?.items ?? [];
-  const inProgress = items.filter((c) => isInProgress(c.status));
-  const completed = items.filter((c) => {
-    const s = toClaimStatus(c.status);
-    return s === "PRINTED" || s === "CONFIRMED";
-  });
+  const inProgress = list.data?.items ?? [];
+  const completed = recentCompleted.data?.items ?? [];
   const hints = useResumeHints(inProgress.map((c) => c.id));
 
-  const visibleIds = new Set(items.map((c) => c.id));
+  const visibleIds = new Set(inProgress.map((c) => c.id));
   const pendingHandoffs = handoffs.filter((h) => visibleIds.has(h.claim_id));
   const handoffClaimIds = new Set(pendingHandoffs.map((h) => h.claim_id));
   const firstHandoff = pendingHandoffs[0];
@@ -102,6 +106,7 @@ export function WorkHome() {
               onClick={() => {
                 overview.refetch();
                 list.refetch();
+                recentCompleted.refetch();
               }}
             >
               {t("retry")}
@@ -142,17 +147,32 @@ export function WorkHome() {
                  overflow but does not shrink intrinsic width), overflowing
                  small viewports. */
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {inProgress.map((claim) => (
+                {inProgress.map((claim) => {
+                  const row = claim as ClaimListItem & {
+                    company_name?: string | null;
+                    company_name_en?: string | null;
+                    template_name?: string | null;
+                  };
+                  const companyLabel =
+                    (locale === "zh-Hant-HK"
+                      ? row.company_name
+                      : row.company_name_en || row.company_name) ||
+                    catalog.companyName(claim.company_id, locale);
+                  const formLabel =
+                    row.template_name?.trim() ||
+                    catalog.formName(claim.template_id, locale);
+                  return (
                   <InProgressCard
                     key={claim.id}
                     claim={claim}
                     locale={locale}
                     handoff={handoffClaimIds.has(claim.id)}
                     hint={hints[claim.id]}
-                    companyLabel={catalog.companyName(claim.company_id, locale)}
-                    formLabel={catalog.formName(claim.template_id, locale)}
+                    companyLabel={companyLabel}
+                    formLabel={formLabel}
                   />
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>
@@ -162,15 +182,30 @@ export function WorkHome() {
             <section>
               <Eyebrow className="mb-3.5">{t("completed-heading")}</Eyebrow>
               <div className="divide-y divide-border overflow-hidden rounded-md border border-border bg-card">
-                {completed.slice(0, 5).map((claim) => (
+                {completed.map((claim) => {
+                  const row = claim as ClaimListItem & {
+                    company_name?: string | null;
+                    company_name_en?: string | null;
+                    template_name?: string | null;
+                  };
+                  const companyLabel =
+                    (locale === "zh-Hant-HK"
+                      ? row.company_name
+                      : row.company_name_en || row.company_name) ||
+                    catalog.companyName(claim.company_id, locale);
+                  const formLabel =
+                    row.template_name?.trim() ||
+                    catalog.formName(claim.template_id, locale);
+                  return (
                   <CompletedRow
                     key={claim.id}
                     claim={claim}
                     locale={locale}
-                    companyLabel={catalog.companyName(claim.company_id, locale)}
-                    formLabel={catalog.formName(claim.template_id, locale)}
+                    companyLabel={companyLabel}
+                    formLabel={formLabel}
                   />
-                ))}
+                  );
+                })}
               </div>
               <div className="mt-3">
                 <Link
@@ -238,7 +273,7 @@ function InProgressCard({
               : companyLabel || formLabel || t("no-patient")}
           </p>
           <p className="truncate text-sm text-muted-foreground">
-            {claim.patient_name ?? t("no-patient")}
+            {formatPatientDisplay(claim) || t("no-patient")}
           </p>
         </div>
         {handoff && (
@@ -288,7 +323,10 @@ function CompletedRow({
           {companyLabel} · {formLabel}
         </span>
         <span className="text-muted-foreground">
-          {claim.patient_name ? ` — ${claim.patient_name}` : ""}
+          {(() => {
+            const name = formatPatientDisplay(claim);
+            return name ? ` — ${name}` : "";
+          })()}
         </span>
       </div>
       <span className="shrink-0 text-xs text-muted-foreground">

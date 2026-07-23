@@ -37,12 +37,12 @@ function isPdfFile(file: File): boolean {
   return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
 }
 
-// Intake (step 2). Import <-> paste segmented toggle with paste always
-// available. Import selects a capture (checkmark) — extraction only fires from
-// the footer Extract, never on tap (matrix 4.3.3). Selecting a medical PDF
-// arms Upload instead: upload creates the extraction task and opens the
-// PDF + standard-field dual pane. A saved draft's record text re-seeds the
-// paste editor (the resume pointer).
+// Intake (step 2). Import <-> paste segmented toggle; Import is the default.
+// Paste remains always available. Import selects a capture (checkmark) —
+// extraction only fires from the footer Extract, never on tap (matrix 4.3.3).
+// Selecting a medical PDF arms Upload instead: upload creates the extraction
+// task and opens the PDF + standard-field dual pane. A saved draft's record
+// text re-seeds the paste editor (the resume pointer).
 
 export function Intake({ claimId }: { claimId: number }) {
   const t = useTranslations("intake");
@@ -50,7 +50,7 @@ export function Intake({ claimId }: { claimId: number }) {
   const router = useRouter();
   const apiMessage = useApiErrorMessage();
 
-  const [mode, setMode] = useState<Mode>("paste");
+  const [mode, setMode] = useState<Mode>("import");
   const [pasteText, setPasteText] = useState("");
   const [picked, setPicked] = useState<InboxDocument | null>(null);
   const [uploadFile, setUploadFile] = useState<File | null>(null);

@@ -5,8 +5,9 @@
 //     notes" evidence pane) + the per-field confirmation set + the optimistic-
 //     lock cursor. The real backend serves source evidence on demand (PHI
 //     fetched minimally).
-//   - DELETE /doctor/claims/{id} — history permanent-delete (the demo backend
-//     only has admin-scoped deletes).
+//   - DELETE /doctor/claims/{id} — prefer `claims.deleteClaim` (live backend).
+//     This alias remains for mock-first surfaces that still import the
+//     frontend-only module.
 //   - The fields-save body extensions (per-field `confirmed` set + claim-level
 //     `row_version` cursor) and the ClaimListItem clinic attribution are folded
 //     into the canonical contract schemas as optional declared backend asks.

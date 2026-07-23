@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { ApiError, claims } from "@acuity/api-client";
 import type { ClaimOut } from "@acuity/types";
 import {
@@ -19,6 +19,9 @@ import {
 } from "@acuity/ui";
 import { useApi } from "@/lib/use-api";
 import { useApiErrorMessage } from "@/lib/api-error";
+import { useCatalog } from "@/lib/catalog";
+import { formatPatientDisplay } from "@/lib/patient-name";
+import type { Locale } from "@/i18n/routing";
 import { LoopScaffold } from "@/components/loop/loop-scaffold";
 import { ResizableSplit } from "@/components/loop/resizable-split";
 import { ReviewSurfaceSkeleton } from "@/components/ui/loaders";
@@ -28,7 +31,10 @@ import { useRouter } from "@acuity/i18n/navigation";
 import { AiGlowBorder } from "./ai-glow-border";
 import { PdfExtractionOverlay } from "./pdf-extraction-overlay";
 import { StandardFieldsPlaceholder } from "./standard-fields-placeholder";
-import { ExtractionReviewForm } from "./extraction-review-form";
+import {
+  ExtractionReviewForm,
+  type ReviewFieldValue,
+} from "./extraction-review-form";
 import { orderFieldCodes } from "./field-catalog";
 import { useClaimAiExtract } from "./use-claim-ai-extract";
 
@@ -43,12 +49,46 @@ type TemplateSpecificAiField = Awaited<
   ReturnType<typeof claims.listTemplateSpecificAiFields>
 >[number];
 
+function mergeReviewFieldsWithClaim(
+  reviewFields: Record<string, ReviewFieldValue>,
+  claimValues: Record<string, string | null> | null | undefined,
+): Record<string, ReviewFieldValue> {
+  if (!claimValues) return reviewFields;
+  const merged: Record<string, ReviewFieldValue> = { ...reviewFields };
+  for (const [code, value] of Object.entries(claimValues)) {
+    const existing = merged[code];
+    if (existing) {
+      merged[code] = { ...existing, value };
+    } else {
+      merged[code] = {
+        value,
+        status: "edited",
+        confidence: 1,
+      };
+    }
+  }
+  return merged;
+}
+
+async function persistReviewValues(
+  claimId: number,
+  taskNo: string | null,
+  values: Record<string, string | null>,
+) {
+  if (taskNo) {
+    await claims.saveExtractionReviewOutput(taskNo, values);
+  }
+  await claims.updateClaimFields(claimId, { final_field_values: values });
+}
+
 // Extract step — parity with doctor web MedicalRecordReviewPanel:
 // AI glow on PDF, frosted step overlay, visit select, standard-field
 // placeholder → editable review form, re-upload + AI Extract controls.
 
 export function MedicalReview({ claimId }: { claimId: number }) {
   const t = useTranslations("medical-review");
+  const locale = useLocale() as Locale;
+  const catalog = useCatalog();
   const router = useRouter();
   const searchParams = useSearchParams();
   const apiMessage = useApiErrorMessage();
@@ -63,6 +103,9 @@ export function MedicalReview({ claimId }: { claimId: number }) {
   const [confirming, setConfirming] = useState(false);
   const [pending, startTransition] = useTransition();
   const [formPdfReady, setFormPdfReady] = useState(false);
+  const [formPdfVersion, setFormPdfVersion] = useState(0);
+  const [previewingPdf, setPreviewingPdf] = useState(false);
+  const appliedExtractionRef = useRef<string | null>(null);
 
   const taskNo =
     searchParams.get("task") ||
@@ -75,7 +118,19 @@ export function MedicalReview({ claimId }: { claimId: number }) {
     () => (taskNo ? claims.medicalPdfPreviewUrl(taskNo) : null),
     [taskNo],
   );
-  const formPdfUrl = useMemo(() => claims.claimFormPdfUrl(claimId), [claimId]);
+  const formPdfUrl = useMemo(() => {
+    const base = claims.claimFormPdfUrl(claimId);
+    const cacheKey =
+      formPdfVersion ||
+      claimState.data?.updated_at ||
+      claimState.data?.generated_pdf_url ||
+      claimId;
+    return `${base}?v=${encodeURIComponent(String(cacheKey))}`;
+  }, [claimId, claimState.data?.generated_pdf_url, claimState.data?.updated_at, formPdfVersion]);
+
+  useEffect(() => {
+    appliedExtractionRef.current = null;
+  }, [claimId, taskNo]);
 
   useEffect(() => {
     let cancelled = false;
@@ -118,29 +173,49 @@ export function MedicalReview({ claimId }: { claimId: number }) {
     );
   }, [claimState.data]);
 
-  // After review JSON is loaded, apply extraction into claim fields.
-  // Depend on `pipeline.review` (not only isReviewReady): progress can flip
-  // phase to "review" before review-output arrives, which previously skipped apply.
+  // Apply extraction once per review load — never re-apply after the doctor
+  // has saved edits (that race was wiping PUT /fields).
   useEffect(() => {
     if (!pipeline.review) return;
+    const applyKey = `${claimId}:${taskNo ?? ""}`;
+    if (appliedExtractionRef.current === applyKey) return;
+    // Already have saved claim values — skip overwrite.
+    if (
+      claimState.data?.status === "AI_FILLED" &&
+      claimState.data.final_field_values &&
+      Object.keys(claimState.data.final_field_values).length > 0
+    ) {
+      appliedExtractionRef.current = applyKey;
+      return;
+    }
     let cancelled = false;
+    appliedExtractionRef.current = applyKey;
     void (async () => {
       try {
         await claims.applyExtraction(claimId);
         if (!cancelled) await claimState.refetch();
       } catch {
-        /* review form remains usable even if apply fails */
+        if (!cancelled) appliedExtractionRef.current = null;
       }
     })();
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pipeline.review, claimId]);
+  }, [pipeline.review, claimId, taskNo]);
 
   const review = pipeline.review;
+  const reviewFields = review?.display_fields ?? review?.standard_fields ?? {};
+  const formFields = useMemo(
+    () =>
+      mergeReviewFieldsWithClaim(
+        reviewFields,
+        claimState.data?.final_field_values as Record<string, string | null> | undefined,
+      ),
+    [reviewFields, claimState.data?.final_field_values],
+  );
   const fieldOrder = review
-    ? orderFieldCodes(Object.keys(review.display_fields ?? review.standard_fields ?? {}))
+    ? orderFieldCodes(Object.keys(formFields))
     : [];
   const reviewTemplateCodes =
     review?.template_specific_field_codes ??
@@ -163,15 +238,23 @@ export function MedicalReview({ claimId }: { claimId: number }) {
 
   async function handleSave(values: Record<string, string | null>) {
     setSaving(true);
+    setPreviewingPdf(true);
     setActionError(null);
     try {
-      await claims.updateClaimFields(claimId, { final_field_values: values });
+      await persistReviewValues(claimId, taskNo, values);
+      // Keep in-memory review in sync so remount/reset keeps doctor edits.
+      await pipeline.refreshReview();
+      await claims.generateClaimPdf(claimId);
+      setFormPdfReady(true);
+      setFormPdfVersion((v) => v + 1);
+      setPdfTab("form");
       showToast(t("saved"));
       await claimState.refetch();
     } catch (cause) {
       setActionError(cause instanceof ApiError ? cause.message : apiMessage(undefined));
     } finally {
       setSaving(false);
+      setPreviewingPdf(false);
     }
   }
 
@@ -179,13 +262,13 @@ export function MedicalReview({ claimId }: { claimId: number }) {
     setConfirming(true);
     setActionError(null);
     try {
-      await claims.updateClaimFields(claimId, { final_field_values: values });
+      await persistReviewValues(claimId, taskNo, values);
       if (claimState.data?.status === "DRAFT") {
         await claims.applyExtraction(claimId);
       }
       await claims.confirmClaim(claimId);
       showToast(t("confirmed"));
-      router.push(`/forms/${claimId}/review`);
+      router.push(`/forms/${claimId}/produce`);
     } catch (cause) {
       setActionError(cause instanceof ApiError ? cause.message : apiMessage(undefined));
     } finally {
@@ -367,7 +450,7 @@ export function MedicalReview({ claimId }: { claimId: number }) {
                   ) : null}
                 </AiGlowBorder>
               ) : (
-                <div className="min-h-0 flex-1 overflow-hidden rounded-md border border-border bg-card">
+                <div className="relative min-h-0 flex-1 overflow-hidden rounded-md border border-border bg-card">
                   {formPdfReady ? (
                     <iframe title={t("tab-form")} src={formPdfUrl} className="h-full w-full" />
                   ) : (
@@ -375,6 +458,11 @@ export function MedicalReview({ claimId }: { claimId: number }) {
                       {t("form-pdf-empty")}
                     </div>
                   )}
+                  {previewingPdf ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-card/80 text-sm text-muted-foreground">
+                      {t("form-pdf-generating")}
+                    </div>
+                  ) : null}
                 </div>
               )}
             </div>
@@ -394,13 +482,23 @@ export function MedicalReview({ claimId }: { claimId: number }) {
               <div className="relative min-h-0 flex-1">
                 {pipeline.isReviewReady && review ? (
                   <ExtractionReviewForm
-                    fields={review.display_fields ?? review.standard_fields ?? {}}
+                    fields={formFields}
                     fieldOrder={fieldOrder}
                     saving={saving}
                     confirming={confirming}
                     onSave={handleSave}
                     onConfirm={handleConfirm}
-                    confirmLabel={t("finish-review")}
+                    companyLabel={
+                      claimState.data
+                        ? catalog.companyName(claimState.data.company_id, locale)
+                        : ""
+                    }
+                    formLabel={
+                      claimState.data
+                        ? catalog.formName(claimState.data.template_id, locale)
+                        : ""
+                    }
+                    patientLabel={formatPatientDisplay(claimState.data ?? {}) || "—"}
                     templateSpecificFieldCodes={reviewTemplateCodes}
                     fieldLabels={reviewFieldLabels}
                   />
