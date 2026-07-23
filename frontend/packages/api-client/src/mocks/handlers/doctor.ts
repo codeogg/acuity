@@ -213,6 +213,222 @@ export const doctorHandlers = [
     return HttpResponse.json({ saved_at: new Date().toISOString() });
   }),
 
+  // --- medical PDF upload (live backend; mock for local demos) ----------------
+  http.post(`${API}/doctor/claims/:claimId/medical-pdf`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const claimId = Number(params.claimId);
+    const entry = scopedEntry(claimId);
+    if (!entry) return notFoundZh(CLAIM_NOT_FOUND);
+    const form = await request.formData();
+    const file = form.get("file");
+    if (typeof file === "string" || file == null) {
+      return HttpResponse.json(
+        { error: { code: "VALIDATION_ERROR", message: "请上传 PDF 文件" } },
+        { status: 422 },
+      );
+    }
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const filename = "name" in file && file.name ? file.name : "upload.pdf";
+    const taskNo = `MOCK-TASK-${claimId}-${Date.now()}`;
+    updateClaimEntry(claimId, (e) => {
+      e.medicalPdfBytes = bytes;
+      e.extractionTaskNo = taskNo;
+      e.intakeText = e.intakeText ?? `[PDF] ${filename}`;
+      // ClaimOut contract may not yet list these; attach for medical-review resume.
+      (e.claim as ClaimOut & { extraction_task_no?: string }).extraction_task_no = taskNo;
+    });
+    return HttpResponse.json({
+      extraction_task_id: claimId * 1000 + 1,
+      extraction_task_no: taskNo,
+      original_filename: filename,
+      patient_name: entry.claim.patient_name,
+    });
+  }),
+
+  http.get(`${API}/doctor/extraction-tasks/:taskNo/pdf`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const taskNo = String(params.taskNo);
+    const entry = Array.from(
+      // Prefer an entry that owns this task number.
+      listClaimEntries({ clinicIds: activeClinicScope() }),
+    ).find((e) => e.extractionTaskNo === taskNo);
+    const bytes = entry?.medicalPdfBytes;
+    if (!bytes || bytes.byteLength === 0) {
+      // Tiny valid empty PDF so the iframe still loads in demos without a file.
+      const minimal = new TextEncoder().encode(
+        "%PDF-1.1\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n",
+      );
+      return new HttpResponse(minimal, {
+        headers: { "Content-Type": "application/pdf" },
+      });
+    }
+    return new HttpResponse(bytes, {
+      headers: { "Content-Type": "application/pdf" },
+    });
+  }),
+
+  http.post(`${API}/doctor/claims/:claimId/extract-from-pdf`, async ({ request, params }) => {
+    const { scenario, deny } = await gate(request);
+    if (deny) return deny;
+    if (isAiDegraded(scenario)) return aiUnavailable();
+    const claimId = Number(params.claimId);
+    const entry = scopedEntry(claimId);
+    if (!entry) return notFoundZh(CLAIM_NOT_FOUND);
+    if (!entry.extractionTaskNo) {
+      return errorEnvelope("VALIDATION_ERROR", "请先上传病历 PDF", 422);
+    }
+    updateClaimEntry(claimId, (e) => {
+      (e as ClaimStoreEntry & { extractStatus?: string }).extractStatus = "RUNNING";
+      (e as ClaimStoreEntry & { extractStartedAt?: number }).extractStartedAt = Date.now();
+    });
+    return HttpResponse.json({ job_id: `mock-job-${claimId}`, status: "QUEUED" }, { status: 202 });
+  }),
+
+  http.get(`${API}/doctor/claims/:claimId/extract-progress`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const claimId = Number(params.claimId);
+    const entry = scopedEntry(claimId);
+    if (!entry) return notFoundZh(CLAIM_NOT_FOUND);
+    const startedAt = (entry as ClaimStoreEntry & { extractStartedAt?: number }).extractStartedAt;
+    const status = (entry as ClaimStoreEntry & { extractStatus?: string }).extractStatus;
+    if (!startedAt || status === "IDLE" || !status) {
+      return HttpResponse.json({
+        stage: "IDLE",
+        percent: 0,
+        message: null,
+        status: "IDLE",
+        visits: null,
+      });
+    }
+    const elapsed = Date.now() - startedAt;
+    if (elapsed < 800) {
+      return HttpResponse.json({
+        stage: "INGEST",
+        percent: 20,
+        message: "正在预处理病历…",
+        status: "RUNNING",
+        visits: null,
+      });
+    }
+    if (elapsed < 1600) {
+      return HttpResponse.json({
+        stage: "EXTRACT",
+        percent: 70,
+        message: "正在 AI 识别…",
+        status: "RUNNING",
+        visits: null,
+      });
+    }
+    updateClaimEntry(claimId, (e) => {
+      (e as ClaimStoreEntry & { extractStatus?: string }).extractStatus = "DONE";
+    });
+    return HttpResponse.json({
+      stage: "DONE",
+      percent: 100,
+      message: "提取完成",
+      status: "DONE",
+      visits: null,
+    });
+  }),
+
+  http.post(`${API}/doctor/claims/:claimId/cancel-extraction`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const claimId = Number(params.claimId);
+    if (!scopedEntry(claimId)) return notFoundZh(CLAIM_NOT_FOUND);
+    const updated = updateClaimEntry(claimId, (e) => {
+      (e as ClaimStoreEntry & { extractStatus?: string }).extractStatus = "IDLE";
+      (e as ClaimStoreEntry & { extractStartedAt?: number }).extractStartedAt = undefined;
+    });
+    return HttpResponse.json(updated!.claim);
+  }),
+
+  http.post(`${API}/doctor/claims/:claimId/apply-extraction`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const claimId = Number(params.claimId);
+    if (!scopedEntry(claimId)) return notFoundZh(CLAIM_NOT_FOUND);
+    const updated = updateClaimEntry(claimId, fillFromExtraction);
+    return HttpResponse.json(updated!.claim);
+  }),
+
+  http.post(`${API}/doctor/claims/:claimId/reset-medical-upload`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const claimId = Number(params.claimId);
+    if (!scopedEntry(claimId)) return notFoundZh(CLAIM_NOT_FOUND);
+    const updated = updateClaimEntry(claimId, (e) => {
+      e.medicalPdfBytes = null;
+      e.extractionTaskNo = null;
+      (e.claim as ClaimOut & { extraction_task_no?: string | null }).extraction_task_no = null;
+      (e as ClaimStoreEntry & { extractStatus?: string }).extractStatus = "IDLE";
+      (e as ClaimStoreEntry & { extractStartedAt?: number }).extractStartedAt = undefined;
+      e.claim.ai_raw_result = null;
+      e.claim.final_field_values = null;
+      e.claim.status = "DRAFT";
+    });
+    return HttpResponse.json(updated!.claim);
+  }),
+
+  http.get(`${API}/doctor/claims/:claimId/template-specific-ai-fields`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    if (!scopedEntry(Number(params.claimId))) return notFoundZh(CLAIM_NOT_FOUND);
+    return HttpResponse.json([]);
+  }),
+
+  http.get(`${API}/doctor/extraction-tasks/:taskNo/review-output`, async ({ request, params }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const taskNo = String(params.taskNo);
+    const entry = listClaimEntries({ clinicIds: activeClinicScope() }).find(
+      (e) => e.extractionTaskNo === taskNo,
+    );
+    if (!entry) return notFoundZh("提取任务不存在");
+    const result = extractionResult(entry.claim.template_id);
+    const display_fields: Record<
+      string,
+      {
+        value: string | null;
+        status: string;
+        confidence: number;
+        validation_error: string | null;
+      }
+    > = Object.fromEntries(
+      Object.entries(result.final_field_values).map(([code, value]) => [
+        code,
+        {
+          value,
+          status: "extracted",
+          confidence: result.ai_raw_result[code]?.confidence ?? 0.9,
+          validation_error: null,
+        },
+      ]),
+    );
+    // Ensure schema fields appear even when canned data misses them.
+    for (const field of getTemplateFieldSchema(entry.claim.template_id).fields) {
+      if (!display_fields[field.field_code]) {
+        display_fields[field.field_code] = {
+          value: null,
+          status: "missing",
+          confidence: 0,
+          validation_error: null,
+        };
+      }
+    }
+    return HttpResponse.json({
+      task_id: taskNo,
+      display_fields,
+      standard_fields: display_fields,
+      template_specific_field_codes: [],
+      field_labels: null,
+      is_confirmed: false,
+    });
+  }),
+
   // --- extract (contract; ai-degrade -> 503 force_manual) ----------------------
   http.post(`${API}/doctor/claims/:claimId/extract`, async ({ request, params }) => {
     const { scenario, deny } = await gate(request);

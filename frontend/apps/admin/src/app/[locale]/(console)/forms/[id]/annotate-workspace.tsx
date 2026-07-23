@@ -241,12 +241,12 @@ export function AnnotateWorkspace({
 
         {/* Selected field */}
         <aside className="flex w-[22rem] shrink-0 flex-col border-l border-border lg:w-[26rem]">
-          <div className="border-b border-border px-4 py-3 text-sm font-medium text-foreground">
+          <div className="shrink-0 border-b border-border px-4 py-3 text-sm font-medium text-foreground">
             {ta("selected-field")}
           </div>
-          <div className="slim-scroll min-h-0 flex-1 overflow-y-auto p-4">
+          <div className="flex min-h-0 flex-1 flex-col">
             {!selected ? (
-              <p className="text-sm text-muted-foreground">{ta("select-hint")}</p>
+              <p className="p-4 text-sm text-muted-foreground">{ta("select-hint")}</p>
             ) : (
               <FieldPanel
                 key={selected.id}
@@ -441,8 +441,8 @@ function FieldPanel({
 
   if (ignored) {
     return (
-      <div className="flex flex-col gap-4">
-        <div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden">
+        <div className="slim-scroll min-h-0 flex-1 overflow-y-auto p-4">
           <div className="text-base font-semibold text-foreground">{label}</div>
           <div className="mt-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
             {ta("status.ignored")}
@@ -451,7 +451,7 @@ function FieldPanel({
             ) : null}
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex shrink-0 gap-2 border-t border-border bg-background px-4 py-3">
           <Button
             type="button"
             className="flex-1"
@@ -493,7 +493,8 @@ function FieldPanel({
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-4 overflow-x-hidden">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-x-hidden">
+      <div className="slim-scroll flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4">
       <div>
         <div className="text-base font-semibold text-foreground">{label}</div>
         {field.confidence_score != null ? (
@@ -643,7 +644,9 @@ function FieldPanel({
         ) : null}
       </div>
 
-      <div className="flex flex-wrap gap-2 pt-2">
+      </div>
+
+      <div className="flex shrink-0 flex-wrap gap-2 border-t border-border bg-background px-4 py-3">
         <Button
           type="button"
           variant="outline"

@@ -33,11 +33,16 @@ type InboxDocument = Awaited<
   ReturnType<typeof frontendOnly.documentInbox.listPrintCaptures>
 >[number];
 
+function isPdfFile(file: File): boolean {
+  return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+}
+
 // Intake (step 2). Import <-> paste segmented toggle with paste always
 // available. Import selects a capture (checkmark) — extraction only fires from
-// the footer Extract, never on tap (matrix 4.3.3). A saved draft's record text
-// re-seeds the paste editor (the resume pointer). The footer carries the
-// 25 MB + paste-is-always-available reassurance in both modes.
+// the footer Extract, never on tap (matrix 4.3.3). Selecting a medical PDF
+// arms Upload instead: upload creates the extraction task and opens the
+// PDF + standard-field dual pane. A saved draft's record text re-seeds the
+// paste editor (the resume pointer).
 
 export function Intake({ claimId }: { claimId: number }) {
   const t = useTranslations("intake");
@@ -48,7 +53,7 @@ export function Intake({ claimId }: { claimId: number }) {
   const [mode, setMode] = useState<Mode>("paste");
   const [pasteText, setPasteText] = useState("");
   const [picked, setPicked] = useState<InboxDocument | null>(null);
-  const [uploadName, setUploadName] = useState<string | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [overLimit, setOverLimit] = useState(false);
   const [pasteBytes, setPasteBytes] = useState(0);
@@ -82,10 +87,32 @@ export function Intake({ claimId }: { claimId: number }) {
     };
   }, [claimId]);
 
+  const uploadName = uploadFile?.name ?? null;
+  const pdfReady = mode === "import" && uploadFile !== null;
   const hasContent =
     mode === "paste"
       ? pasteText.trim().length > 0
-      : picked !== null || uploadName !== null;
+      : picked !== null || uploadFile !== null;
+
+  function pickPdf(file: File | null) {
+    if (!file) {
+      setUploadFile(null);
+      return;
+    }
+    if (!isPdfFile(file)) {
+      setSubmitError(t("pdf-only"));
+      return;
+    }
+    if (file.size > SIZE_LIMIT_MB * 1024 * 1024) {
+      setOverLimit(true);
+      setSubmitError(t("over-limit", { limit: SIZE_LIMIT_MB }));
+      return;
+    }
+    setSubmitError(null);
+    setOverLimit(false);
+    setUploadFile(file);
+    setPicked(null);
+  }
 
   function handlePasteChange(value: string) {
     // A visible early over-limit error, never a silent truncation. The live
@@ -95,6 +122,22 @@ export function Intake({ claimId }: { claimId: number }) {
     setPasteBytes(bytes);
     setOverLimit(bytes > SIZE_LIMIT_MB * 1024 * 1024);
     setPasteText(value);
+  }
+
+  async function handleUploadPdf() {
+    if (!uploadFile || submitting) return;
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const result = await claims.uploadMedicalPdf(claimId, uploadFile);
+      rememberIntakeSource(claimId, { kind: "import", filename: uploadFile.name });
+      router.push(
+        `/forms/${claimId}/medical-review?task=${encodeURIComponent(result.extraction_task_no)}`,
+      );
+    } catch (cause) {
+      setSubmitError(apiMessage(cause instanceof ApiError ? cause : undefined));
+      setSubmitting(false);
+    }
   }
 
   async function handleExtract() {
@@ -112,15 +155,6 @@ export function Intake({ claimId }: { claimId: number }) {
             kind: "import",
             filename: picked.filename,
           });
-        } else if (uploadName) {
-          // A browsed/dropped file: the mock boundary cannot parse a real PDF,
-          // so the shared sample record stands in for its extracted text.
-          const docs = captures.data ?? [];
-          const first = docs[0];
-          recordText = first
-            ? (await frontendOnly.documentInbox.importInboxDocument(first.id)).intake_text
-            : pasteText;
-          rememberIntakeSource(claimId, { kind: "import", filename: uploadName });
         }
       } else {
         rememberIntakeSource(claimId, { kind: "paste" });
@@ -149,15 +183,27 @@ export function Intake({ claimId }: { claimId: number }) {
       heading={t("step-heading")}
       footerStart={t("footer-hint", { limit: SIZE_LIMIT_MB })}
       footerEnd={
-        <Button
-          size="lg"
-          disabled={!hasContent || overLimit || submitting}
-          loading={submitting}
-          onClick={handleExtract}
-        >
-          {!submitting && <SparkleIcon size={18} aria-hidden />}
-          {t("extract")}
-        </Button>
+        pdfReady ? (
+          <Button
+            size="lg"
+            disabled={!hasContent || overLimit || submitting}
+            loading={submitting}
+            onClick={handleUploadPdf}
+          >
+            {!submitting && <UploadIcon size={18} aria-hidden />}
+            {t("upload")}
+          </Button>
+        ) : (
+          <Button
+            size="lg"
+            disabled={!hasContent || overLimit || submitting}
+            loading={submitting}
+            onClick={handleExtract}
+          >
+            {!submitting && <SparkleIcon size={18} aria-hidden />}
+            {t("extract")}
+          </Button>
+        )
       }
     >
       {/* Mode toggle (segmented control) */}
@@ -252,7 +298,7 @@ export function Intake({ claimId }: { claimId: number }) {
                       aria-pressed={selected}
                       onClick={() => {
                         setPicked(selected ? null : cap);
-                        setUploadName(null);
+                        setUploadFile(null);
                       }}
                       className={cn(
                         "flex w-full items-center gap-3 px-4 py-3 text-left transition-colors duration-[120ms]",
@@ -282,7 +328,7 @@ export function Intake({ claimId }: { claimId: number }) {
             )}
           </div>
 
-          {/* Upload drop zone (drag-drop + browse; selecting arms Extract). */}
+          {/* Upload drop zone (drag-drop + browse; selecting a PDF arms Upload). */}
           <label
             onDragOver={(e) => {
               e.preventDefault();
@@ -292,11 +338,7 @@ export function Intake({ claimId }: { claimId: number }) {
             onDrop={(e) => {
               e.preventDefault();
               setDragOver(false);
-              const file = e.dataTransfer.files?.[0];
-              if (file) {
-                setUploadName(file.name);
-                setPicked(null);
-              }
+              pickPdf(e.dataTransfer.files?.[0] ?? null);
             }}
             className={cn(
               "flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border border-dashed border-[var(--color-border-strong)] bg-card px-6 py-9 text-center transition-colors duration-[120ms] hover:bg-accent",
@@ -323,13 +365,11 @@ export function Intake({ claimId }: { claimId: number }) {
             </span>
             <input
               type="file"
+              accept="application/pdf,.pdf"
               className="sr-only"
               onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  setUploadName(file.name);
-                  setPicked(null);
-                }
+                pickPdf(e.target.files?.[0] ?? null);
+                e.target.value = "";
               }}
             />
           </label>

@@ -9,6 +9,7 @@ from src.core.ai_usage_context import reset_ai_call_context, set_ai_call_context
 from src.core.exceptions import ForbiddenException, NotFoundException, ValidationException, AppException
 from src.db.models import (
     ClaimSubmission,
+    Clinic,
     ClinicPolicyTemplate,
     DocumentClassification,
     DocumentPage,
@@ -307,14 +308,27 @@ async def _load_extractable_fields_for_task(
 async def _build_system_review_values(
     db: AsyncSession, task: ExtractionTask
 ) -> dict[str, str | None]:
+    """系统已知字段：即使 AI stub/失败，也应写入核对表，避免右侧空白。"""
+    values: dict[str, str | None] = {}
+    if task.patient_name and str(task.patient_name).strip():
+        values["patient_name_cn"] = str(task.patient_name).strip()
+
     doctor = (
         await db.execute(select(Doctor).where(Doctor.id == task.doctor_id))
     ).scalar_one_or_none()
-    if not doctor:
-        return {}
-    return {
-        "doctor_signature": doctor.signature_url,
-    }
+    if doctor:
+        if doctor.doctor_name and str(doctor.doctor_name).strip():
+            values["doctor_name"] = str(doctor.doctor_name).strip()
+        if doctor.signature_url:
+            values["doctor_signature"] = doctor.signature_url
+
+    clinic = (
+        await db.execute(select(Clinic).where(Clinic.id == task.clinic_id))
+    ).scalar_one_or_none()
+    if clinic and clinic.clinic_name and str(clinic.clinic_name).strip():
+        values["clinic_name"] = str(clinic.clinic_name).strip()
+
+    return values
 
 
 async def _template_specific_meta_for_task(

@@ -114,3 +114,149 @@ export function reuseClaimForTemplate(
 ): Promise<ReuseResponse> {
   return api.post<ReuseResponse>(`/doctor/claims/${claimId}/reuse-for-template`, body);
 }
+
+/** Response from POST /doctor/claims/{id}/medical-pdf (backend live; not yet in OpenAPI). */
+export interface ClaimMedicalPdfUploadOutput {
+  extraction_task_id: number;
+  extraction_task_no: string;
+  original_filename: string;
+  patient_name: string | null;
+}
+
+/** Upload a medical-record PDF and create the linked extraction task. */
+export function uploadMedicalPdf(
+  claimId: number,
+  file: File | Blob,
+  patientName?: string | null,
+  filename?: string,
+): Promise<ClaimMedicalPdfUploadOutput> {
+  const form = new FormData();
+  form.append("file", file, filename ?? (file instanceof File ? file.name : "upload.pdf"));
+  if (patientName) form.append("patient_name", patientName);
+  return api.postForm<ClaimMedicalPdfUploadOutput>(
+    `/doctor/claims/${claimId}/medical-pdf`,
+    form,
+  );
+}
+
+/** Absolute-ish URL for the uploaded medical PDF preview (same-origin /api proxy). */
+export function medicalPdfPreviewUrl(taskNo: string): string {
+  const base = (typeof process !== "undefined" ? process.env?.NEXT_PUBLIC_API_BASE : undefined) ?? "/api";
+  return `${base.replace(/\/$/, "")}/doctor/extraction-tasks/${encodeURIComponent(taskNo)}/pdf`;
+}
+
+/** Filled insurer-form PDF stream (available after generate-pdf). */
+export function claimFormPdfUrl(claimId: number): string {
+  const base = (typeof process !== "undefined" ? process.env?.NEXT_PUBLIC_API_BASE : undefined) ?? "/api";
+  return `${base.replace(/\/$/, "")}/doctor/claims/${claimId}/pdf`;
+}
+
+export type ExtractProgressStage =
+  | "IDLE"
+  | "INGEST"
+  | "CLASSIFY"
+  | "EXTRACT"
+  | "VALIDATE"
+  | "DONE"
+  | "FAILED"
+  | "AWAITING_INPUT";
+
+export type ExtractProgressStatus =
+  | "IDLE"
+  | "QUEUED"
+  | "RUNNING"
+  | "AWAITING_INPUT"
+  | "DONE"
+  | "FAILED";
+
+export interface ExtractProgressVisit {
+  visit_index: number;
+  visit_date: string | null;
+  summary: string | null;
+  page_range: number[];
+  selected: boolean;
+}
+
+export interface ExtractProgress {
+  stage: ExtractProgressStage;
+  percent: number;
+  message: string | null;
+  status: ExtractProgressStatus;
+  visits?: ExtractProgressVisit[] | null;
+}
+
+export interface ExtractEnqueueResponse {
+  job_id: string | null;
+  status: string;
+  message?: string;
+}
+
+/** Same as doctor web: enqueue PDF → AI extraction pipeline. */
+export function extractFromPdf(claimId: number): Promise<ExtractEnqueueResponse> {
+  return api.post<ExtractEnqueueResponse>(`/doctor/claims/${claimId}/extract-from-pdf`);
+}
+
+export function getExtractProgress(claimId: number): Promise<ExtractProgress> {
+  return api.get<ExtractProgress>(`/doctor/claims/${claimId}/extract-progress`);
+}
+
+export function cancelExtraction(claimId: number): Promise<ClaimOut> {
+  return api.post<ClaimOut>(`/doctor/claims/${claimId}/cancel-extraction`);
+}
+
+export function resumeExtraction(
+  claimId: number,
+  visitIndex: number,
+): Promise<ExtractEnqueueResponse> {
+  return api.post<ExtractEnqueueResponse>(`/doctor/claims/${claimId}/resume-extraction`, {
+    visit_index: visitIndex,
+  });
+}
+
+export function applyExtraction(claimId: number): Promise<ClaimOut> {
+  return api.post<ClaimOut>(`/doctor/claims/${claimId}/apply-extraction`);
+}
+
+export function resetMedicalUpload(claimId: number): Promise<ClaimOut> {
+  return api.post<ClaimOut>(`/doctor/claims/${claimId}/reset-medical-upload`);
+}
+
+/** Review-output fields after PDF extraction completes (task_no scoped). */
+export interface ReviewFieldValue {
+  value: string | null;
+  status: string;
+  confidence: number;
+  validation_error?: string | null;
+  page?: number | null;
+  bbox?: number[] | null;
+  source_text?: string | null;
+}
+
+export interface ExtractionReviewOutput {
+  task_id?: string;
+  display_fields: Record<string, ReviewFieldValue>;
+  standard_fields?: Record<string, ReviewFieldValue>;
+  field_labels?: Record<string, string> | null;
+  template_specific_field_codes?: string[];
+  is_confirmed?: boolean;
+}
+
+export function getExtractionReviewOutput(taskNo: string): Promise<ExtractionReviewOutput> {
+  return api.get<ExtractionReviewOutput>(
+    `/doctor/extraction-tasks/${encodeURIComponent(taskNo)}/review-output`,
+  );
+}
+
+export interface TemplateSpecificAiField {
+  field_code: string;
+  field_name: string;
+  ai_extraction_hint?: string | null;
+}
+
+export function listTemplateSpecificAiFields(
+  claimId: number,
+): Promise<TemplateSpecificAiField[]> {
+  return api.get<TemplateSpecificAiField[]>(
+    `/doctor/claims/${claimId}/template-specific-ai-fields`,
+  );
+}

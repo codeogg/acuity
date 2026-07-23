@@ -18,6 +18,9 @@ export interface ClaimStoreEntry {
   rowVersion: number;
   // The intake source text ("your notes").
   intakeText: string | null;
+  // Uploaded medical-record PDF (mock) + extraction task id for the review pane.
+  medicalPdfBytes?: Uint8Array | null;
+  extractionTaskNo?: string | null;
 }
 
 let store: Map<number, ClaimStoreEntry> | null = null;

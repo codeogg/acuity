@@ -426,8 +426,8 @@ async def apply_extraction(
 ) -> ClaimSubmission:
     """将 PDF 提取审核结果写入 claim 字段，进入 AI_FILLED。"""
     claim = await get_claim(db, claim_id, clinic_id)
-    if claim.status != "DRAFT":
-        raise ValidationException("仅草稿状态可应用提取结果")
+    if claim.status not in ("DRAFT", "AI_FILLED"):
+        raise ValidationException("仅草稿或 AI 已填状态可应用提取结果")
     if not claim.extraction_task_id:
         raise ValidationException("请先上传病历 PDF 并完成提取")
 
@@ -444,6 +444,11 @@ async def apply_extraction(
     ).scalar_one_or_none()
     if not review_row:
         raise ValidationException("请先完成病历 PDF 提取与字段生成")
+
+    # 补齐系统字段（诊所/医生等），避免 stub 提取后右侧与 claim 仍全空
+    await pdf_extraction_service._complete_review_row_standard_fields(
+        db, task=task, review_row=review_row
+    )
 
     result_row = (
         await db.execute(
