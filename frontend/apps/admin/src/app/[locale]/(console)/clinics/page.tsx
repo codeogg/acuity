@@ -1,5 +1,5 @@
-// Clinics portfolio — the default operator working grid: saved-view count
-// tabs (Needs attention / Provisioning / Active / Overdue payment / All),
+// Clinics portfolio — the default operator working grid: count tabs
+// (Needs attention / Provisioning / Active / Overdue payment / All),
 // keyword + status filters, URL-driven sortable columns, multi-select bulk
 // actions (re-tag / export / deactivate with dry-run + gates), and the
 // clinic detail drawer over the grid (?open=<id>&facet=<facet>).
@@ -230,7 +230,6 @@ async function ClinicsGrid({
       <SectionTopBar
         eyebrow={t("eyebrow")}
         title={t("title")}
-        grid="clinics"
         tabs={tabs}
         action={
           <Button asChild>

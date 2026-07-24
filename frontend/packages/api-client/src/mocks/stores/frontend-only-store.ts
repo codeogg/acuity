@@ -1,7 +1,7 @@
 // In-memory state for the frontend-only surfaces (notifications, tickets, tags,
-// saved views, hand-offs, settings, document inbox, support access /
-// impersonation, audit logs) — mutable copies of the fixture universe so the
-// mock flows behave statefully.
+// hand-offs, settings, document inbox, support access / impersonation, audit
+// logs) — mutable copies of the fixture universe so the mock flows behave
+// statefully.
 
 import type { AuditActionType, AuditLogOut } from "@acuity/types";
 import type {
@@ -9,7 +9,6 @@ import type {
   Ticket,
 } from "../../endpoints/frontend-only/admin-tickets";
 import type { Tag, TagVisibilityEntry } from "../../endpoints/frontend-only/admin-tags";
-import type { SavedView } from "../../endpoints/frontend-only/admin-saved-views";
 import type { ImpersonationSession } from "../../endpoints/frontend-only/admin-impersonation";
 import type { DoctorSettings } from "../../endpoints/frontend-only/doctor-settings";
 import type { InboxDocument } from "../../endpoints/frontend-only/document-inbox";
@@ -23,7 +22,6 @@ import {
   notifications,
   onboardingQueue,
   printCaptures,
-  savedViews,
   supportAccess,
   tags,
   tagVisibility,
@@ -85,7 +83,6 @@ export interface FrontendOnlyState {
   onboardingQueue: OnboardingQueueItem[];
   tags: Tag[];
   tagVisibility: TagVisibilityEntry[];
-  savedViews: SavedView[];
   auditLogs: AuditLogOut[];
   impersonation: ImpersonationSession | null;
   nextId: number;
@@ -111,7 +108,6 @@ export function frontendOnlyState(): FrontendOnlyState {
       onboardingQueue: structuredClone(onboardingQueue),
       tags: structuredClone(tags),
       tagVisibility: structuredClone(tagVisibility),
-      savedViews: structuredClone(savedViews),
       auditLogs,
       impersonation: null,
       nextId: 1,

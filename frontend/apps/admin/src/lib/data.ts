@@ -4,13 +4,14 @@
 // in src/instrumentation.ts) over one stateful fixture universe; in live mode
 // the same calls hit the real /api/* backend (NEXT_PUBLIC_API_BASE). This
 // module adds only console-side composition: the ops-model join (mock-first
-// operational fields pending backend support) and list shaping (saved-view
-// tabs, sort, keyword) that belongs to the presentation, not to the contract.
+// operational fields pending backend support) and list shaping (count-tab
+// filters, sort, keyword) that belongs to the presentation, not to the contract.
 
 import {
   ApiError,
   api,
   audit,
+  authEndpoints,
   claims as claimsContract,
   clinics,
   companies,
@@ -35,6 +36,7 @@ import type {
   ClinicRetentionOut,
   ClinicSubscriptionOut,
   DoctorOut,
+  MeResponse,
   OnboardingQueueItem,
   Page,
   QualityReport,
@@ -61,15 +63,14 @@ const {
   adminAnalytics,
   adminClaimsOversight,
   adminImpersonation,
-  adminSavedViews,
   adminTags,
   adminTickets,
 } = frontendOnly;
 
 // Live FastAPI does not implement most forward-contract / frontend-only admin
-// surfaces yet (impersonation, saved-views). Soft-fail those reads to empty
-// defaults so the console shell stays usable. Tickets, onboarding-queue,
-// claims oversight, analytics, tags and audit-logs are implemented on the live API.
+// surfaces yet (impersonation). Soft-fail those reads to empty defaults so the
+// console shell stays usable. Tickets, onboarding-queue, claims oversight,
+// analytics, tags and audit-logs are implemented on the live API.
 function emptyPage<T>(pageSize = 100): Page<T> {
   return { items: [], total: 0, page: 1, page_size: pageSize };
 }
@@ -174,6 +175,25 @@ export async function listAuditLogs(
 export async function getAuditLog(eventCode: string): Promise<AuditLogOut> {
   return audit.getAuditLog(eventCode, { headers: await serverSessionHeaders() });
 }
+
+export async function getCurrentUser(): Promise<MeResponse> {
+  return authEndpoints.me({ headers: await serverSessionHeaders() });
+}
+
+/** Map API role codes to console preference labels. */
+export function operatorRoleLabel(role: string | null | undefined): string {
+  switch ((role ?? "").toUpperCase()) {
+    case "SUPER_ADMIN":
+      return "super-admin";
+    case "OPERATOR":
+      return "operator";
+    case "ANNOTATOR":
+      return "annotator";
+    default:
+      return (role ?? "").toLowerCase() || "operator";
+  }
+}
+
 export async function listTickets(
   query: Parameters<typeof adminTickets.listTickets>[0] = {},
 ): Promise<Page<Ticket>> {
@@ -228,7 +248,6 @@ export async function getQualityReport(): Promise<QualityReport> {
     headers: await serverSessionHeaders(),
   });
 }
-export const listSavedViews = adminSavedViews.listSavedViews;
 export function getImpersonationSession(): Promise<
   Awaited<ReturnType<typeof adminImpersonation.getImpersonationSession>>
 > {

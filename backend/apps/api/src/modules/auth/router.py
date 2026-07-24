@@ -12,6 +12,7 @@ from src.modules.auth.schemas import (
     LoginRequest,
     LoginResponse,
     MeResponse,
+    ProfileUpdateRequest,
     SuccessResponse,
 )
 from src.modules.mfa import service as mfa_service
@@ -56,13 +57,16 @@ async def logout(response: Response) -> SuccessResponse:
 
 @router.get("/me", response_model=MeResponse)
 async def me(user: CurrentUserDep, db: DbSession) -> MeResponse:
-    display_name = await service.resolve_display_name(db, user)
-    return MeResponse(
-        user_id=user.id,
-        role=user.role,
-        clinic_id=user.clinic_id,
-        display_name=display_name,
-    )
+    return await service.get_me(db, user)
+
+
+@router.patch("/me", response_model=MeResponse)
+async def update_me(
+    body: ProfileUpdateRequest,
+    user: CurrentUserDep,
+    db: DbSession,
+) -> MeResponse:
+    return await service.update_profile(db, user, display_name=body.display_name)
 
 
 @router.get("/clinics", response_model=AuthClinicList)

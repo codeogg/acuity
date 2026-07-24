@@ -10,10 +10,10 @@ Every row is an endpoint the frontend calls. **EXISTS** = implemented by the dem
 
 | Status | Count |
 |---|---|
-| EXISTS | 79 |
-| DRIFT | 2 |
-| PARTIAL | 4 |
-| MISSING | 46 |
+| EXISTS | 84 |
+| DRIFT | 15 |
+| PARTIAL | 0 |
+| MISSING | 31 |
 | FUTURE-AUTH | 9 |
 | **Total frontend endpoints** | **140** |
 
@@ -59,6 +59,9 @@ Every row is an endpoint the frontend calls. **EXISTS** = implemented by the dem
 
 | Status | Method | Path | Notes |
 |---|---|---|---|
+| EXISTS | GET | `/api/admin/audit-logs` | List Audit Logs |
+| EXISTS | POST | `/api/admin/audit-logs` | Create Audit Log |
+| EXISTS | GET | `/api/admin/audit-logs/{event_code}` | Get Audit Log |
 | EXISTS | GET | `/api/admin/clinics` | List Clinics |
 | EXISTS | POST | `/api/admin/clinics` | Create Clinic |
 | EXISTS | DELETE | `/api/admin/clinics/{clinic_id}` | Delete Clinic |
@@ -83,6 +86,7 @@ Every row is an endpoint the frontend calls. **EXISTS** = implemented by the dem
 | EXISTS | DELETE | `/api/admin/doctors/{doctor_id}` | Delete Doctor |
 | EXISTS | GET | `/api/admin/doctors/{doctor_id}` | Get Doctor |
 | EXISTS | PUT | `/api/admin/doctors/{doctor_id}` | Update Doctor |
+| EXISTS | PUT | `/api/admin/doctors/{doctor_id}/account-notes` | Set Account Notes |
 | EXISTS | POST | `/api/admin/doctors/{doctor_id}/reset-password` | Reset Password |
 | EXISTS | PATCH | `/api/admin/doctors/{doctor_id}/status` | Update Status |
 | EXISTS | GET | `/api/admin/field-domains` | List Domains |
@@ -118,16 +122,19 @@ Every row is an endpoint the frontend calls. **EXISTS** = implemented by the dem
 | EXISTS | POST | `/api/admin/templates/{template_id}/reparse` | Reparse Template |
 | EXISTS | GET | `/api/admin/transform-rules` | List Rules |
 | EXISTS | POST | `/api/admin/transform-rules` | Create Rule |
-| PARTIAL | GET | `/api/admin/audit-events` | `listAuditEvents` — Audit trail read + client-emitted events (impersonation lifecycle, act-as edits). operation_log exists server-side but is never written or exposed. (matrix-admin.md §11 AU9, §6 I7) — The backend's operation_log table exists but is never written; wiring it is the backend work here. |
-| PARTIAL | POST | `/api/admin/audit-events` | `recordAuditEvent` — Audit trail read + client-emitted events (impersonation lifecycle, act-as edits). operation_log exists server-side but is never written or exposed. (matrix-admin.md §11 AU9, §6 I7) |
-| PARTIAL | GET | `/api/admin/claims` | `listClaimsOversight` — Admin-scoped claims list + detail (PHI-redacted). The console currently rides doctor-scoped routes an admin token cannot call — the seam breaks at integration. (matrix-admin.md §13 X2, §19 API4) — patient_name is null at portfolio level pending the redaction-rule decision. |
-| PARTIAL | GET | `/api/admin/claims/{claim_id}` | `getClaimOversight` — Admin-scoped claims list + detail (PHI-redacted). The console currently rides doctor-scoped routes an admin token cannot call — the seam breaks at integration. (matrix-admin.md §13 X2, §19 API4) — final_field_values withheld at portfolio level pending the redaction-rule decision. |
-| MISSING | POST | `/api/admin/analytics/export` | `exportAnalytics` — Usage / funnel / verification / quality aggregates + surrogate-only export; also feeds the dashboard forms-processed card. No aggregates endpoints exist. (matrix-admin.md §10, §3 D3, §5 DOC11) |
-| MISSING | GET | `/api/admin/analytics/funnel` | `getActivationFunnel` — Usage / funnel / verification / quality aggregates + surrogate-only export; also feeds the dashboard forms-processed card. No aggregates endpoints exist. (matrix-admin.md §10, §3 D3, §5 DOC11) |
-| MISSING | GET | `/api/admin/analytics/overview` | `getAnalyticsOverview` — Usage / funnel / verification / quality aggregates + surrogate-only export; also feeds the dashboard forms-processed card. No aggregates endpoints exist. (matrix-admin.md §10, §3 D3, §5 DOC11) |
-| MISSING | GET | `/api/admin/analytics/quality` | `getQualityReport` — Usage / funnel / verification / quality aggregates + surrogate-only export; also feeds the dashboard forms-processed card. No aggregates endpoints exist. (matrix-admin.md §10, §3 D3, §5 DOC11) |
-| MISSING | GET | `/api/admin/analytics/usage` | `getUsageSeries` — Usage / funnel / verification / quality aggregates + surrogate-only export; also feeds the dashboard forms-processed card. No aggregates endpoints exist. (matrix-admin.md §10, §3 D3, §5 DOC11) |
-| MISSING | GET | `/api/admin/analytics/verification` | `getVerificationReport` — Usage / funnel / verification / quality aggregates + surrogate-only export; also feeds the dashboard forms-processed card. No aggregates endpoints exist. (matrix-admin.md §10, §3 D3, §5 DOC11) |
+| DRIFT | POST | `/api/admin/analytics/export` | `exportAnalytics` — Usage / funnel / verification / quality aggregates + surrogate-only export — now backed by FastAPI claim/clinic aggregates; MSW retained for mock-first. (matrix-admin.md §10, §3 D3, §5 DOC11) |
+| DRIFT | GET | `/api/admin/analytics/funnel` | `getActivationFunnel` — Usage / funnel / verification / quality aggregates + surrogate-only export — now backed by FastAPI claim/clinic aggregates; MSW retained for mock-first. (matrix-admin.md §10, §3 D3, §5 DOC11) |
+| DRIFT | GET | `/api/admin/analytics/overview` | `getAnalyticsOverview` — Usage / funnel / verification / quality aggregates + surrogate-only export — now backed by FastAPI claim/clinic aggregates; MSW retained for mock-first. (matrix-admin.md §10, §3 D3, §5 DOC11) |
+| DRIFT | GET | `/api/admin/analytics/quality` | `getQualityReport` — Usage / funnel / verification / quality aggregates + surrogate-only export — now backed by FastAPI claim/clinic aggregates; MSW retained for mock-first. (matrix-admin.md §10, §3 D3, §5 DOC11) |
+| DRIFT | GET | `/api/admin/analytics/usage` | `getUsageSeries` — Usage / funnel / verification / quality aggregates + surrogate-only export — now backed by FastAPI claim/clinic aggregates; MSW retained for mock-first. (matrix-admin.md §10, §3 D3, §5 DOC11) |
+| DRIFT | GET | `/api/admin/analytics/verification` | `getVerificationReport` — Usage / funnel / verification / quality aggregates + surrogate-only export — now backed by FastAPI claim/clinic aggregates; MSW retained for mock-first. (matrix-admin.md §10, §3 D3, §5 DOC11) |
+| DRIFT | GET | `/api/admin/claims` | `listClaimsOversight` — Admin-scoped claims list + detail (PHI-redacted) — now backed by FastAPI; MSW retained for mock-first. (matrix-admin.md §13 X2, §19 API4) — patient_name is null at portfolio level; final_field_values are returned for client-side masked reveal. |
+| DRIFT | GET | `/api/admin/claims/{claim_id}` | `getClaimOversight` — Admin-scoped claims list + detail (PHI-redacted) — now backed by FastAPI; MSW retained for mock-first. (matrix-admin.md §13 X2, §19 API4) — patient_name and ai_raw_result redacted; final_field_values returned for client-side masked reveal. |
+| DRIFT | GET | `/api/admin/onboarding-queue` | `listOnboardingQueue` — Operations tickets + onboarding queue — now backed by FastAPI ops_ticket tables; MSW retained for mock-first. (matrix-admin.md §9) |
+| DRIFT | GET | `/api/admin/tickets` | `listTickets` — Operations tickets + onboarding queue — now backed by FastAPI ops_ticket tables; MSW retained for mock-first. (matrix-admin.md §9) |
+| DRIFT | GET | `/api/admin/tickets/{ticket_id}` | `getTicket` — Operations tickets + onboarding queue — now backed by FastAPI ops_ticket tables; MSW retained for mock-first. (matrix-admin.md §9) |
+| DRIFT | PUT | `/api/admin/tickets/{ticket_id}` | `updateTicket` — Operations tickets + onboarding queue — now backed by FastAPI ops_ticket tables; MSW retained for mock-first. (matrix-admin.md §9) |
+| DRIFT | POST | `/api/admin/tickets/{ticket_id}/resolve` | `resolveTicket` — Operations tickets + onboarding queue — now backed by FastAPI ops_ticket tables; MSW retained for mock-first. (matrix-admin.md §9) |
 | MISSING | PATCH | `/api/admin/clinics/{clinic_id}/notes` | `updateClinicNotes` — Account-clinic many-to-many, non-destructive lifecycle, operator notes, and login-issue tooling per dev ADR 0041; mock-first extensions on DoctorOut/ClinicOut until the backend lands them. (dev ADR 0041) |
 | MISSING | PATCH | `/api/admin/doctors/{doctor_id}/account-model` | `updateDoctorAccountModel` — Account-clinic many-to-many, non-destructive lifecycle, operator notes, and login-issue tooling per dev ADR 0041; mock-first extensions on DoctorOut/ClinicOut until the backend lands them. (dev ADR 0041) |
 | MISSING | POST | `/api/admin/doctors/{doctor_id}/clinics` | `linkDoctorClinic` — Account-clinic many-to-many, non-destructive lifecycle, operator notes, and login-issue tooling per dev ADR 0041; mock-first extensions on DoctorOut/ClinicOut until the backend lands them. (dev ADR 0041) |
@@ -138,29 +145,22 @@ Every row is an endpoint the frontend calls. **EXISTS** = implemented by the dem
 | MISSING | POST | `/api/admin/impersonation/end` | `endImpersonation` — Operator-side impersonation sessions; server-persisted so the banner survives reload, moving toward the server-rendered invariant. Lifecycle emits audit events. (matrix-admin.md §6, §21 item 12) |
 | MISSING | GET | `/api/admin/impersonation/session` | `getImpersonationSession` — Operator-side impersonation sessions; server-persisted so the banner survives reload, moving toward the server-rendered invariant. Lifecycle emits audit events. (matrix-admin.md §6, §21 item 12) |
 | MISSING | POST | `/api/admin/impersonation/start` | `startImpersonation` — Operator-side impersonation sessions; server-persisted so the banner survives reload, moving toward the server-rendered invariant. Lifecycle emits audit events. (matrix-admin.md §6, §21 item 12) — Start/end/abandon emit audit events. |
-| MISSING | GET | `/api/admin/onboarding-queue` | `listOnboardingQueue` — Operations tickets + onboarding queue — an absent console destination with no backend support. (matrix-admin.md §9) |
-| MISSING | GET | `/api/admin/saved-views` | `listSavedViews` — Named filter+sort presets for the ops grids (saved-view tab strip with counts, default, star). (matrix-admin.md §15) |
-| MISSING | POST | `/api/admin/saved-views` | `createSavedView` — Named filter+sort presets for the ops grids (saved-view tab strip with counts, default, star). (matrix-admin.md §15) |
-| MISSING | DELETE | `/api/admin/saved-views/{view_id}` | `deleteSavedView` — Named filter+sort presets for the ops grids (saved-view tab strip with counts, default, star). (matrix-admin.md §15) |
-| MISSING | PUT | `/api/admin/saved-views/{view_id}` | `updateSavedView` — Named filter+sort presets for the ops grids (saved-view tab strip with counts, default, star). (matrix-admin.md §15) |
 | MISSING | GET | `/api/admin/tags` | `listTags` — Form-tag taxonomy + per-doctor visibility matrix — an absent console destination with no backend support. Retire re-maps, never orphans. (matrix-admin.md §8) |
 | MISSING | POST | `/api/admin/tags` | `createTag` — Form-tag taxonomy + per-doctor visibility matrix — an absent console destination with no backend support. Retire re-maps, never orphans. (matrix-admin.md §8) |
 | MISSING | PUT | `/api/admin/tags/{tag_id}` | `updateTag` — Form-tag taxonomy + per-doctor visibility matrix — an absent console destination with no backend support. Retire re-maps, never orphans. (matrix-admin.md §8) |
 | MISSING | POST | `/api/admin/tags/{tag_id}/retire` | `retireTag` — Form-tag taxonomy + per-doctor visibility matrix — an absent console destination with no backend support. Retire re-maps, never orphans. (matrix-admin.md §8) |
 | MISSING | GET | `/api/admin/tags/visibility` | `getTagVisibility` — Form-tag taxonomy + per-doctor visibility matrix — an absent console destination with no backend support. Retire re-maps, never orphans. (matrix-admin.md §8) |
 | MISSING | PUT | `/api/admin/tags/visibility` | `setTagVisibility` — Form-tag taxonomy + per-doctor visibility matrix — an absent console destination with no backend support. Retire re-maps, never orphans. (matrix-admin.md §8) |
-| MISSING | GET | `/api/admin/tickets` | `listTickets` — Operations tickets + onboarding queue — an absent console destination with no backend support. (matrix-admin.md §9) |
-| MISSING | GET | `/api/admin/tickets/{ticket_id}` | `getTicket` — Operations tickets + onboarding queue — an absent console destination with no backend support. (matrix-admin.md §9) |
-| MISSING | PUT | `/api/admin/tickets/{ticket_id}` | `updateTicket` — Operations tickets + onboarding queue — an absent console destination with no backend support. (matrix-admin.md §9) |
-| MISSING | POST | `/api/admin/tickets/{ticket_id}/resolve` | `resolveTicket` — Operations tickets + onboarding queue — an absent console destination with no backend support. (matrix-admin.md §9) |
 
 ## Auth journeys (`packages/auth-ui`, mounted in app + console) — /auth/*
 
 | Status | Method | Path | Notes |
 |---|---|---|---|
+| implemented | POST | `/api/auth/mfa/verify-backup-code` | Verify MFA with a one-time backup recovery code |
 | EXISTS | POST | `/api/auth/login` | Login — Backend asks (non-contract): rate-limit this endpoint (ADR 0040 compensating control) and make the session cookie's `secure` flag environment-driven (hardcoded False in the demo). The token is returned in the body AND set as the httpOnly cookie; browser clients use the cookie. |
 | EXISTS | POST | `/api/auth/logout` | Logout — Normalised to the typed SuccessResponse (the implemented backend returns an ad-hoc dict). |
 | EXISTS | GET | `/api/auth/me` | Me |
+| EXISTS | PATCH | `/api/auth/me` | Update current user profile |
 | FUTURE-AUTH | GET | `/api/auth/clinics` | `listAccountClinics` — The folded-auth journey beyond demo login/me/logout: MFA challenge/verify (TOTP + backup code), account discovery + clinic selection, recovery, session state/refresh, session-expiry deep-link token + return-target allowlist. WorkOS + MFA spec target behind the AuthAdapter seam. (matrix-auth.md §1.8/1.9, P0-2) — also: app, admin |
 | FUTURE-AUTH | POST | `/api/auth/clinics/select` | `selectClinic` — The folded-auth journey beyond demo login/me/logout: MFA challenge/verify (TOTP + backup code), account discovery + clinic selection, recovery, session state/refresh, session-expiry deep-link token + return-target allowlist. WorkOS + MFA spec target behind the AuthAdapter seam. (matrix-auth.md §1.8/1.9, P0-2) — also: app, admin |
 | FUTURE-AUTH | POST | `/api/auth/mfa/challenge` | `beginMfaChallenge` — The folded-auth journey beyond demo login/me/logout: MFA challenge/verify (TOTP + backup code), account discovery + clinic selection, recovery, session state/refresh, session-expiry deep-link token + return-target allowlist. WorkOS + MFA spec target behind the AuthAdapter seam. (matrix-auth.md §1.8/1.9, P0-2) — also: app, admin |

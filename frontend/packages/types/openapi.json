@@ -121,6 +121,45 @@
             }
           }
         }
+      },
+      "patch": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Update current user profile",
+        "operationId": "updateMe",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Domain error (ErrorEnvelope). Request-shape validation failures return the native 422 HTTPValidationError instead.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/admin/clinics": {
@@ -6051,181 +6090,6 @@
         ]
       }
     },
-    "/api/admin/saved-views": {
-      "get": {
-        "tags": [
-          "admin-saved-views"
-        ],
-        "summary": "List saved views",
-        "operationId": "listSavedViews",
-        "x-backend-status": "MISSING",
-        "parameters": [
-          {
-            "name": "grid",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SavedView"
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Domain error (ErrorEnvelope). Request-shape validation failures return the native 422 HTTPValidationError instead.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "admin-saved-views"
-        ],
-        "summary": "Create a saved view",
-        "operationId": "createSavedView",
-        "x-backend-status": "MISSING",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SavedViewCreate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SavedView"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Domain error (ErrorEnvelope). Request-shape validation failures return the native 422 HTTPValidationError instead.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/IdempotencyKey"
-          }
-        ]
-      }
-    },
-    "/api/admin/saved-views/{view_id}": {
-      "put": {
-        "tags": [
-          "admin-saved-views"
-        ],
-        "summary": "Update a saved view",
-        "operationId": "updateSavedView",
-        "x-backend-status": "MISSING",
-        "parameters": [
-          {
-            "name": "view_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SavedViewUpdate"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SavedView"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Domain error (ErrorEnvelope). Request-shape validation failures return the native 422 HTTPValidationError instead.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "admin-saved-views"
-        ],
-        "summary": "Delete a saved view",
-        "operationId": "deleteSavedView",
-        "x-backend-status": "MISSING",
-        "parameters": [
-          {
-            "name": "view_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Deleted."
-          },
-          "default": {
-            "description": "Domain error (ErrorEnvelope). Request-shape validation failures return the native 422 HTTPValidationError instead.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/admin/impersonation/session": {
       "get": {
         "tags": [
@@ -9478,6 +9342,18 @@
           "merged_workspace": {
             "type": "boolean",
             "description": "True when a multi-clinic identity enters one combined workspace (ADR 0041 §6; backend ask)."
+          },
+          "username": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Username",
+            "description": "Login account (admin username or doctor login_account)."
           }
         },
         "type": "object",
@@ -12594,97 +12470,6 @@
           "logged_event_id"
         ]
       },
-      "SavedView": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "grid": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "filters": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "sort": {
-            "type": "string"
-          },
-          "is_default": {
-            "type": "boolean"
-          },
-          "starred": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "id",
-          "grid",
-          "name",
-          "filters",
-          "sort",
-          "is_default",
-          "starred"
-        ]
-      },
-      "SavedViewCreate": {
-        "type": "object",
-        "properties": {
-          "grid": {
-            "type": "string"
-          },
-          "name": {
-            "type": "string"
-          },
-          "filters": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "sort": {
-            "type": "string"
-          },
-          "is_default": {
-            "type": "boolean"
-          },
-          "starred": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "grid",
-          "name"
-        ]
-      },
-      "SavedViewUpdate": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "filters": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            }
-          },
-          "sort": {
-            "type": "string"
-          },
-          "is_default": {
-            "type": "boolean"
-          },
-          "starred": {
-            "type": "boolean"
-          }
-        }
-      },
       "ImpersonationSession": {
         "type": "object",
         "properties": {
@@ -13305,6 +13090,23 @@
             ]
           }
         }
+      },
+      "ProfileUpdateRequest": {
+        "type": "object",
+        "title": "ProfileUpdateRequest",
+        "properties": {
+          "display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Name"
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -13436,11 +13238,6 @@
     {
       "name": "admin-analytics",
       "description": "Console analytics aggregates; exports are surrogate-only and audit-logged.",
-      "x-backend-status-group": true
-    },
-    {
-      "name": "admin-saved-views",
-      "description": "Named filter+sort presets for the console ops grids.",
       "x-backend-status-group": true
     },
     {

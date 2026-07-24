@@ -15,13 +15,27 @@ import { changePasswordAction, changeRoleAction, updateProfileAction } from "@/l
 import { consoleSignOut } from "@/components/shell/console-sign-out";
 import type { OperatorAccount } from "@/lib/ops-model";
 
-export function ProfileFields({ name, email }: { name: string; email: string }) {
+export function ProfileFields({ name, username }: { name: string; username: string }) {
   const t = useTranslations("settings");
   return (
     <>
-      <CrmFieldRow label={t("display-name")} value={name} commit={(next) => updateProfileAction({ name: next })} />
-      <CrmFieldRow label={t("email")} value={email} commit={(next) => updateProfileAction({ email: next })} />
+      <CrmFieldRow
+        label={t("display-name")}
+        value={name}
+        commit={(next) => updateProfileAction({ name: next })}
+        successMessage={t("profile-saved")}
+      />
+      <KeyValReadonly label={t("username")} value={username} />
     </>
+  );
+}
+
+function KeyValReadonly({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline justify-between gap-4 border-b border-border py-2.5 last:border-0">
+      <span className="shrink-0 text-sm text-muted-foreground">{label}</span>
+      <span className="min-w-0 truncate font-mono text-sm text-foreground">{value}</span>
+    </div>
   );
 }
 

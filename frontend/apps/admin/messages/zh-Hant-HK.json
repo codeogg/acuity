@@ -964,7 +964,9 @@
     "title": "偏好設定",
     "profile": "個人資料",
     "display-name": "顯示名稱",
+    "username": "登入帳號",
     "email": "電郵",
+    "profile-saved": "已更新個人資料",
     "locale": "語言",
     "password": "修改密碼",
     "password-current": "目前密碼",
@@ -1004,16 +1006,6 @@
     "device-dates": "登記於 {registered}．上次使用：{lastUsed}",
     "device-never-used": "尚未使用",
     "backup-key-nudge": "目前只登記了一支安全金鑰。請立即登記後備金鑰——若唯一的金鑰遺失，須經較嚴格的身分重新核實程序才能復原。"
-  },
-  "saved-views": {
-    "add": "儲存目前檢視",
-    "title": "儲存目前檢視",
-    "hint": "將目前的篩選、排序及分頁組合儲存為具名檢視。",
-    "name-placeholder": "檢視名稱",
-    "default-name": "我的檢視",
-    "cancel": "取消",
-    "save": "儲存檢視",
-    "saved": "已儲存檢視「{name}」"
   },
   "bulk": {
     "selected": "已選取（本頁）",

@@ -9,13 +9,16 @@ import { Avatar } from "@acuity/ui";
 import { AcuityIcon } from "@acuity/ui";
 import { KeyVal } from "@/components/ui/detail";
 import { ProfileFields, ChangePasswordForm, RbacPanel, SettingsSignOut } from "./settings-view";
-import { getOperatorProfile, listOperators } from "@/lib/ops-model";
+import { getCurrentUser, operatorRoleLabel } from "@/lib/data";
+import { listOperators } from "@/lib/ops-model";
 
 export default async function SettingsPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("settings");
-  const profile = getOperatorProfile();
+  const me = await getCurrentUser();
+  const displayName = me.display_name?.trim() || me.username || `user-${me.user_id}`;
+  const roleLabel = operatorRoleLabel(me.role);
   const operators = listOperators();
 
   return (
@@ -28,16 +31,16 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
               {t("profile")}
             </h2>
             <div className="mb-4 flex items-center gap-4">
-              <Avatar name={profile.name} size={48} />
+              <Avatar name={displayName} size={48} />
               <div>
-                <div className="text-sm font-medium text-foreground">{profile.name}</div>
+                <div className="text-sm font-medium text-foreground">{displayName}</div>
                 <div className="flex items-center gap-1 font-mono text-xs text-muted-foreground">
                   <AcuityIcon name="shield" size={12} />
-                  {profile.role}
+                  {roleLabel}
                 </div>
               </div>
             </div>
-            <ProfileFields name={profile.name} email={profile.email} />
+            <ProfileFields name={displayName} username={me.username ?? "—"} />
             <KeyVal label={t("locale")}>{locale === "zh-Hant-HK" ? "繁體中文（香港）" : "English (Hong Kong)"}</KeyVal>
           </section>
 
@@ -48,7 +51,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
             <ChangePasswordForm />
           </section>
 
-          {profile.role === "super-admin" ? (
+          {roleLabel === "super-admin" ? (
             <section className="rounded-lg border border-border bg-card p-6">
               <div className="mb-4 flex items-center gap-2">
                 <h2 className="font-mono text-xs font-medium uppercase tracking-eyebrow text-muted-foreground">

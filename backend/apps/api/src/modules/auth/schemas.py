@@ -27,6 +27,11 @@ class MeResponse(BaseModel):
     role: str
     clinic_id: int | None = None
     display_name: str | None = None
+    username: str | None = None
+
+
+class ProfileUpdateRequest(BaseModel):
+    display_name: str | None = None
 
 
 class ChangePasswordRequest(BaseModel):

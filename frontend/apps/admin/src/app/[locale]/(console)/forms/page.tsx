@@ -1,4 +1,4 @@
-// Forms — policy-template library: Intake / Library / All saved-view tabs
+// Forms — policy-template library: Intake / Library / All count tabs
 // with counts, upload dropzone (blank insurer forms only — no PHI), per-row
 // retry for failed parses (All tab), intake vs library column sets, pagination,
 // bulk re-tag / archive, and row-open into the field-map editor.
@@ -213,7 +213,6 @@ async function FormsGrid({ locale, sp }: { locale: string; sp: Search }) {
       <SectionTopBar
         eyebrow={t("eyebrow")}
         title={t("title")}
-        grid="forms"
         tabs={tabs}
         action={
           <UploadDropzone

@@ -16,8 +16,7 @@ import { Empty } from "@/components/ui/empty";
 import { AcuityIcon } from "@acuity/ui";
 import { GridSkeleton } from "@/components/ui/skeletons";
 import { TicketDrawer } from "@/components/drawers/ticket-drawer";
-import { listClinicRows, listOnboardingQueue, listTickets } from "@/lib/data";
-import { getOperatorProfile } from "@/lib/ops-model";
+import { getCurrentUser, listClinicRows, listOnboardingQueue, listTickets } from "@/lib/data";
 import { ticketStatus } from "@/lib/status";
 import { formatRelative } from "@acuity/i18n/format";
 
@@ -57,7 +56,8 @@ export default async function TicketsPage({
 async function TicketsGrid({ locale, sp }: { locale: string; sp: Search }) {
   const tab: Tab = (TABS as readonly string[]).includes(sp.tab ?? "") ? (sp.tab as Tab) : "queue";
   const pathname = `/${locale}/tickets`;
-  const operator = getOperatorProfile();
+  const me = await getCurrentUser().catch(() => null);
+  const operatorName = me?.display_name?.trim() || me?.username || "";
 
   const [t, tRoot, queue, ticketsPage, clinicRows] = await Promise.all([
     getTranslations("tickets"),
@@ -81,7 +81,7 @@ async function TicketsGrid({ locale, sp }: { locale: string; sp: Search }) {
     [...rows].sort((a, b) => a.updated_at.localeCompare(b.updated_at));
   const allTickets = byAge(ticketsPage.items);
   const openTickets = allTickets.filter((x) => x.status !== "resolved");
-  const mine = allTickets.filter((x) => x.owner === operator.name);
+  const mine = allTickets.filter((x) => operatorName && x.owner === operatorName);
   const counts: Record<Tab, number> = {
     queue: queue.length,
     open: openTickets.length,
@@ -160,7 +160,7 @@ async function TicketsGrid({ locale, sp }: { locale: string; sp: Search }) {
 
   return (
     <>
-      <SectionTopBar eyebrow={t("eyebrow")} title={t("title")} grid="tickets" tabs={tabs} />
+      <SectionTopBar eyebrow={t("eyebrow")} title={t("title")} tabs={tabs} />
       <div className="slim-scroll min-h-0 flex-1 overflow-y-auto pb-6 pt-2">
         {tab === "queue" ? (
           queue.length === 0 ? (

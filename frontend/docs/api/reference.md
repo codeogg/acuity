@@ -25,9 +25,9 @@ Operations without `x-backend-status` are implemented by the backend today. Oper
 
 | Group | Operations | Backend status |
 |---|---|---|
-| [auth](#groupauth) | 3 | EXISTS |
+| [auth](#groupauth) | 4 | EXISTS |
 | [admin:clinics](#groupadminclinics) | 19 | EXISTS |
-| [admin:doctors](#groupadmindoctors) | 7 | EXISTS |
+| [admin:doctors](#groupadmindoctors) | 8 | EXISTS |
 | [admin:insurance](#groupadmininsurance) | 7 | EXISTS |
 | [admin:standard-fields](#groupadminstandardfields) | 8 | EXISTS |
 | [admin:templates](#groupadmintemplates) | 18 | EXISTS |
@@ -41,15 +41,14 @@ Operations without `x-backend-status` are implemented by the backend today. Oper
 | [doctor-settings](#groupdoctorsettings) | 2 | MISSING |
 | [notifications](#groupnotifications) | 3 | MISSING |
 | [support-access](#groupsupportaccess) | 3 | MISSING |
-| [auth-flow](#groupauthflow) | 9 | FUTURE-AUTH |
-| [admin-audit](#groupadminaudit) | 2 | PARTIAL |
-| [admin-tickets](#groupadmintickets) | 5 | MISSING |
+| [auth-flow](#groupauthflow) | 10 | FUTURE-AUTH, implemented |
+| [admin-tickets](#groupadmintickets) | 5 | DRIFT |
 | [admin-tags](#groupadmintags) | 6 | MISSING |
-| [admin-analytics](#groupadminanalytics) | 6 | MISSING |
-| [admin-saved-views](#groupadminsavedviews) | 4 | MISSING |
+| [admin-analytics](#groupadminanalytics) | 6 | DRIFT |
 | [admin-impersonation](#groupadminimpersonation) | 3 | MISSING |
-| [admin-claims-oversight](#groupadminclaimsoversight) | 2 | PARTIAL |
+| [admin-claims-oversight](#groupadminclaimsoversight) | 2 | DRIFT |
 | [account-management](#groupaccountmanagement) | 7 | MISSING |
+| [admin:audit](#groupadminaudit) | 3 | EXISTS |
 | **Total** | **140** | |
 
 ## Group auth
@@ -90,6 +89,19 @@ Responses:
 Me
 
 Auth: bearer / cookie
+
+Responses:
+
+- `200` — [MeResponse](#meresponse)
+- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
+
+### PATCH `/api/auth/me`
+
+Update current user profile
+
+Auth: bearer / cookie
+
+Request body: [ProfileUpdateRequest](#profileupdaterequest)
 
 Responses:
 
@@ -621,6 +633,25 @@ Responses:
 
 - `200` — [ResetPasswordResponse](#resetpasswordresponse)
 - `422` — [HTTPValidationError](#httpvalidationerror)
+- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
+
+### PUT `/api/admin/doctors/{doctor_id}/account-notes`
+
+Set Account Notes
+
+Auth: bearer / cookie
+
+Path parameters:
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `doctor_id` | integer | yes |  |
+
+Request body: [AccountNotesUpdate](#accountnotesupdate)
+
+Responses:
+
+- `200` — [DoctorOut](#doctorout)
 - errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
 
 ## Group admin:insurance
@@ -1997,7 +2028,20 @@ Request body: [MfaVerifyRequest](#mfaverifyrequest)
 
 Responses:
 
-- `200` — [SuccessResponse](#successresponse)
+- `200` — [LoginResponse](#loginresponse)
+- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
+
+### POST `/api/auth/mfa/verify-backup-code`
+
+Verify MFA with a one-time backup recovery code — **Backend status: implemented** (forward contract — not yet implemented by the backend)
+
+Auth: none
+
+Request body: [MfaBackupCodeVerifyRequest](#mfabackupcodeverifyrequest)
+
+Responses:
+
+- `200` — [LoginResponse](#loginresponse)
 - errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
 
 ### POST `/api/auth/recovery/start`
@@ -2085,59 +2129,13 @@ Responses:
 - `200` — [DeepLinkRedeemResponse](#deeplinkredeemresponse)
 - errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
 
-## Group admin-audit
-
-Operator audit trail (the backend's unwritten operation_log, wired). Surrogate-only fields, no PHI.
-
-### GET `/api/admin/audit-events`
-
-List audit events — **Backend status: PARTIAL** (forward contract — not yet implemented by the backend)
-
-> The backend's operation_log table exists but is never written; wiring it is the backend work here.
-
-Auth: bearer / cookie
-
-Query parameters:
-
-| Name | Type | Required | Notes |
-|---|---|---|---|
-| `page` | integer | no |  |
-| `page_size` | integer | no |  |
-| `operator` | string | no |  |
-| `action` | string | no |  |
-| `clinic_code` | string | no |  |
-
-Responses:
-
-- `200` — [Page_AuditEvent_](#pageauditevent)
-- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
-
-### POST `/api/admin/audit-events`
-
-Record a client-driven audit event — **Backend status: PARTIAL** (forward contract — not yet implemented by the backend)
-
-Auth: bearer / cookie
-
-Header parameters:
-
-| Name | Type | Required | Notes |
-|---|---|---|---|
-| `Idempotency-Key` | string | no | Reserved. Not enforced in Phase 1; clients may send a unique key per logical mutation so later server-side enforcement is non-breaking. |
-
-Request body: [AuditEventCreate](#auditeventcreate)
-
-Responses:
-
-- `200` — [AuditEvent](#auditevent)
-- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
-
 ## Group admin-tickets
 
 Operations tickets and the clinic onboarding queue.
 
 ### GET `/api/admin/tickets`
 
-List tickets — **Backend status: MISSING** (forward contract — not yet implemented by the backend)
+List tickets — **Backend status: DRIFT** (forward contract — not yet implemented by the backend)
 
 Auth: bearer / cookie
 
@@ -2157,7 +2155,7 @@ Responses:
 
 ### GET `/api/admin/tickets/{ticket_id}`
 
-Get a ticket — **Backend status: MISSING** (forward contract — not yet implemented by the backend)
+Get a ticket — **Backend status: DRIFT** (forward contract — not yet implemented by the backend)
 
 Auth: bearer / cookie
 
@@ -2174,7 +2172,7 @@ Responses:
 
 ### PUT `/api/admin/tickets/{ticket_id}`
 
-Update a ticket — **Backend status: MISSING** (forward contract — not yet implemented by the backend)
+Update a ticket — **Backend status: DRIFT** (forward contract — not yet implemented by the backend)
 
 Auth: bearer / cookie
 
@@ -2193,7 +2191,7 @@ Responses:
 
 ### POST `/api/admin/tickets/{ticket_id}/resolve`
 
-Resolve a ticket — **Backend status: MISSING** (forward contract — not yet implemented by the backend)
+Resolve a ticket — **Backend status: DRIFT** (forward contract — not yet implemented by the backend)
 
 Auth: bearer / cookie
 
@@ -2218,7 +2216,7 @@ Responses:
 
 ### GET `/api/admin/onboarding-queue`
 
-List the clinic onboarding queue — **Backend status: MISSING** (forward contract — not yet implemented by the backend)
+List the clinic onboarding queue — **Backend status: DRIFT** (forward contract — not yet implemented by the backend)
 
 Auth: bearer / cookie
 
@@ -2347,7 +2345,7 @@ Console analytics aggregates; exports are surrogate-only and audit-logged.
 
 ### GET `/api/admin/analytics/overview`
 
-Analytics overview — **Backend status: MISSING** (forward contract — not yet implemented by the backend)
+Analytics overview — **Backend status: DRIFT** (forward contract — not yet implemented by the backend)
 
 Auth: bearer / cookie
 
@@ -2358,7 +2356,7 @@ Responses:
 
 ### GET `/api/admin/analytics/usage`
 
-Usage series — **Backend status: MISSING** (forward contract — not yet implemented by the backend)
+Usage series — **Backend status: DRIFT** (forward contract — not yet implemented by the backend)
 
 Auth: bearer / cookie
 
@@ -2377,7 +2375,7 @@ Responses:
 
 ### GET `/api/admin/analytics/funnel`
 
-Activation funnel — **Backend status: MISSING** (forward contract — not yet implemented by the backend)
+Activation funnel — **Backend status: DRIFT** (forward contract — not yet implemented by the backend)
 
 Auth: bearer / cookie
 
@@ -2388,7 +2386,7 @@ Responses:
 
 ### GET `/api/admin/analytics/verification`
 
-Verification report — **Backend status: MISSING** (forward contract — not yet implemented by the backend)
+Verification report — **Backend status: DRIFT** (forward contract — not yet implemented by the backend)
 
 Auth: bearer / cookie
 
@@ -2399,7 +2397,7 @@ Responses:
 
 ### GET `/api/admin/analytics/quality`
 
-Quality report — **Backend status: MISSING** (forward contract — not yet implemented by the backend)
+Quality report — **Backend status: DRIFT** (forward contract — not yet implemented by the backend)
 
 Auth: bearer / cookie
 
@@ -2410,7 +2408,7 @@ Responses:
 
 ### POST `/api/admin/analytics/export`
 
-Export an analytics report — **Backend status: MISSING** (forward contract — not yet implemented by the backend)
+Export an analytics report — **Backend status: DRIFT** (forward contract — not yet implemented by the backend)
 
 Auth: bearer / cookie
 
@@ -2425,82 +2423,6 @@ Request body: [AnalyticsExportRequest](#analyticsexportrequest)
 Responses:
 
 - `200` — [AnalyticsExportResult](#analyticsexportresult)
-- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
-
-## Group admin-saved-views
-
-Named filter+sort presets for the console ops grids.
-
-### GET `/api/admin/saved-views`
-
-List saved views — **Backend status: MISSING** (forward contract — not yet implemented by the backend)
-
-Auth: bearer / cookie
-
-Query parameters:
-
-| Name | Type | Required | Notes |
-|---|---|---|---|
-| `grid` | string | no |  |
-
-Responses:
-
-- `200` — array of [SavedView](#savedview)
-- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
-
-### POST `/api/admin/saved-views`
-
-Create a saved view — **Backend status: MISSING** (forward contract — not yet implemented by the backend)
-
-Auth: bearer / cookie
-
-Header parameters:
-
-| Name | Type | Required | Notes |
-|---|---|---|---|
-| `Idempotency-Key` | string | no | Reserved. Not enforced in Phase 1; clients may send a unique key per logical mutation so later server-side enforcement is non-breaking. |
-
-Request body: [SavedViewCreate](#savedviewcreate)
-
-Responses:
-
-- `200` — [SavedView](#savedview)
-- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
-
-### PUT `/api/admin/saved-views/{view_id}`
-
-Update a saved view — **Backend status: MISSING** (forward contract — not yet implemented by the backend)
-
-Auth: bearer / cookie
-
-Path parameters:
-
-| Name | Type | Required | Notes |
-|---|---|---|---|
-| `view_id` | string | yes |  |
-
-Request body: [SavedViewUpdate](#savedviewupdate)
-
-Responses:
-
-- `200` — [SavedView](#savedview)
-- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
-
-### DELETE `/api/admin/saved-views/{view_id}`
-
-Delete a saved view — **Backend status: MISSING** (forward contract — not yet implemented by the backend)
-
-Auth: bearer / cookie
-
-Path parameters:
-
-| Name | Type | Required | Notes |
-|---|---|---|---|
-| `view_id` | string | yes |  |
-
-Responses:
-
-- `204` — Deleted.
 - errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
 
 ## Group admin-impersonation
@@ -2562,9 +2484,9 @@ Admin-scoped claims oversight (cross-clinic, PHI-redacted): the console must not
 
 ### GET `/api/admin/claims`
 
-List claims across clinics (PHI-redacted) — **Backend status: PARTIAL** (forward contract — not yet implemented by the backend)
+List claims across clinics (PHI-redacted) — **Backend status: DRIFT** (forward contract — not yet implemented by the backend)
 
-> patient_name is null at portfolio level pending the redaction-rule decision.
+> patient_name is null at portfolio level; final_field_values are returned for client-side masked reveal.
 
 Auth: bearer / cookie
 
@@ -2586,9 +2508,9 @@ Responses:
 
 ### GET `/api/admin/claims/{claim_id}`
 
-Get one claim (PHI-redacted) — **Backend status: PARTIAL** (forward contract — not yet implemented by the backend)
+Get one claim (PHI-redacted) — **Backend status: DRIFT** (forward contract — not yet implemented by the backend)
 
-> final_field_values withheld at portfolio level pending the redaction-rule decision.
+> patient_name and ai_raw_result redacted; final_field_values returned for client-side masked reveal.
 
 Auth: bearer / cookie
 
@@ -2755,6 +2677,64 @@ Responses:
 - `200` — [ClinicAccountOut](#clinicaccountout)
 - errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
 
+## Group admin:audit
+
+Unified operator audit trail (append-only, PHI-safe).
+
+### GET `/api/admin/audit-logs`
+
+List Audit Logs
+
+Auth: bearer / cookie
+
+Query parameters:
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `page` | integer | no |  |
+| `page_size` | integer | no |  |
+| `scope` | `"global"` \| `"clinic"` | no |  |
+| `operator_id` | integer | no |  |
+| `action_type` | string | no |  |
+| `clinic_id` | integer | no |  |
+
+Responses:
+
+- `200` — [Page_AuditLogOut_](#pageauditlogout)
+- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
+
+### POST `/api/admin/audit-logs`
+
+Create Audit Log
+
+Client-driven audit write. PHI in field_set/detail is rejected server-side.
+
+Auth: bearer / cookie
+
+Request body: [AuditLogCreate](#auditlogcreate)
+
+Responses:
+
+- `200` — [AuditLogOut](#auditlogout)
+- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
+
+### GET `/api/admin/audit-logs/{event_code}`
+
+Get Audit Log
+
+Auth: bearer / cookie
+
+Path parameters:
+
+| Name | Type | Required | Notes |
+|---|---|---|---|
+| `event_code` | string | yes |  |
+
+Responses:
+
+- `200` — [AuditLogOut](#auditlogout)
+- errors — [ErrorEnvelope](#errorenvelope) (domain failures) / [HTTPValidationError](#httpvalidationerror) (native 422 request-shape validation)
+
 ## Schemas
 
 ### Body_replace_template_file_api_admin_templates__template_id__file_put
@@ -2791,10 +2771,16 @@ Responses:
 | `id` | integer | yes |  |
 | `submission_no` | string | yes |  |
 | `patient_name` | string \| null | yes |  |
+| `patient_name_cn` | string \| null | no |  |
+| `patient_name_en` | string \| null | no |  |
 | `company_id` | integer | yes |  |
 | `template_id` | integer | yes |  |
 | `status` | [ClaimStatus](#claimstatus) | yes |  |
 | `created_at` | string (date-time) | yes |  |
+| `generated_pdf_url` | string \| null | no |  |
+| `company_name` | string \| null | no |  |
+| `company_name_en` | string \| null | no |  |
+| `template_name` | string \| null | no |  |
 | `clinic_id` | integer | no | Clinic attribution for merged-workspace listings (backend ask, ADR 0041). |
 | `clinic_name` | string \| null | no |  |
 
@@ -2810,6 +2796,8 @@ Responses:
 | `template_id` | integer | yes |  |
 | `template_version` | string \| null | yes |  |
 | `patient_name` | string \| null | yes |  |
+| `patient_name_cn` | string \| null | no |  |
+| `patient_name_en` | string \| null | no |  |
 | `ai_raw_result` | object of any \| null | yes |  |
 | `final_field_values` | object of any \| null | yes |  |
 | `ai_token_usage` | integer \| null | yes |  |
@@ -2862,6 +2850,7 @@ Responses:
 | `created_at` | string (date-time) | yes |  |
 | `data_region` | string | yes | Clinic data residency: 香港 / 新加坡 / 美国. |
 | `is_flagged` | integer | yes | 1 = needs attention (operator flag), 0 = not flagged. |
+| `lifecycle_status` | string | yes | Operational lifecycle: provisioning \| onboarding \| active. Needs-attention is is_flagged, not a lifecycle value. |
 | `subscription_status` | string | no | Joined from clinic_subscriptions.subscription_status (1:1). |
 | `payment_status` | string | no | Joined from clinic_subscriptions.payment_status (1:1). |
 | `plan_code` | string | no | Joined from clinic_subscriptions.plan_code (1:1). |
@@ -2981,13 +2970,14 @@ Responses:
 | `login_account` | string | yes |  |
 | `password` | string | yes |  |
 | `signature_url` | string \| null | no | Opaque URL string. Production values are signed or public asset URLs (branding/asset class - long TTL acceptable). |
+| `specialty_tag_id` | integer \| null | no | 专科标签 ID（form_tag.kind=specialty）；省略时默认为全科。 |
 
 ### DoctorOut
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `id` | integer | yes |  |
-| `clinic_id` | integer | yes |  |
+| `clinic_id` | integer \| null | yes |  |
 | `doctor_name` | string | yes |  |
 | `doctor_name_en` | string \| null | yes |  |
 | `reg_no` | string \| null | yes |  |
@@ -2996,6 +2986,12 @@ Responses:
 | `login_account` | string | yes |  |
 | `status` | integer | yes | Organisation-entity status: 0 = disabled, 1 = enabled. |
 | `created_at` | string (date-time) | yes |  |
+| `workspace_mode` | string | yes |  |
+| `account_notes` | string \| null | no |  |
+| `account_notes_format` | `"markdown"` \| `"html"` | yes |  |
+| `specialty_tag_id` | integer | yes |  |
+| `specialty_label_en` | string | yes |  |
+| `specialty_label_zh` | string | yes |  |
 
 ### DoctorStatusUpdate
 
@@ -3014,6 +3010,7 @@ Responses:
 | `login_account` | string \| null | no |  |
 | `signature_url` | string \| null | no | Opaque URL string. Production values are signed or public asset URLs (branding/asset class - long TTL acceptable). |
 | `status` | integer \| null | no | **Deprecated.** Deprecated: use PATCH .../status. Kept for compatibility; servers keep accepting it. |
+| `specialty_tag_id` | integer \| null | no |  |
 
 ### DomainCreate
 
@@ -3157,13 +3154,15 @@ Responses:
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `access_token` | string | yes |  |
+| `access_token` | string \| null | no |  |
 | `token_type` | string | no | Default: `"bearer"`. |
 | `role` | [UserRole](#userrole) | yes |  |
 | `user_id` | integer | yes |  |
 | `clinic_id` | integer \| null | no |  |
 | `display_name` | string \| null | no |  |
 | `mfa_enabled` | boolean | no | Account MFA opt-in (ADR 0040; backend ask pending the account model). |
+| `mfa_required` | boolean | no | True when password OK but MFA step-up is required (doctors only). |
+| `mfa_token` | string \| null | no | Short-lived token for POST /auth/mfa/verify when mfa_required is true. |
 | `merged_workspace` | boolean | no | True when a multi-clinic identity enters one combined workspace (ADR 0041 §6; backend ask). |
 
 ### LogoUploadResponse
@@ -3182,6 +3181,7 @@ Responses:
 | `display_name` | string \| null | no |  |
 | `mfa_enabled` | boolean | no | Account MFA opt-in (ADR 0040; backend ask pending the account model). |
 | `merged_workspace` | boolean | no | True when a multi-clinic identity enters one combined workspace (ADR 0041 §6; backend ask). |
+| `username` | string \| null | no | Login account (admin username or doctor login_account). |
 
 ### MedicalRecordSubmit
 
@@ -3626,6 +3626,7 @@ Extends [DoctorOut](#doctorout).
 | `notes` | string | yes | Operator-internal markdown notes - never doctor-visible. |
 | `workspace_separation` | [WorkspaceSeparation](#workspaceseparation) | yes |  |
 | `mfa_enabled` | boolean | yes |  |
+| `notes_format` | `"markdown"` \| `"html"` | yes |  |
 
 ### ClinicAccountOut
 
@@ -3686,6 +3687,14 @@ Enum: `totp`, `backup-code`, `hardware-key`
 | `challenge_id` | string | no |  |
 | `method` | [MfaMethod](#mfamethod) | no |  |
 | `code` | string | yes |  |
+| `mfa_token` | string | no |  |
+
+### MfaBackupCodeVerifyRequest
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `code` | string | yes |  |
+| `mfa_token` | string | no |  |
 
 ### RecoveryStartRequest
 
@@ -3840,8 +3849,8 @@ Enum: `download`, `send`
 |---|---|---|---|
 | `doctor_id` | integer | yes |  |
 | `signature_image_url` | string \| null | yes |  |
-| `language` | string (`zh-Hant-HK` \| `en-HK`) | yes | Persisted on `doctor.language`. |
-| `idle_lock_minutes` | integer (2–30) | yes | Resolved: doctor override → clinic default → 10. |
+| `language` | `"zh-Hant-HK"` \| `"en-HK"` | yes | Doctor preferred UI locale (persisted on doctor.language). |
+| `idle_lock_minutes` | integer | yes | Resolved idle lock threshold in minutes (doctor override, else clinic default, else 10). |
 | `delivery_default` | [DeliveryDefault](#deliverydefault) | yes |  |
 | `trusted_devices` | array of [TrustedDevice](#trusteddevice) | yes |  |
 
@@ -3850,8 +3859,8 @@ Enum: `download`, `send`
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `signature_image_url` | string \| null | no |  |
-| `language` | string (`zh-Hant-HK` \| `en-HK`) | no | Writes `doctor.language`. |
-| `idle_lock_minutes` | integer (2–30) | no | Writes `doctor.idle_lock_minutes` personal override. |
+| `language` | `"zh-Hant-HK"` \| `"en-HK"` | no | Doctor preferred UI locale (zh-Hant-HK \| en-HK). |
+| `idle_lock_minutes` | integer | no | Personal idle lock override (2–30). Persisted on doctor.idle_lock_minutes. |
 | `delivery_default` | [DeliveryDefault](#deliverydefault) | no |  |
 | `remove_device_ids` | array of string | no |  |
 
@@ -4123,39 +4132,6 @@ Enum: `type`, `insurer`, `specialty`
 | `export_url` | string | yes | Opaque URL string. Production values are short-lived presigned URLs (patient document class - never durable public URLs). Exports are surrogate-only and always emit an `export` audit event. |
 | `logged_event_id` | string | yes |  |
 
-### SavedView
-
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `id` | string | yes |  |
-| `grid` | string | yes |  |
-| `name` | string | yes |  |
-| `filters` | object of string | yes |  |
-| `sort` | string | yes |  |
-| `is_default` | boolean | yes |  |
-| `starred` | boolean | yes |  |
-
-### SavedViewCreate
-
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `grid` | string | yes |  |
-| `name` | string | yes |  |
-| `filters` | object of string | no |  |
-| `sort` | string | no |  |
-| `is_default` | boolean | no |  |
-| `starred` | boolean | no |  |
-
-### SavedViewUpdate
-
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `name` | string | no |  |
-| `filters` | object of string | no |  |
-| `sort` | string | no |  |
-| `is_default` | boolean | no |  |
-| `starred` | boolean | no |  |
-
 ### ImpersonationSession
 
 | Field | Type | Required | Notes |
@@ -4282,4 +4258,57 @@ Enum: `type`, `insurer`, `specialty`
 | `operator_name` | string | no |  |
 | `operated_at` | string (date-time) | yes |  |
 | `ip_address` | string | no |  |
+
+### AuditActionType
+
+Enum: `account_creation`, `simulation_start`, `simulation_end`, `simulation_interrupt`, `proxy_edit`, `retention_override`, `template_publish`, `template_archive`, `crm_billing_edit`, `tag_category_change`, `batch_operation`, `export`, `patient_data_view`, `clinic_activate`
+
+### AuditLogOut
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `id` | integer | yes |  |
+| `event_code` | string | yes |  |
+| `action_type` | [AuditActionType](#auditactiontype) | yes |  |
+| `operator_id` | integer | yes |  |
+| `operator_name` | string | no |  |
+| `clinic_id` | integer | no |  |
+| `target_ref` | string | no |  |
+| `mode` | `"view-as"` \| `"act-as"` \| null | no |  |
+| `field_set` | string | no |  |
+| `detail` | object of any | no |  |
+| `created_at` | string (date-time) | yes |  |
+
+### AuditLogCreate
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `action_type` | [AuditActionType](#auditactiontype) | yes |  |
+| `clinic_id` | integer | no |  |
+| `target_ref` | string | no |  |
+| `mode` | `"view-as"` \| `"act-as"` \| null | no |  |
+| `field_set` | string | no |  |
+| `detail` | object of any | no |  |
+
+### Page_AuditLogOut_
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `items` | array of [AuditLogOut](#auditlogout) | yes |  |
+| `total` | integer | yes |  |
+| `page` | integer | yes |  |
+| `page_size` | integer | yes |  |
+
+### AccountNotesUpdate
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `notes` | string | no | Default: `""`. |
+| `notes_format` | `"markdown"` \| `"html"` \| null | no |  |
+
+### ProfileUpdateRequest
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `display_name` | string \| null | no |  |
 

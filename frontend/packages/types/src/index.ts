@@ -20,6 +20,7 @@ type Schemas = components["schemas"];
 export type LoginRequest = Schemas["LoginRequest"];
 export type LoginResponse = Schemas["LoginResponse"];
 export type MeResponse = Schemas["MeResponse"];
+export type ProfileUpdateRequest = Schemas["ProfileUpdateRequest"];
 
 // Clinics
 export type ClinicCreate = Schemas["ClinicCreate"];
@@ -230,11 +231,6 @@ export type QualityTrendPoint = Schemas["QualityTrendPoint"];
 export type QualityReport = Schemas["QualityReport"];
 export type AnalyticsExportRequest = Schemas["AnalyticsExportRequest"];
 export type AnalyticsExportResult = Schemas["AnalyticsExportResult"];
-
-// Admin saved views
-export type SavedView = Schemas["SavedView"];
-export type SavedViewCreate = Schemas["SavedViewCreate"];
-export type SavedViewUpdate = Schemas["SavedViewUpdate"];
 
 // --- hand-authored contract helpers ----------------------------------------
 

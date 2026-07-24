@@ -126,7 +126,6 @@ async function AuditGrid({ locale, sp }: { locale: string; sp: Search }) {
       <SectionTopBar
         eyebrow={t("eyebrow")}
         title={t("title")}
-        grid="audit"
         tabs={tabs}
         filterRow={
           <FilterRow>

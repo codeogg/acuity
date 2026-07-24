@@ -2,8 +2,8 @@
 // implemented statefully over the admin store (CRUD, enablement toggles,
 // template parse simulation, row_version optimistic lock on template fields),
 // plus the FRONTEND-ONLY admin modules (audit events, tickets + onboarding
-// queue, tags + visibility, analytics, saved views, impersonation, PHI-redacted
-// claims oversight). Tenant/entity misses return 404 with the error envelope.
+// queue, tags + visibility, analytics, impersonation, PHI-redacted claims
+// oversight). Tenant/entity misses return 404 with the error envelope.
 
 import { HttpResponse, http } from "msw";
 import type {
@@ -44,7 +44,6 @@ import type {
 } from "@acuity/types";
 import type { AuditLogCreate } from "@acuity/types";
 import type { ImpersonationSession, ImpersonationStartRequest } from "../../endpoints/frontend-only/admin-impersonation";
-import type { SavedView, SavedViewCreate, SavedViewUpdate } from "../../endpoints/frontend-only/admin-saved-views";
 import type { Tag, TagCreate, TagRetireRequest, TagUpdate, TagVisibilityEntry } from "../../endpoints/frontend-only/admin-tags";
 import type { TicketUpdate } from "../../endpoints/frontend-only/admin-tickets";
 import {
@@ -1670,68 +1669,6 @@ export const adminHandlers = [
       export_url: `/local-storage/exports/${body.report ?? "usage"}-${Date.now() % 100000}.csv`,
       logged_event_id: event.event_code,
     });
-  }),
-
-  // ===== frontend-only: saved views ================================================
-  http.get(`${API}/admin/saved-views`, async ({ request }) => {
-    const { scenario, deny } = await gate(request);
-    if (deny) return deny;
-    const url = new URL(request.url);
-    const grid = url.searchParams.get("grid");
-    let rows = frontendOnlyState().savedViews;
-    if (grid) rows = rows.filter((v) => v.grid === grid);
-    return HttpResponse.json(listItems(scenario, rows));
-  }),
-
-  http.post(`${API}/admin/saved-views`, async ({ request }) => {
-    const { deny } = await gate(request);
-    if (deny) return deny;
-    const body = (await request.json()) as SavedViewCreate;
-    const state = frontendOnlyState();
-    const view: SavedView = {
-      id: nextFrontendOnlyId("sv"),
-      grid: body.grid,
-      name: body.name,
-      filters: body.filters ?? {},
-      sort: body.sort ?? "",
-      is_default: body.is_default ?? false,
-      starred: body.starred ?? false,
-    };
-    if (view.is_default) {
-      for (const v of state.savedViews) if (v.grid === view.grid) v.is_default = false;
-    }
-    state.savedViews.push(view);
-    return HttpResponse.json(view);
-  }),
-
-  http.put(`${API}/admin/saved-views/:viewId`, async ({ request, params }) => {
-    const { deny } = await gate(request);
-    if (deny) return deny;
-    const state = frontendOnlyState();
-    const view = state.savedViews.find((v) => v.id === params.viewId);
-    if (!view) return notFoundZh("檢視不存在");
-    const body = (await request.json()) as SavedViewUpdate;
-    if (body.name !== undefined) view.name = body.name;
-    if (body.filters !== undefined) view.filters = body.filters;
-    if (body.sort !== undefined) view.sort = body.sort;
-    if (body.starred !== undefined) view.starred = body.starred;
-    if (body.is_default !== undefined) {
-      if (body.is_default) {
-        for (const v of state.savedViews) if (v.grid === view.grid) v.is_default = false;
-      }
-      view.is_default = body.is_default;
-    }
-    return HttpResponse.json(view);
-  }),
-
-  http.delete(`${API}/admin/saved-views/:viewId`, async ({ request, params }) => {
-    const { deny } = await gate(request);
-    if (deny) return deny;
-    const state = frontendOnlyState();
-    const index = state.savedViews.findIndex((v) => v.id === params.viewId);
-    if (index === -1) return notFoundZh("檢視不存在");
-    state.savedViews.splice(index, 1);
-    return new HttpResponse(null, { status: 204 });
   }),
 
   // ===== frontend-only: impersonation (support access, console side) ================

@@ -578,53 +578,6 @@
       ]
     },
     {
-      "name": "admin-saved-views",
-      "module": "./frontend-only/admin-saved-views",
-      "surfaces": [
-        "admin"
-      ],
-      "reason": "Named filter+sort presets for the ops grids (saved-view tab strip with counts, default, star).",
-      "matrix": "matrix-admin.md §15",
-      "ops": [
-        {
-          "method": "GET",
-          "path": "/api/admin/saved-views",
-          "fn": "listSavedViews",
-          "req": null,
-          "res": "SavedView[]",
-          "backend_status": "MISSING",
-          "msw_implemented": true
-        },
-        {
-          "method": "POST",
-          "path": "/api/admin/saved-views",
-          "fn": "createSavedView",
-          "req": "SavedViewCreate",
-          "res": "SavedView",
-          "backend_status": "MISSING",
-          "msw_implemented": true
-        },
-        {
-          "method": "PUT",
-          "path": "/api/admin/saved-views/{view_id}",
-          "fn": "updateSavedView",
-          "req": "SavedViewUpdate",
-          "res": "SavedView",
-          "backend_status": "MISSING",
-          "msw_implemented": true
-        },
-        {
-          "method": "DELETE",
-          "path": "/api/admin/saved-views/{view_id}",
-          "fn": "deleteSavedView",
-          "req": null,
-          "res": null,
-          "backend_status": "MISSING",
-          "msw_implemented": true
-        }
-      ]
-    },
-    {
       "name": "admin-impersonation",
       "module": "./frontend-only/admin-impersonation",
       "surfaces": [

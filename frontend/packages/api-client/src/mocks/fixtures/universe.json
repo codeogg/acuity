@@ -2995,41 +2995,6 @@
         "visible": false
       }
     ],
-    "saved_views": [
-      {
-        "id": "sv-1",
-        "grid": "clinics",
-        "name": "Active clinics",
-        "filters": {
-          "status": "1"
-        },
-        "sort": "clinic_name",
-        "is_default": true,
-        "starred": true
-      },
-      {
-        "id": "sv-2",
-        "grid": "doctors",
-        "name": "MFA pending",
-        "filters": {
-          "status": "0"
-        },
-        "sort": "-created_at",
-        "is_default": false,
-        "starred": false
-      },
-      {
-        "id": "sv-3",
-        "grid": "claims",
-        "name": "Awaiting confirmation",
-        "filters": {
-          "status": "AI_FILLED"
-        },
-        "sort": "-created_at",
-        "is_default": false,
-        "starred": true
-      }
-    ],
     "audit_events": [
       {
         "id": "EV-9016",

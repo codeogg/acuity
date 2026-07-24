@@ -56,7 +56,7 @@ backend cost and carries an `x-implementation-note` on the operation:
 - **The 16 frontend-only module groups** (61 operations tagged `x-backend-status`) are the forward
   contract for capabilities the demo backend lacks — document inbox, staff hand-off, doctor
   settings, notifications, support access, coverage registry, claim extensions, and the console's
-  audit/tickets/tags/analytics/saved-views/impersonation/claims-oversight/account-management
+  audit/tickets/tags/analytics/impersonation/claims-oversight/account-management
   groups. All are authored in the backend's own dialect, so adopting them costs the backend team
   nothing stylistically. Per-endpoint view: [endpoint-checklist.md](endpoint-checklist.md).
 - **Account management (ADR 0041)** includes the atomic switch operation

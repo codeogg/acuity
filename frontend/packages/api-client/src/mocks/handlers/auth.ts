@@ -67,18 +67,54 @@ export const authHandlers = [
     if (session?.expired) {
       return errorEnvelope("UNAUTHORIZED", "登入已過期，請重新登入。", 401);
     }
-    if (scenario.role === "operator") return HttpResponse.json(operatorUser);
-    if (!session) return HttpResponse.json(demoUser);
+    if (scenario.role === "operator") {
+      return HttpResponse.json({
+        ...operatorUser,
+        username: (operatorUser as { username?: string }).username ?? "operator",
+      });
+    }
+    if (!session) {
+      return HttpResponse.json({
+        ...demoUser,
+        username: (demoUser as { username?: string }).username ?? "doctor",
+      });
+    }
     const me: MeResponse = {
       user_id: session.account.user_id,
       role: session.account.role,
       clinic_id: session.clinicId,
       display_name: session.account.display_name,
+      username: session.account.login_account,
       // AccountSessionExtension: the app shell renders the combined-workspace
       // label off this marker (ADR 0041 §6).
       merged_workspace: authStore.isMergedWorkspace(session),
     } as MeResponse;
     return HttpResponse.json(me);
+  }),
+
+  http.patch(`${API}/auth/me`, async ({ request }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const body = (await request.json()) as { display_name?: string | null };
+    const name = (body.display_name ?? "").trim();
+    if (!name) {
+      return errorEnvelope("VALIDATION_ERROR", "顯示名稱不能為空。", 422);
+    }
+    const session = authStore.currentSession();
+    if (session) {
+      session.account.display_name = name;
+    }
+    const base =
+      session == null
+        ? { ...(operatorUser as MeResponse), username: "mcheng" }
+        : ({
+            user_id: session.account.user_id,
+            role: session.account.role,
+            clinic_id: session.clinicId,
+            display_name: name,
+            username: session.account.login_account,
+          } as MeResponse);
+    return HttpResponse.json({ ...base, display_name: name });
   }),
 
   http.post(`${API}/auth/change-password`, async ({ request }) => {

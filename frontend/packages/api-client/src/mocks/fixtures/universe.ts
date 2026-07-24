@@ -44,7 +44,6 @@ import type {
   UsagePoint,
   VerificationReport,
 } from "../../endpoints/frontend-only/admin-analytics";
-import type { SavedView } from "../../endpoints/frontend-only/admin-saved-views";
 import universe from "./universe.json";
 
 // --- core entities (contract shapes) -----------------------------------------
@@ -237,7 +236,6 @@ export const tickets = fo.tickets as unknown as Ticket[];
 export const onboardingQueue = fo.onboarding_queue as unknown as OnboardingQueueItem[];
 export const tags = fo.tags as unknown as Tag[];
 export const tagVisibility = fo.tag_visibility as unknown as TagVisibilityEntry[];
-export const savedViews = fo.saved_views as unknown as SavedView[];
 /** Legacy fixture rows; migrated to AuditLogOut shape in frontend-only-store. */
 export const demoAudit = fo.audit_events as unknown as Array<{
   id: string;

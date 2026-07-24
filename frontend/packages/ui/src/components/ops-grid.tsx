@@ -21,7 +21,7 @@ import { AcuityIcon } from "../icons";
 //     sortable columns (sort state + hrefs computed by the caller - sort is a
 //     server re-render, never a client sort) and an optional leading cell for
 //     the bulk-selection checkbox island.
-//   - CountTabs: the saved-view / count-tab strip above a grid.
+//   - CountTabs: the count-tab strip above a grid.
 //   - DryRunPreview: the per-item preview list a bulk action shows inside the
 //     deliberate-confirm gate before executing.
 // Interactive pieces (bulk selection, detail drawer, confirm gate) live in
@@ -177,7 +177,7 @@ export function OpsDataTable<Row>({
   );
 }
 
-// --- Count tabs / saved views ------------------------------------------------
+// --- Count tabs --------------------------------------------------------------
 
 export interface CountTab {
   key: string;
@@ -185,7 +185,7 @@ export interface CountTab {
   href: string;
   active?: boolean;
   count?: number;
-  /** Starred = the default saved view. */
+  /** Optional star marker for a preferred tab. */
   starred?: boolean;
 }
 
@@ -196,7 +196,7 @@ export function CountTabs({
   navLabel,
 }: {
   tabs: CountTab[];
-  /** Trailing slot (e.g. the "+" new-saved-view affordance). */
+  /** Trailing slot for a tab-row action. */
   action?: ReactNode;
   className?: string;
   navLabel?: string;

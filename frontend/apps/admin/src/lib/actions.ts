@@ -35,7 +35,6 @@ import type {
 import {
   updateClinicOps,
   updateDoctorOps,
-  updateOperatorProfile,
   type ClinicOps,
   type DoctorOps,
 } from "./ops-model";
@@ -43,7 +42,6 @@ import {
 const {
   accountManagement,
   adminImpersonation,
-  adminSavedViews,
   adminAnalytics,
 } = frontendOnly;
 
@@ -771,12 +769,6 @@ export async function setTagVisibilityAction(
   );
 }
 
-// --- saved views ------------------------------------------------------------------
-
-export async function createSavedViewAction(grid: string, name: string, filters: Record<string, string>) {
-  return run(() => adminSavedViews.createSavedView({ grid, name, filters }), ["/"]);
-}
-
 // --- analytics ----------------------------------------------------------------------
 
 export async function exportAnalyticsAction(report: "usage" | "funnel" | "verification" | "quality") {
@@ -850,9 +842,17 @@ export async function createStandardFieldAction(body: StandardFieldCreate) {
 
 // --- preferences ------------------------------------------------------------------------
 
-export async function updateProfileAction(patch: { name?: string; email?: string }) {
+export async function updateProfileAction(patch: { name?: string }) {
+  const displayName = patch.name?.trim();
+  if (displayName !== undefined && !displayName) {
+    return { ok: false as const, kind: "validation", message: "display-name-required" };
+  }
   return run(async () => {
-    updateOperatorProfile(patch);
+    const opts = await liveRequestOptions();
+    return authEndpoints.updateMe(
+      { display_name: displayName ?? null },
+      opts,
+    );
   }, ["/"]);
 }
 

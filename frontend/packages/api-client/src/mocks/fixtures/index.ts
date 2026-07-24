@@ -31,7 +31,6 @@ export type {
   TicketStatus,
 } from "../../endpoints/frontend-only/admin-tickets";
 export type { Tag, TagKind, TagVisibilityEntry } from "../../endpoints/frontend-only/admin-tags";
-export type { SavedView } from "../../endpoints/frontend-only/admin-saved-views";
 export type {
   ActivationFunnel,
   AnalyticsOverview,

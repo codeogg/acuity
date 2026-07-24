@@ -1,4 +1,4 @@
-// Doctors portfolio — cross-clinic grid: saved-view tabs (Active / All),
+// Doctors portfolio — cross-clinic grid: count tabs (Active / All),
 // keyword + clinic filters, URL-driven sort, bulk re-tag / deactivate, and
 // the doctor detail drawer over the grid.
 
@@ -185,7 +185,6 @@ async function DoctorsGrid({ locale, sp }: { locale: string; sp: Search }) {
       <SectionTopBar
         eyebrow={t("eyebrow")}
         title={t("title")}
-        grid="doctors"
         tabs={tabs}
         action={
           <NewDoctorButton

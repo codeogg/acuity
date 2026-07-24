@@ -2,7 +2,13 @@
 // these are the raw typed functions the demo adapter is built on and are exposed
 // for direct use where an adapter is not appropriate.
 
-import type { LoginRequest, LoginResponse, MeResponse, SuccessResponse } from "@acuity/types";
+import type {
+  LoginRequest,
+  LoginResponse,
+  MeResponse,
+  ProfileUpdateRequest,
+  SuccessResponse,
+} from "@acuity/types";
 import { api, type RequestOptions } from "../client";
 
 export type ChangePasswordRequest = {
@@ -18,8 +24,15 @@ export function logout(): Promise<SuccessResponse> {
   return api.post<SuccessResponse>("/auth/logout");
 }
 
-export function me(): Promise<MeResponse> {
-  return api.get<MeResponse>("/auth/me");
+export function me(options?: RequestOptions): Promise<MeResponse> {
+  return api.get<MeResponse>("/auth/me", options);
+}
+
+export function updateMe(
+  body: ProfileUpdateRequest,
+  options?: RequestOptions,
+): Promise<MeResponse> {
+  return api.patch<MeResponse>("/auth/me", body, options);
 }
 
 export function changePassword(

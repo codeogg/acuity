@@ -1,30 +1,25 @@
 "use client";
 
-// Section top-bar — the two-row header every destination composes (overview.md
-// §Section top-bar): Row 1 eyebrow + serif title with the primary action
-// pinned top-right; Row 2 the saved-view count-tab strip (counts, favourite
-// star on the active tab, a "+" save-current-view control). Server component;
-// tabs arrive as prebuilt CountTab hrefs. Client component: the shared
-// CountTabs executes design-kit client-bundle utilities.
+// Section top-bar — the two-row header every destination composes: Row 1
+// eyebrow + serif title with the primary action pinned top-right; Row 2 the
+// count-tab strip. Server component; tabs arrive as prebuilt CountTab hrefs.
+// Client component: the shared CountTabs executes design-kit client-bundle
+// utilities.
 
 import type { ReactNode } from "react";
 import { CountTabs, type CountTab } from "@acuity/ui";
-import { SaveViewButton } from "@/components/grid/save-view-button";
 
 export function SectionTopBar({
   eyebrow,
   title,
   action,
   tabs,
-  grid,
   filterRow,
 }: {
   eyebrow: string;
   title: string;
   action?: ReactNode;
   tabs?: CountTab[];
-  /** Saved-view grid id — enables the "+" save-current-view control. */
-  grid?: string;
   filterRow?: ReactNode;
 }) {
   return (
@@ -44,11 +39,7 @@ export function SectionTopBar({
       </div>
       {tabs ? (
         <div className="mt-2">
-          <CountTabs
-            tabs={tabs}
-            className="border-b-0"
-            action={grid ? <SaveViewButton grid={grid} /> : undefined}
-          />
+          <CountTabs tabs={tabs} className="border-b-0" />
         </div>
       ) : null}
       {filterRow}

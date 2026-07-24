@@ -13,8 +13,7 @@
 import type { ReactNode } from "react";
 import { getTranslations } from "next-intl/server";
 import { AcuityShell, type ShellNavItem, type ShellNavSection } from "@acuity/ui";
-import { getNavCounts } from "@/lib/data";
-import { getOperatorProfile } from "@/lib/ops-model";
+import { getNavCounts, getCurrentUser, operatorRoleLabel } from "@/lib/data";
 import { AcuityIcon, type AcuityIconName } from "@acuity/ui";
 import { ImpersonationBanner } from "@/components/system/impersonation-banner";
 import { ShellFooter } from "@/components/shell/shell-footer";
@@ -32,8 +31,12 @@ function item(
 
 export async function ConsoleShell({ locale, children }: { locale: string; children: ReactNode }) {
   const t = await getTranslations("nav");
-  const counts = await getNavCounts().catch(() => null);
-  const operator = getOperatorProfile();
+  const [counts, me] = await Promise.all([
+    getNavCounts().catch(() => null),
+    getCurrentUser().catch(() => null),
+  ]);
+  const operatorName = me?.display_name?.trim() || me?.username || "—";
+  const operatorRole = operatorRoleLabel(me?.role);
   // Hrefs handed to @acuity/ui components carry the locale explicitly — the
   // shared shell renders plain next/link (the package is i18n-neutral). App
   // components rendering their own links use the @acuity/i18n/navigation
@@ -99,8 +102,8 @@ export async function ConsoleShell({ locale, children }: { locale: string; child
             <div className="flex w-11 justify-center">
               <ShellFooter
                 locale={locale}
-                operatorName={operator.name}
-                operatorRole={operator.role}
+                operatorName={operatorName}
+                operatorRole={operatorRole}
                 compact
               />
             </div>
@@ -114,15 +117,15 @@ export async function ConsoleShell({ locale, children }: { locale: string; child
           <div className="hidden lg:block">
             <ShellFooter
               locale={locale}
-              operatorName={operator.name}
-              operatorRole={operator.role}
+              operatorName={operatorName}
+              operatorRole={operatorRole}
             />
           </div>
           <div className="lg:hidden">
             <ShellFooter
               locale={locale}
-              operatorName={operator.name}
-              operatorRole={operator.role}
+              operatorName={operatorName}
+              operatorRole={operatorRole}
               compact
             />
           </div>

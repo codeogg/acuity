@@ -260,7 +260,7 @@ apps/admin/.env.local：
 | P1-A | handoff、notifications、document inbox、print captures |
 | P1-B | doctor settings、support access、coverage registry |
 | P1-C | analytics、admin claims、onboarding queue |
-| P2-A | tickets、tags、saved views、impersonation |
+| P2-A | tickets、tags、impersonation |
 | P2-B | MFA、恢复、clinic 选择、refresh、re-auth |
 
 每批固定流程：确认权限/状态机/保留策略 → 如需则更新 OpenAPI → 类型/文档生成 → Alembic/model/service/router/测试 → 页面关闭 Mock → 前后端回归。

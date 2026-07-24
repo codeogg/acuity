@@ -21,6 +21,7 @@ from src.modules.auth.schemas import (
     AuthClinicOption,
     ClinicSelectResponse,
     LoginResponse,
+    MeResponse,
 )
 from src.modules.doctors.clinic_links import list_linked_clinic_ids
 
@@ -216,3 +217,52 @@ async def resolve_display_name(db: AsyncSession, user) -> str | None:
     if admin:
         return admin.real_name or admin.username
     return None
+
+
+async def resolve_username(db: AsyncSession, user) -> str | None:
+    if user.role == "DOCTOR":
+        doctor = await db.get(Doctor, user.id)
+        return doctor.login_account if doctor else None
+    admin = await db.get(AdminUser, user.id)
+    return admin.username if admin else None
+
+
+async def get_me(db: AsyncSession, user) -> MeResponse:
+    return MeResponse(
+        user_id=user.id,
+        role=user.role,
+        clinic_id=user.clinic_id,
+        display_name=await resolve_display_name(db, user),
+        username=await resolve_username(db, user),
+    )
+
+
+async def update_profile(
+    db: AsyncSession,
+    user,
+    *,
+    display_name: str | None,
+) -> MeResponse:
+    """Update the signed-in account's display name (admin real_name / doctor name)."""
+    if display_name is None:
+        return await get_me(db, user)
+
+    name = display_name.strip()
+    if not name:
+        raise ValidationException("显示名称不能为空")
+    if len(name) > 100:
+        raise ValidationException("显示名称不能超过 100 个字符")
+
+    if user.role == "DOCTOR":
+        doctor = await db.get(Doctor, user.id)
+        if doctor is None:
+            raise AuthException("账号不存在")
+        doctor.doctor_name = name
+    else:
+        admin = await db.get(AdminUser, user.id)
+        if admin is None:
+            raise AuthException("账号不存在")
+        admin.real_name = name
+
+    await db.flush()
+    return await get_me(db, user)

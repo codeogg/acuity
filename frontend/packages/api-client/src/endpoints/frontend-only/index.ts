@@ -17,6 +17,5 @@ export * as adminAudit from "./admin-audit";
 export * as adminTickets from "./admin-tickets";
 export * as adminTags from "./admin-tags";
 export * as adminAnalytics from "./admin-analytics";
-export * as adminSavedViews from "./admin-saved-views";
 export * as adminImpersonation from "./admin-impersonation";
 export * as adminClaimsOversight from "./admin-claims-oversight";

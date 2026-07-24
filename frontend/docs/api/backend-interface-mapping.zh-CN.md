@@ -33,7 +33,7 @@
 | P0 | MISSING | 医生-诊所多对多、账号管理 | `doctors`、`clinics` |
 | P1 | MISSING | handoff、通知、文档收件箱、打印捕获 | `handoffs`、`notifications`、`documents` |
 | P1 | MISSING | 后台分析、运营队列 | `analytics`、`onboarding` |
-| P2 | MISSING | 工单、标签、保存视图、模拟登录 | `tickets`、`tags`、`saved_views`、`impersonation` |
+| P2 | MISSING | 工单、标签、模拟登录 | `tickets`、`tags`、`impersonation` |
 | P2 | FUTURE-AUTH | MFA、恢复、诊所选择、会话刷新 | `auth` 扩展 |
 
 ## 每次接口改动的固定验证

@@ -964,7 +964,9 @@
     "title": "Preferences",
     "profile": "Profile",
     "display-name": "Display name",
+    "username": "Username",
     "email": "Email",
+    "profile-saved": "Profile updated",
     "locale": "Locale",
     "password": "Change password",
     "password-current": "Current password",
@@ -1004,16 +1006,6 @@
     "device-dates": "Registered {registered} · last used {lastUsed}",
     "device-never-used": "not yet used",
     "backup-key-nudge": "One key registered. Register a backup key now — a lost single key requires the stricter identity re-verification recovery path."
-  },
-  "saved-views": {
-    "add": "Save current view",
-    "title": "Save current view",
-    "hint": "Saves the current filter, sort and tab set as a named view.",
-    "name-placeholder": "View name",
-    "default-name": "My view",
-    "cancel": "Cancel",
-    "save": "Save view",
-    "saved": "Saved view “{name}”"
   },
   "bulk": {
     "selected": "selected on this page",
