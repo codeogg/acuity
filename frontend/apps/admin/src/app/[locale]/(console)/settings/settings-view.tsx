@@ -1,16 +1,17 @@
 "use client";
 
-// Preferences client islands: editable profile fields and the internal RBAC
-// panel (role change behind an acknowledgement gate — capability changes are
-// server-enforced + logged).
+// Preferences client islands: editable profile fields, password change, and the
+// internal RBAC panel (role change behind an acknowledgement gate — capability
+// changes are server-enforced + logged).
 
+import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { Button } from "@acuity/ui";
+import { Button, Input, useToast } from "@acuity/ui";
 import { AcuityIcon } from "@acuity/ui";
 import { Avatar } from "@acuity/ui";
 import { CrmFieldRow } from "@/components/ui/crm-field";
 import { GateButton } from "@/components/ui/confirm-gate";
-import { changeRoleAction, updateProfileAction } from "@/lib/actions";
+import { changePasswordAction, changeRoleAction, updateProfileAction } from "@/lib/actions";
 import { consoleSignOut } from "@/components/shell/console-sign-out";
 import type { OperatorAccount } from "@/lib/ops-model";
 
@@ -21,6 +22,95 @@ export function ProfileFields({ name, email }: { name: string; email: string }) 
       <CrmFieldRow label={t("display-name")} value={name} commit={(next) => updateProfileAction({ name: next })} />
       <CrmFieldRow label={t("email")} value={email} commit={(next) => updateProfileAction({ email: next })} />
     </>
+  );
+}
+
+export function ChangePasswordForm() {
+  const t = useTranslations("settings");
+  const { showToast } = useToast();
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pending, startTransition] = useTransition();
+
+  function localMessage(code: string | undefined): string {
+    switch (code) {
+      case "current-required":
+        return t("password-current-required");
+      case "too-short":
+        return t("password-too-short");
+      case "mismatch":
+        return t("password-mismatch");
+      default:
+        return code || t("password-failed");
+    }
+  }
+
+  function submit(event: React.FormEvent) {
+    event.preventDefault();
+    startTransition(async () => {
+      const result = await changePasswordAction({
+        current_password: currentPassword,
+        new_password: newPassword,
+        confirm_password: confirmPassword,
+      });
+      if (!result.ok) {
+        showToast(localMessage(result.message), "error");
+        return;
+      }
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      showToast(t("password-changed"));
+    });
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-4">
+      <div className="space-y-1.5">
+        <label htmlFor="settings-current-password" className="text-sm text-muted-foreground">
+          {t("password-current")}
+        </label>
+        <Input
+          id="settings-current-password"
+          type="password"
+          autoComplete="current-password"
+          value={currentPassword}
+          onChange={(e) => setCurrentPassword(e.target.value)}
+          disabled={pending}
+        />
+      </div>
+      <div className="space-y-1.5">
+        <label htmlFor="settings-new-password" className="text-sm text-muted-foreground">
+          {t("password-new")}
+        </label>
+        <Input
+          id="settings-new-password"
+          type="password"
+          autoComplete="new-password"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          disabled={pending}
+        />
+      </div>
+      <div className="space-y-1.5">
+        <label htmlFor="settings-confirm-password" className="text-sm text-muted-foreground">
+          {t("password-confirm")}
+        </label>
+        <Input
+          id="settings-confirm-password"
+          type="password"
+          autoComplete="new-password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          disabled={pending}
+        />
+      </div>
+      <p className="text-xs text-muted-foreground">{t("password-hint")}</p>
+      <Button type="submit" disabled={pending}>
+        {pending ? t("password-saving") : t("password-submit")}
+      </Button>
+    </form>
   );
 }
 

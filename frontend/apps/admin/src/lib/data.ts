@@ -67,9 +67,9 @@ const {
 } = frontendOnly;
 
 // Live FastAPI does not implement most forward-contract / frontend-only admin
-// surfaces yet (tickets, analytics, impersonation, claims oversight).
-// Soft-fail those reads to empty defaults so the console shell stays usable.
-// Tags and audit-logs are implemented on the live API.
+// surfaces yet (impersonation, saved-views). Soft-fail those reads to empty
+// defaults so the console shell stays usable. Tickets, onboarding-queue,
+// claims oversight, analytics, tags and audit-logs are implemented on the live API.
 function emptyPage<T>(pageSize = 100): Page<T> {
   return { items: [], total: 0, page: 1, page_size: pageSize };
 }
@@ -174,17 +174,16 @@ export async function listAuditLogs(
 export async function getAuditLog(eventCode: string): Promise<AuditLogOut> {
   return audit.getAuditLog(eventCode, { headers: await serverSessionHeaders() });
 }
-export function listTickets(
+export async function listTickets(
   query: Parameters<typeof adminTickets.listTickets>[0] = {},
 ): Promise<Page<Ticket>> {
-  return softFrontendOnly(
-    () => adminTickets.listTickets(query),
-    emptyPage<Ticket>(query.page_size ?? 100),
-  );
+  return adminTickets.listTickets(query, { headers: await serverSessionHeaders() });
 }
-export const getTicket = adminTickets.getTicket;
-export function listOnboardingQueue(): Promise<OnboardingQueueItem[]> {
-  return softFrontendOnly(() => adminTickets.listOnboardingQueue(), []);
+export async function getTicket(ticketId: string): Promise<Ticket> {
+  return adminTickets.getTicket(ticketId, { headers: await serverSessionHeaders() });
+}
+export async function listOnboardingQueue(): Promise<OnboardingQueueItem[]> {
+  return adminTickets.listOnboardingQueue({ headers: await serverSessionHeaders() });
 }
 export async function listTags(
   kind?: Parameters<typeof adminTags.listTags>[0],
@@ -202,40 +201,32 @@ export async function getTagVisibility(
     headers: await serverSessionHeaders(),
   });
 }
-export function getAnalyticsOverview(): Promise<AnalyticsOverview> {
-  return softFrontendOnly(
-    () => adminAnalytics.getAnalyticsOverview(),
-    {
-      forms_processed_today: 0,
-      forms_processed_7d: 0,
-      verify_pass_7d: 0,
-      verify_fail_7d: 0,
-      window_days: 7,
-    },
-  );
+export async function getAnalyticsOverview(): Promise<AnalyticsOverview> {
+  return adminAnalytics.getAnalyticsOverview({
+    headers: await serverSessionHeaders(),
+  });
 }
-export function getUsageSeries(
+export async function getUsageSeries(
   query: Parameters<typeof adminAnalytics.getUsageSeries>[0] = {},
 ): Promise<UsagePoint[]> {
-  return softFrontendOnly(() => adminAnalytics.getUsageSeries(query), []);
+  return adminAnalytics.getUsageSeries(query, {
+    headers: await serverSessionHeaders(),
+  });
 }
-export function getActivationFunnel(): Promise<ActivationFunnel> {
-  return softFrontendOnly(
-    () => adminAnalytics.getActivationFunnel(),
-    { provisioning: 0, onboarding: 0, active: 0 },
-  );
+export async function getActivationFunnel(): Promise<ActivationFunnel> {
+  return adminAnalytics.getActivationFunnel({
+    headers: await serverSessionHeaders(),
+  });
 }
-export function getVerificationReport(): Promise<VerificationReport> {
-  return softFrontendOnly(
-    () => adminAnalytics.getVerificationReport(),
-    { pass: 0, fail: 0, window_days: 30 },
-  );
+export async function getVerificationReport(): Promise<VerificationReport> {
+  return adminAnalytics.getVerificationReport({
+    headers: await serverSessionHeaders(),
+  });
 }
-export function getQualityReport(): Promise<QualityReport> {
-  return softFrontendOnly(
-    () => adminAnalytics.getQualityReport(),
-    { avg_confidence: 0, correction_rate: 0, trend: [] },
-  );
+export async function getQualityReport(): Promise<QualityReport> {
+  return adminAnalytics.getQualityReport({
+    headers: await serverSessionHeaders(),
+  });
 }
 export const listSavedViews = adminSavedViews.listSavedViews;
 export function getImpersonationSession(): Promise<
@@ -245,15 +236,21 @@ export function getImpersonationSession(): Promise<
     active: null,
   });
 }
-export function listClaimsOversight(
+export async function listClaimsOversight(
   query: Parameters<typeof adminClaimsOversight.listClaimsOversight>[0] = {},
 ): Promise<Awaited<ReturnType<typeof adminClaimsOversight.listClaimsOversight>>> {
-  return softFrontendOnly(
-    () => adminClaimsOversight.listClaimsOversight(query),
-    emptyPage(query.page_size ?? 25),
-  );
+  return adminClaimsOversight.listClaimsOversight(query, {
+    headers: await serverSessionHeaders(),
+  });
 }
-export const getClaimOversight = adminClaimsOversight.getClaimOversight;
+
+export async function getClaimOversight(
+  claimId: number,
+): Promise<Awaited<ReturnType<typeof adminClaimsOversight.getClaimOversight>>> {
+  return adminClaimsOversight.getClaimOversight(claimId, {
+    headers: await serverSessionHeaders(),
+  });
+}
 export const listClaimsContract = claimsContract.listClaims;
 
 export type AuditLog = AuditLogOut;

@@ -1,17 +1,9 @@
-// frontend-only: pending backend
-//
-// Admin-scoped claims oversight. The console currently rides the doctor-scoped
-// /api/doctor/claims/* routes, which an admin-role token cannot call (RBAC is
-// admin-vs-doctor) — a seam that breaks at integration. These are the
-// admin-scoped equivalents the backend needs: cross-clinic list + detail with
-// PHI redacted (patient_name null, final_field_values withheld at portfolio
-// level pending the redaction-rule decision).
+// Admin claims oversight — live FastAPI /api/admin/claims* (PHI-redacted).
+// MSW handlers in mocks/handlers/admin.ts still cover mock-first mode.
 
 import type { ClaimListItem, ClaimOut, ClaimStatus, Page } from "@acuity/types";
-import { api } from "../../client";
+import { api, type RequestOptions } from "../../client";
 
-// A type alias (not interface) so it is assignable to the client's query index
-// signature.
 export type ListClaimsOversightQuery = {
   page?: number;
   page_size?: number;
@@ -23,10 +15,14 @@ export type ListClaimsOversightQuery = {
 
 export function listClaimsOversight(
   query: ListClaimsOversightQuery = {},
+  options?: RequestOptions,
 ): Promise<Page<ClaimListItem>> {
-  return api.get<Page<ClaimListItem>>("/admin/claims", { query });
+  return api.get<Page<ClaimListItem>>("/admin/claims", { ...options, query });
 }
 
-export function getClaimOversight(claimId: number): Promise<ClaimOut> {
-  return api.get<ClaimOut>(`/admin/claims/${claimId}`);
+export function getClaimOversight(
+  claimId: number,
+  options?: RequestOptions,
+): Promise<ClaimOut> {
+  return api.get<ClaimOut>(`/admin/claims/${claimId}`, options);
 }

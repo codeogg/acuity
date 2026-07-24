@@ -81,6 +81,23 @@ export const authHandlers = [
     return HttpResponse.json(me);
   }),
 
+  http.post(`${API}/auth/change-password`, async ({ request }) => {
+    const { deny } = await gate(request);
+    if (deny) return deny;
+    const body = (await request.json()) as {
+      current_password?: string;
+      new_password?: string;
+    };
+    if (!body.current_password) {
+      return errorEnvelope("VALIDATION_ERROR", "請輸入目前密碼。", 422);
+    }
+    if (!body.new_password || body.new_password.length < 6) {
+      return errorEnvelope("VALIDATION_ERROR", "新密碼不能少於 6 位。", 422);
+    }
+    // Mock accounts accept any non-empty current password.
+    return HttpResponse.json({ success: true });
+  }),
+
   // --- frontend-only: MFA ------------------------------------------------------
   http.post(`${API}/auth/mfa/challenge`, async ({ request }) => {
     const { deny } = await gate(request, { authed: false });

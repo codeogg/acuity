@@ -17,6 +17,9 @@ export * as doctors from "./doctors";
 export * as fields from "./fields";
 export * as health from "./health";
 export * as templates from "./templates";
+export * as tickets from "./tickets";
+export * as claimsOversight from "./claims-oversight";
+export * as analytics from "./frontend-only/admin-analytics";
 
 // Frontend-only surface (pending backend) + its machine-readable registry.
 export * as frontendOnly from "./frontend-only/index";

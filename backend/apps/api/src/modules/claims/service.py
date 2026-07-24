@@ -1011,6 +1011,102 @@ async def list_claims(
     return items, total
 
 
+async def list_claims_oversight(
+    db: AsyncSession,
+    *,
+    clinic_id: int | None,
+    status: str | None,
+    date_from: datetime | None,
+    date_to: datetime | None,
+    page: int,
+    page_size: int,
+) -> tuple[list[ClaimListItem], int]:
+    """运营端跨诊所列表：患者姓名一律脱敏为 null。"""
+    conds: list = []
+    if clinic_id is not None:
+        conds.append(ClaimSubmission.clinic_id == clinic_id)
+    if status:
+        statuses = [s.strip() for s in status.split(",") if s.strip()]
+        if len(statuses) == 1:
+            conds.append(ClaimSubmission.status == statuses[0])
+        elif statuses:
+            conds.append(ClaimSubmission.status.in_(statuses))
+    if date_from:
+        conds.append(ClaimSubmission.created_at >= date_from)
+    if date_to:
+        conds.append(ClaimSubmission.created_at <= date_to)
+
+    total_stmt = select(func.count()).select_from(ClaimSubmission)
+    list_stmt = (
+        select(
+            ClaimSubmission,
+            InsuranceCompany.company_name,
+            InsuranceCompany.company_name_en,
+            PolicyTemplate.template_name,
+            Clinic.clinic_name,
+            Clinic.clinic_name_en,
+        )
+        .outerjoin(InsuranceCompany, InsuranceCompany.id == ClaimSubmission.company_id)
+        .outerjoin(PolicyTemplate, PolicyTemplate.id == ClaimSubmission.template_id)
+        .outerjoin(Clinic, Clinic.id == ClaimSubmission.clinic_id)
+    )
+    if conds:
+        where = and_(*conds)
+        total_stmt = total_stmt.where(where)
+        list_stmt = list_stmt.where(where)
+
+    total = (await db.execute(total_stmt)).scalar_one()
+    stmt = (
+        list_stmt.order_by(ClaimSubmission.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    rows = (await db.execute(stmt)).all()
+    items: list[ClaimListItem] = []
+    for claim, company_name, company_name_en, template_name, clinic_name, clinic_name_en in rows:
+        display_clinic = " ".join(
+            part for part in (clinic_name, clinic_name_en or "") if part
+        ).strip() or None
+        items.append(
+            ClaimListItem(
+                id=claim.id,
+                submission_no=claim.submission_no,
+                patient_name=None,
+                patient_name_cn=None,
+                patient_name_en=None,
+                company_id=claim.company_id,
+                template_id=claim.template_id,
+                generated_pdf_url=claim.generated_pdf_url,
+                status=claim.status,
+                created_at=claim.created_at,
+                company_name=company_name,
+                company_name_en=company_name_en,
+                template_name=template_name,
+                clinic_id=claim.clinic_id,
+                clinic_name=display_clinic,
+            )
+        )
+    return items, total
+
+
+async def get_claim_oversight(db: AsyncSession, claim_id: int) -> ClaimOut:
+    """运营端详情：姓名与 AI 原值脱敏；final_field_values 保留供前端遮蔽展示。"""
+    claim = await db.get(ClaimSubmission, claim_id)
+    if claim is None:
+        raise NotFoundException("理赔记录不存在")
+    task_no = await get_extraction_task_no(db, claim)
+    data = ClaimOut.model_validate(claim)
+    return data.model_copy(
+        update={
+            "patient_name": None,
+            "patient_name_cn": None,
+            "patient_name_en": None,
+            "ai_raw_result": None,
+            "extraction_task_no": task_no,
+        }
+    )
+
+
 async def get_medical_record_plain(
     db: AsyncSession, claim_id: int, clinic_id: int
 ) -> str | None:

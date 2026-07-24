@@ -3,7 +3,12 @@
 // for direct use where an adapter is not appropriate.
 
 import type { LoginRequest, LoginResponse, MeResponse, SuccessResponse } from "@acuity/types";
-import { api } from "../client";
+import { api, type RequestOptions } from "../client";
+
+export type ChangePasswordRequest = {
+  current_password: string;
+  new_password: string;
+};
 
 export function login(body: LoginRequest): Promise<LoginResponse> {
   return api.post<LoginResponse>("/auth/login", body);
@@ -15,4 +20,11 @@ export function logout(): Promise<SuccessResponse> {
 
 export function me(): Promise<MeResponse> {
   return api.get<MeResponse>("/auth/me");
+}
+
+export function changePassword(
+  body: ChangePasswordRequest,
+  options?: RequestOptions,
+): Promise<SuccessResponse> {
+  return api.post<SuccessResponse>("/auth/change-password", body, options);
 }

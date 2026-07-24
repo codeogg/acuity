@@ -9,7 +9,7 @@
 
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { api, ApiError, audit as auditApi, companies, doctors, fields, frontendOnly, templates } from "@acuity/api-client";
+import { api, ApiError, audit as auditApi, authEndpoints, companies, doctors, fields, frontendOnly, templates } from "@acuity/api-client";
 import type { DoctorAccountExtension } from "@acuity/api-client";
 import type {
   AuditActionType,
@@ -44,7 +44,6 @@ const {
   accountManagement,
   adminImpersonation,
   adminSavedViews,
-  adminTickets,
   adminAnalytics,
 } = frontendOnly;
 
@@ -176,6 +175,74 @@ export async function deleteClinicAction(clinicId: number, code: string) {
   return run(async () => {
     await clinicMutation<void>("delete", `/admin/clinics/${clinicId}`);
     await logAudit("batch_operation", `${code} · deleted`, { clinicId: null });
+  }, ["/"]);
+}
+
+export async function getOnboardingProgressAction(clinicId: number) {
+  return run(async () => {
+    const target = process.env.API_PROXY_TARGET;
+    const base =
+      process.env.NEXT_PUBLIC_API_MOCKING === "disabled" && target
+        ? `${target.replace(/\/$/, "")}/api`
+        : undefined;
+    return api.get<{
+      clinic_id: number;
+      lifecycle_status: string;
+      completed: number;
+      total: number;
+      progress_label: string;
+      can_confirm_activate: boolean;
+      all_completed: boolean;
+      current_step_code: string | null;
+      current_step_name: string | null;
+      current_step_name_en: string | null;
+      steps: Array<{
+        step_code: string;
+        step_name: string;
+        step_name_en: string;
+        sort_order: number;
+        status: "pending" | "completed";
+        completed_at: string | null;
+      }>;
+    }>(`/admin/clinics/${clinicId}/onboarding-progress`, {
+      headers: await sessionHeaders(),
+      base,
+    });
+  }, []);
+}
+
+export async function completeOnboardingStepAction(clinicId: number, stepCode: string) {
+  return run(
+    () =>
+      clinicMutation<{
+        clinic_id: number;
+        lifecycle_status: string;
+        completed: number;
+        total: number;
+        progress_label: string;
+        can_confirm_activate: boolean;
+        all_completed: boolean;
+        steps: Array<{
+          step_code: string;
+          step_name: string;
+          step_name_en: string;
+          sort_order: number;
+          status: "pending" | "completed";
+          completed_at: string | null;
+        }>;
+      }>("post", `/admin/clinics/${clinicId}/onboarding-steps/${stepCode}/complete`),
+    ["/"],
+  );
+}
+
+export async function confirmClinicActivateAction(clinicId: number, code: string) {
+  return run(async () => {
+    // Audit is recorded server-side in mark_active (clinic_activate).
+    void code;
+    return clinicMutation<ClinicOut>(
+      "post",
+      `/admin/clinics/${clinicId}/confirm-activate`,
+    );
   }, ["/"]);
 }
 
@@ -645,11 +712,27 @@ export async function updateTicketAction(
   ticketId: string,
   body: { status?: "open" | "in-progress" | "resolved"; owner?: string | null; add_note?: string },
 ) {
-  return run(() => adminTickets.updateTicket(ticketId, body), ["/"]);
+  return run(
+    () =>
+      clinicMutation<import("@acuity/types").Ticket>(
+        "put",
+        `/admin/tickets/${ticketId}`,
+        body,
+      ),
+    ["/"],
+  );
 }
 
 export async function resolveTicketAction(ticketId: string, note?: string) {
-  return run(() => adminTickets.resolveTicket(ticketId, note), ["/"]);
+  return run(
+    () =>
+      clinicMutation<import("@acuity/types").Ticket>(
+        "post",
+        `/admin/tickets/${ticketId}/resolve`,
+        { resolution_note: note },
+      ),
+    ["/"],
+  );
 }
 
 // --- tags -----------------------------------------------------------------------
@@ -697,8 +780,10 @@ export async function createSavedViewAction(grid: string, name: string, filters:
 // --- analytics ----------------------------------------------------------------------
 
 export async function exportAnalyticsAction(report: "usage" | "funnel" | "verification" | "quality") {
-  // The mock handler records the surrogate-only export audit event.
-  return run(() => adminAnalytics.exportAnalytics({ report }), ["/"]);
+  return run(async () => {
+    const opts = await liveRequestOptions();
+    return adminAnalytics.exportAnalytics({ report }, opts);
+  }, ["/"]);
 }
 
 // --- audit / PHI ---------------------------------------------------------------------
@@ -768,6 +853,32 @@ export async function createStandardFieldAction(body: StandardFieldCreate) {
 export async function updateProfileAction(patch: { name?: string; email?: string }) {
   return run(async () => {
     updateOperatorProfile(patch);
+  }, ["/"]);
+}
+
+export async function changePasswordAction(input: {
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
+}) {
+  const current = input.current_password.trim();
+  const next = input.new_password;
+  const confirm = input.confirm_password;
+  if (!current) {
+    return { ok: false as const, kind: "validation", message: "current-required" };
+  }
+  if (next.length < 6) {
+    return { ok: false as const, kind: "validation", message: "too-short" };
+  }
+  if (next !== confirm) {
+    return { ok: false as const, kind: "validation", message: "mismatch" };
+  }
+  return run(async () => {
+    const opts = await liveRequestOptions();
+    await authEndpoints.changePassword(
+      { current_password: current, new_password: next },
+      opts,
+    );
   }, ["/"]);
 }
 

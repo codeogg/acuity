@@ -14,6 +14,8 @@ from src.modules.clinics.schemas import (
     ClinicUpdate,
     CompanyEnableResult,
     CompanyEnableUpdate,
+    OnboardingProgressOut,
+    OnboardingStepOut,
     TemplateEnableResult,
     TemplateEnableUpdate,
 )
@@ -97,6 +99,71 @@ async def update_flag(
 ) -> ClinicOut:
     return service.clinic_to_out(
         await service.set_flagged(db, clinic_id, body.is_flagged)
+    )
+
+
+@router.get("/{clinic_id}/onboarding-progress", response_model=OnboardingProgressOut)
+async def get_onboarding_progress(
+    clinic_id: int, db: DbSession, _: AdminDep
+) -> OnboardingProgressOut:
+    from src.modules.clinics import onboarding as onboarding_service
+
+    data = await onboarding_service.get_onboarding_progress(db, clinic_id)
+    return OnboardingProgressOut(
+        clinic_id=data["clinic_id"],
+        lifecycle_status=data["lifecycle_status"],
+        completed=data["completed"],
+        total=data["total"],
+        progress_label=data["progress_label"],
+        all_completed=data["all_completed"],
+        can_confirm_activate=data["can_confirm_activate"],
+        current_step_code=data["current_step_code"],
+        current_step_name=data["current_step_name"],
+        current_step_name_en=data["current_step_name_en"],
+        steps=[OnboardingStepOut.model_validate(s) for s in data["steps"]],
+    )
+
+
+@router.post(
+    "/{clinic_id}/onboarding-steps/{step_code}/complete",
+    response_model=OnboardingProgressOut,
+)
+async def complete_onboarding_step(
+    clinic_id: int,
+    step_code: str,
+    db: DbSession,
+    admin: AdminDep,
+) -> OnboardingProgressOut:
+    from src.modules.clinics import onboarding as onboarding_service
+
+    await onboarding_service.mark_step_completed(
+        db, clinic_id, step_code, completed_by=admin.id
+    )
+    data = await onboarding_service.get_onboarding_progress(db, clinic_id)
+    return OnboardingProgressOut(
+        clinic_id=data["clinic_id"],
+        lifecycle_status=data["lifecycle_status"],
+        completed=data["completed"],
+        total=data["total"],
+        progress_label=data["progress_label"],
+        all_completed=data["all_completed"],
+        can_confirm_activate=data["can_confirm_activate"],
+        current_step_code=data["current_step_code"],
+        current_step_name=data["current_step_name"],
+        current_step_name_en=data["current_step_name_en"],
+        steps=[OnboardingStepOut.model_validate(s) for s in data["steps"]],
+    )
+
+
+@router.post("/{clinic_id}/confirm-activate", response_model=ClinicOut)
+async def confirm_activate(
+    clinic_id: int, db: DbSession, admin: AdminDep
+) -> ClinicOut:
+    from src.modules.clinics.lifecycle import mark_active
+
+    clinic = await service.get_clinic(db, clinic_id)
+    return service.clinic_to_out(
+        await mark_active(db, clinic, operator_id=admin.id)
     )
 
 

@@ -63,6 +63,29 @@ class ClinicOut(BaseModel):
     plan_code: str | None = None
 
 
+class OnboardingStepOut(BaseModel):
+    step_code: str
+    step_name: str
+    step_name_en: str
+    sort_order: int
+    status: Literal["pending", "completed"]
+    completed_at: datetime | None = None
+
+
+class OnboardingProgressOut(BaseModel):
+    clinic_id: int
+    lifecycle_status: str
+    completed: int
+    total: int
+    progress_label: str
+    all_completed: bool
+    can_confirm_activate: bool
+    current_step_code: str | None = None
+    current_step_name: str | None = None
+    current_step_name_en: str | None = None
+    steps: list[OnboardingStepOut]
+
+
 class ClinicInsuranceUpdate(BaseModel):
     company_ids: list[int]
 

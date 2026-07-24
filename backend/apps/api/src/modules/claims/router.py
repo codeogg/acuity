@@ -4,7 +4,7 @@ from fastapi import APIRouter, File, Form, Query, UploadFile, status
 from fastapi.responses import Response
 
 from src.core.exceptions import NotFoundException, ValidationException
-from src.deps import DbSession, DoctorDep
+from src.deps import AdminDep, DbSession, DoctorDep
 from src.modules.claims import service
 from src.modules.claims.schemas import (
     ClaimCreate,
@@ -30,6 +30,35 @@ from src.modules.common import Page
 from src.modules.pdf_generation import service as pdf_service
 
 router = APIRouter(prefix="/api/doctor", tags=["doctor:claims"])
+admin_router = APIRouter(tags=["admin:claims"])
+
+
+@admin_router.get("/api/admin/claims", response_model=Page[ClaimListItem])
+async def list_claims_oversight(
+    db: DbSession,
+    _: AdminDep,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(25, ge=1, le=100),
+    clinic_id: int | None = None,
+    status: str | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
+) -> Page[ClaimListItem]:
+    items, total = await service.list_claims_oversight(
+        db,
+        clinic_id=clinic_id,
+        status=status,
+        date_from=date_from,
+        date_to=date_to,
+        page=page,
+        page_size=page_size,
+    )
+    return Page(items=items, total=total, page=page, page_size=page_size)
+
+
+@admin_router.get("/api/admin/claims/{claim_id}", response_model=ClaimOut)
+async def get_claim_oversight(claim_id: int, db: DbSession, _: AdminDep) -> ClaimOut:
+    return await service.get_claim_oversight(db, claim_id)
 
 
 @router.get("/home/overview", response_model=HomeOverview)

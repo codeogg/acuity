@@ -6,7 +6,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Button, Input, cn } from "@acuity/ui";
 import { AcuityIcon } from "@acuity/ui";
 import { CrmFieldRow } from "@/components/ui/crm-field";
@@ -26,7 +26,10 @@ import { MetaBadge } from "@/components/ui/status-badge";
 import { RichNotes, type NoteFormat } from "@/components/ui/markdown-notes";
 import { RetentionOverridePanel } from "@/components/drawers/retention-override-panel";
 import {
+  completeOnboardingStepAction,
+  confirmClinicActivateAction,
   createDoctorAction,
+  getOnboardingProgressAction,
   setClinicCompanyEnablementAction,
   setClinicCompanyTemplatesAction,
   setClinicTemplateEnablementAction,
@@ -406,33 +409,153 @@ export function AccountFacet({
 
 export function OnboardingFacet({ clinic, ops }: { clinic: ClinicSummary; ops: ClinicOps }) {
   const t = useTranslations("clinic-drawer.onboarding");
+  const locale = useLocale();
   const [feedback, setFeedback] = useState("");
+  const [progress, setProgress] = useState<{
+    completed: number;
+    total: number;
+    progress_label: string;
+    can_confirm_activate: boolean;
+    all_completed: boolean;
+    lifecycle_status: string;
+    steps: Array<{
+      step_code: string;
+      step_name: string;
+      step_name_en: string;
+      sort_order: number;
+      status: "pending" | "completed";
+    }>;
+  } | null>(null);
+  const [pending, startTransition] = useTransition();
   const { showToast } = useToast();
-  const steps = [1, 2, 3, 4, 5, 6, 7, 8].map((n) => t(`step-${n}`));
-  const current = ops.onboarding_step;
+  const router = useRouter();
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const result = await getOnboardingProgressAction(clinic.id);
+      if (cancelled) return;
+      if (result.ok && result.data) setProgress(result.data);
+      else setProgress(null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [clinic.id]);
+
+  const steps = progress?.steps ?? [];
+  const completed = progress?.completed ?? ops.onboarding_step;
+  const total = progress?.total ?? 8;
+  const currentIndex = steps.findIndex((s) => s.status === "pending");
+
+  function refreshProgress(
+    data: NonNullable<typeof progress> & { lifecycle_status?: string },
+  ) {
+    setProgress({
+      completed: data.completed,
+      total: data.total,
+      progress_label: data.progress_label,
+      can_confirm_activate: data.can_confirm_activate,
+      all_completed: data.all_completed,
+      lifecycle_status: data.lifecycle_status ?? progress?.lifecycle_status ?? "onboarding",
+      steps: data.steps,
+    });
+  }
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
       <div>
         <div className="mb-3 font-mono text-xs font-medium uppercase tracking-eyebrow text-muted-foreground">
-          {t("progress", { current: Math.min(current + 1, 8), total: 8 })}
+          {t("progress", {
+            current: Math.min(completed + (progress?.all_completed ? 0 : 1), total || 8),
+            total: total || 8,
+          })}
+          {progress ? ` · ${progress.progress_label}` : null}
         </div>
-        {steps.map((step, i) => (
-          <div key={i} className="flex items-center gap-2.5 py-2">
-            <span
-              className={`flex size-6 shrink-0 items-center justify-center rounded-full text-xs ${
-                i < current
-                  ? "bg-success text-success-foreground"
-                  : i === current
-                    ? "bg-primary text-primary-foreground"
-                    : "border border-border bg-muted text-muted-foreground"
-              }`}
-            >
-              {i < current ? <AcuityIcon name="check" size={12} /> : i + 1}
-            </span>
-            <span className={`text-sm ${i <= current ? "text-foreground" : "text-muted-foreground"}`}>{step}</span>
-          </div>
-        ))}
+        {(steps.length
+          ? steps
+          : [1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({
+              step_code: `step-${n}`,
+              step_name: t(`step-${n}`),
+              step_name_en: t(`step-${n}`),
+              sort_order: n,
+              status: "pending" as const,
+            }))
+        ).map((step, i) => {
+          const done = step.status === "completed";
+          const current = !done && (currentIndex === -1 ? false : i === currentIndex);
+          const label = locale.startsWith("zh") ? step.step_name : step.step_name_en;
+          return (
+            <div key={step.step_code} className="flex items-center gap-2.5 py-2">
+              <span
+                className={`flex size-6 shrink-0 items-center justify-center rounded-full text-xs ${
+                  done
+                    ? "bg-success text-success-foreground"
+                    : current
+                      ? "bg-primary text-primary-foreground"
+                      : "border border-border bg-muted text-muted-foreground"
+                }`}
+              >
+                {done ? <AcuityIcon name="check" size={12} /> : i + 1}
+              </span>
+              <span
+                className={cn(
+                  "min-w-0 flex-1 text-sm",
+                  done || current ? "text-foreground" : "text-muted-foreground",
+                )}
+              >
+                {label}
+              </span>
+              {!done && progress ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={pending || (!current && currentIndex !== -1 && i !== currentIndex)}
+                  onClick={() => {
+                    startTransition(async () => {
+                      const result = await completeOnboardingStepAction(
+                        clinic.id,
+                        step.step_code,
+                      );
+                      if (!result.ok) {
+                        showToast(result.message);
+                        return;
+                      }
+                      if (result.data) refreshProgress(result.data);
+                      showToast(t("step-completed"));
+                      router.refresh();
+                    });
+                  }}
+                >
+                  {t("mark-done")}
+                </Button>
+              ) : null}
+            </div>
+          );
+        })}
+        <div className="mt-4">
+          <Button
+            type="button"
+            disabled={pending || !progress?.can_confirm_activate}
+            onClick={() => {
+              startTransition(async () => {
+                const result = await confirmClinicActivateAction(clinic.id, clinic.code);
+                if (!result.ok) {
+                  showToast(result.message);
+                  return;
+                }
+                showToast(t("activated"));
+                router.refresh();
+              });
+            }}
+          >
+            {t("confirm-activate")}
+          </Button>
+          {!progress?.can_confirm_activate ? (
+            <p className="mt-2 text-xs text-muted-foreground">{t("confirm-activate-hint")}</p>
+          ) : null}
+        </div>
       </div>
       <div>
         <div className="mb-4 overflow-hidden rounded-lg border border-border">

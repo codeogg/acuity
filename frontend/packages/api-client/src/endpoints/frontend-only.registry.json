@@ -397,7 +397,7 @@
       "surfaces": [
         "admin"
       ],
-      "reason": "Operations tickets + onboarding queue — an absent console destination with no backend support.",
+      "reason": "Operations tickets + onboarding queue — now backed by FastAPI ops_ticket tables; MSW retained for mock-first.",
       "matrix": "matrix-admin.md §9",
       "ops": [
         {
@@ -406,7 +406,7 @@
           "fn": "listTickets",
           "req": null,
           "res": "Page<Ticket>",
-          "backend_status": "MISSING",
+          "backend_status": "DRIFT",
           "msw_implemented": true
         },
         {
@@ -415,7 +415,7 @@
           "fn": "getTicket",
           "req": null,
           "res": "Ticket",
-          "backend_status": "MISSING",
+          "backend_status": "DRIFT",
           "msw_implemented": true
         },
         {
@@ -424,7 +424,7 @@
           "fn": "updateTicket",
           "req": "TicketUpdate",
           "res": "Ticket",
-          "backend_status": "MISSING",
+          "backend_status": "DRIFT",
           "msw_implemented": true
         },
         {
@@ -433,7 +433,7 @@
           "fn": "resolveTicket",
           "req": "{resolution_note}",
           "res": "Ticket",
-          "backend_status": "MISSING",
+          "backend_status": "DRIFT",
           "msw_implemented": true
         },
         {
@@ -442,7 +442,7 @@
           "fn": "listOnboardingQueue",
           "req": null,
           "res": "OnboardingQueueItem[]",
-          "backend_status": "MISSING",
+          "backend_status": "DRIFT",
           "msw_implemented": true
         }
       ]
@@ -518,7 +518,7 @@
       "surfaces": [
         "admin"
       ],
-      "reason": "Usage / funnel / verification / quality aggregates + surrogate-only export; also feeds the dashboard forms-processed card. No aggregates endpoints exist.",
+      "reason": "Usage / funnel / verification / quality aggregates + surrogate-only export — now backed by FastAPI claim/clinic aggregates; MSW retained for mock-first.",
       "matrix": "matrix-admin.md §10, §3 D3, §5 DOC11",
       "ops": [
         {
@@ -527,7 +527,7 @@
           "fn": "getAnalyticsOverview",
           "req": null,
           "res": "AnalyticsOverview",
-          "backend_status": "MISSING",
+          "backend_status": "DRIFT",
           "msw_implemented": true
         },
         {
@@ -536,7 +536,7 @@
           "fn": "getUsageSeries",
           "req": null,
           "res": "UsagePoint[]",
-          "backend_status": "MISSING",
+          "backend_status": "DRIFT",
           "msw_implemented": true
         },
         {
@@ -545,7 +545,7 @@
           "fn": "getActivationFunnel",
           "req": null,
           "res": "ActivationFunnel",
-          "backend_status": "MISSING",
+          "backend_status": "DRIFT",
           "msw_implemented": true
         },
         {
@@ -554,7 +554,7 @@
           "fn": "getVerificationReport",
           "req": null,
           "res": "VerificationReport",
-          "backend_status": "MISSING",
+          "backend_status": "DRIFT",
           "msw_implemented": true
         },
         {
@@ -563,7 +563,7 @@
           "fn": "getQualityReport",
           "req": null,
           "res": "QualityReport",
-          "backend_status": "MISSING",
+          "backend_status": "DRIFT",
           "msw_implemented": true
         },
         {
@@ -572,7 +572,7 @@
           "fn": "exportAnalytics",
           "req": "AnalyticsExportRequest",
           "res": "AnalyticsExportResult",
-          "backend_status": "MISSING",
+          "backend_status": "DRIFT",
           "msw_implemented": true
         }
       ]
@@ -668,7 +668,7 @@
       "surfaces": [
         "admin"
       ],
-      "reason": "Admin-scoped claims list + detail (PHI-redacted). The console currently rides doctor-scoped routes an admin token cannot call — the seam breaks at integration.",
+      "reason": "Admin-scoped claims list + detail (PHI-redacted) — now backed by FastAPI; MSW retained for mock-first.",
       "matrix": "matrix-admin.md §13 X2, §19 API4",
       "ops": [
         {
@@ -677,7 +677,7 @@
           "fn": "listClaimsOversight",
           "req": null,
           "res": "Page<ClaimListItem>",
-          "backend_status": "PARTIAL",
+          "backend_status": "DRIFT",
           "msw_implemented": true
         },
         {
@@ -686,7 +686,7 @@
           "fn": "getClaimOversight",
           "req": null,
           "res": "ClaimOut",
-          "backend_status": "PARTIAL",
+          "backend_status": "DRIFT",
           "msw_implemented": true
         }
       ]

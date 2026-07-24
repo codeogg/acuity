@@ -173,3 +173,47 @@ export function listClinicRetentionHistory(
 ): Promise<ClinicRetentionAuditOut[]> {
   return api.get<ClinicRetentionAuditOut[]>(`/admin/clinics/${clinicId}/retention/history`);
 }
+
+// --- onboarding walkthrough progress -------------------------------------------
+
+export type OnboardingStepStatus = "pending" | "completed";
+
+export type OnboardingStepOut = {
+  step_code: string;
+  step_name: string;
+  step_name_en: string;
+  sort_order: number;
+  status: OnboardingStepStatus;
+  completed_at: string | null;
+};
+
+export type OnboardingProgressOut = {
+  clinic_id: number;
+  lifecycle_status: string;
+  completed: number;
+  total: number;
+  progress_label: string;
+  all_completed: boolean;
+  can_confirm_activate: boolean;
+  current_step_code: string | null;
+  current_step_name: string | null;
+  current_step_name_en: string | null;
+  steps: OnboardingStepOut[];
+};
+
+export function getOnboardingProgress(clinicId: number): Promise<OnboardingProgressOut> {
+  return api.get<OnboardingProgressOut>(`/admin/clinics/${clinicId}/onboarding-progress`);
+}
+
+export function completeOnboardingStep(
+  clinicId: number,
+  stepCode: string,
+): Promise<OnboardingProgressOut> {
+  return api.post<OnboardingProgressOut>(
+    `/admin/clinics/${clinicId}/onboarding-steps/${stepCode}/complete`,
+  );
+}
+
+export function confirmClinicActivate(clinicId: number): Promise<ClinicOut> {
+  return api.post<ClinicOut>(`/admin/clinics/${clinicId}/confirm-activate`);
+}

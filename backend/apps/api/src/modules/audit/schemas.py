@@ -20,6 +20,7 @@ ActionType = Literal[
     "mfa_reset",
     "account_unlock",
     "invite_resend",
+    "clinic_activate",
 ]
 
 ACTION_TYPES: frozenset[str] = frozenset(
@@ -40,6 +41,7 @@ ACTION_TYPES: frozenset[str] = frozenset(
         "mfa_reset",
         "account_unlock",
         "invite_resend",
+        "clinic_activate",
     }
 )
 

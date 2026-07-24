@@ -3,9 +3,9 @@
 Rules:
 - New clinics start as ``provisioning`` (开通中 / 设定中).
 - When the provisioning checklist is complete, advance to ``onboarding``
-  (导入中 / 导入中).
-- ``active`` (活跃 / 已启用) is set only after the import walkthrough finishes
-  (not implemented yet — do not auto-advance).
+  and seed ``clinic_onboarding_step`` from the template (all pending).
+- ``active`` is set only after manual confirm-activate when all 8 steps
+  are completed — never auto-advance.
 - Needs-attention is a separate manual flag (``clinic.is_flagged``), not a
   lifecycle value.
 """
@@ -15,6 +15,7 @@ from __future__ import annotations
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.core.exceptions import ValidationException
 from src.db.models.org import Clinic, ClinicInsuranceCompany, DoctorClinicLink
 from src.db.models.retention import ClinicDataRetention, RetentionPolicy
 
@@ -87,7 +88,7 @@ async def _residency_and_retention_ready(db: AsyncSession, clinic: Clinic) -> bo
 
 async def sync_lifecycle(db: AsyncSession, clinic: Clinic) -> Clinic:
     """Advance lifecycle when checklist gates are met. Never demotes; never
-    auto-promotes to active until import completion is implemented.
+    auto-promotes to active (requires manual confirm-activate).
     """
     status = clinic.lifecycle_status or LIFECYCLE_PROVISIONING
     if status == LIFECYCLE_PROVISIONING and await provisioning_checklist_complete(
@@ -95,6 +96,9 @@ async def sync_lifecycle(db: AsyncSession, clinic: Clinic) -> Clinic:
     ):
         clinic.lifecycle_status = LIFECYCLE_ONBOARDING
         await db.flush()
+        from src.modules.clinics.onboarding import seed_clinic_onboarding_steps
+
+        await seed_clinic_onboarding_steps(db, clinic.id)
     return clinic
 
 
@@ -105,8 +109,38 @@ async def sync_lifecycle_by_id(db: AsyncSession, clinic_id: int) -> Clinic | Non
     return await sync_lifecycle(db, clinic)
 
 
-async def mark_active(db: AsyncSession, clinic: Clinic) -> Clinic:
-    """Import walkthrough finished — promote to active. (Call site TBD.)"""
+async def mark_active(
+    db: AsyncSession,
+    clinic: Clinic,
+    *,
+    operator_id: int | None = None,
+) -> Clinic:
+    """人工确认启用：8 步全部完成后才可从 onboarding → active。"""
+    from src.modules.audit.service import log_audit
+    from src.modules.clinics.onboarding import get_onboarding_progress
+
+    if (clinic.lifecycle_status or "") != LIFECYCLE_ONBOARDING:
+        raise ValidationException("仅「導入中」诊所可确认启用")
+
+    progress = await get_onboarding_progress(db, clinic.id)
+    if not progress["all_completed"]:
+        raise ValidationException(
+            f"导览尚未完成（{progress['progress_label']}），无法确认启用"
+        )
+
     clinic.lifecycle_status = LIFECYCLE_ACTIVE
     await db.flush()
+
+    if operator_id is not None:
+        await log_audit(
+            db,
+            action_type="clinic_activate",
+            operator_id=operator_id,
+            clinic_id=clinic.id,
+            target_ref=clinic.clinic_code,
+            detail={
+                "lifecycle": "onboarding→active",
+                "progress": progress["progress_label"],
+            },
+        )
     return clinic

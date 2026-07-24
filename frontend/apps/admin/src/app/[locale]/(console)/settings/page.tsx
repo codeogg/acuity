@@ -8,7 +8,7 @@ import { SectionTopBar } from "@/components/shell/section-top-bar";
 import { Avatar } from "@acuity/ui";
 import { AcuityIcon } from "@acuity/ui";
 import { KeyVal } from "@/components/ui/detail";
-import { ProfileFields, RbacPanel, SettingsSignOut } from "./settings-view";
+import { ProfileFields, ChangePasswordForm, RbacPanel, SettingsSignOut } from "./settings-view";
 import { getOperatorProfile, listOperators } from "@/lib/ops-model";
 
 export default async function SettingsPage({ params }: { params: Promise<{ locale: string }> }) {
@@ -39,6 +39,13 @@ export default async function SettingsPage({ params }: { params: Promise<{ local
             </div>
             <ProfileFields name={profile.name} email={profile.email} />
             <KeyVal label={t("locale")}>{locale === "zh-Hant-HK" ? "繁體中文（香港）" : "English (Hong Kong)"}</KeyVal>
+          </section>
+
+          <section className="rounded-lg border border-border bg-card p-6">
+            <h2 className="mb-4 font-mono text-xs font-medium uppercase tracking-eyebrow text-muted-foreground">
+              {t("password")}
+            </h2>
+            <ChangePasswordForm />
           </section>
 
           {profile.role === "super-admin" ? (

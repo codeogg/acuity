@@ -5292,7 +5292,7 @@
         ],
         "summary": "List tickets",
         "operationId": "listTickets",
-        "x-backend-status": "MISSING",
+        "x-backend-status": "DRIFT",
         "parameters": [
           {
             "name": "page",
@@ -5358,7 +5358,7 @@
         ],
         "summary": "Get a ticket",
         "operationId": "getTicket",
-        "x-backend-status": "MISSING",
+        "x-backend-status": "DRIFT",
         "parameters": [
           {
             "name": "ticket_id",
@@ -5398,7 +5398,7 @@
         ],
         "summary": "Update a ticket",
         "operationId": "updateTicket",
-        "x-backend-status": "MISSING",
+        "x-backend-status": "DRIFT",
         "parameters": [
           {
             "name": "ticket_id",
@@ -5450,7 +5450,7 @@
         ],
         "summary": "Resolve a ticket",
         "operationId": "resolveTicket",
-        "x-backend-status": "MISSING",
+        "x-backend-status": "DRIFT",
         "parameters": [
           {
             "name": "ticket_id",
@@ -5505,7 +5505,7 @@
         ],
         "summary": "List the clinic onboarding queue",
         "operationId": "listOnboardingQueue",
-        "x-backend-status": "MISSING",
+        "x-backend-status": "DRIFT",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -5822,7 +5822,7 @@
         ],
         "summary": "Analytics overview",
         "operationId": "getAnalyticsOverview",
-        "x-backend-status": "MISSING",
+        "x-backend-status": "DRIFT",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -5854,7 +5854,7 @@
         ],
         "summary": "Usage series",
         "operationId": "getUsageSeries",
-        "x-backend-status": "MISSING",
+        "x-backend-status": "DRIFT",
         "parameters": [
           {
             "name": "range_days",
@@ -5915,7 +5915,7 @@
         ],
         "summary": "Activation funnel",
         "operationId": "getActivationFunnel",
-        "x-backend-status": "MISSING",
+        "x-backend-status": "DRIFT",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -5947,7 +5947,7 @@
         ],
         "summary": "Verification report",
         "operationId": "getVerificationReport",
-        "x-backend-status": "MISSING",
+        "x-backend-status": "DRIFT",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -5979,7 +5979,7 @@
         ],
         "summary": "Quality report",
         "operationId": "getQualityReport",
-        "x-backend-status": "MISSING",
+        "x-backend-status": "DRIFT",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -6011,7 +6011,7 @@
         ],
         "summary": "Export an analytics report",
         "operationId": "exportAnalytics",
-        "x-backend-status": "MISSING",
+        "x-backend-status": "DRIFT",
         "requestBody": {
           "required": true,
           "content": {
@@ -6350,8 +6350,8 @@
         ],
         "summary": "List claims across clinics (PHI-redacted)",
         "operationId": "listClaimsOversight",
-        "x-backend-status": "PARTIAL",
-        "x-implementation-note": "patient_name is null at portfolio level pending the redaction-rule decision.",
+        "x-backend-status": "DRIFT",
+        "x-implementation-note": "patient_name is null at portfolio level; final_field_values are returned for client-side masked reveal.",
         "parameters": [
           {
             "name": "page",
@@ -6433,8 +6433,8 @@
         ],
         "summary": "Get one claim (PHI-redacted)",
         "operationId": "getClaimOversight",
-        "x-backend-status": "PARTIAL",
-        "x-implementation-note": "final_field_values withheld at portfolio level pending the redaction-rule decision.",
+        "x-backend-status": "DRIFT",
+        "x-implementation-note": "patient_name and ai_raw_result redacted; final_field_values returned for client-side masked reveal.",
         "parameters": [
           {
             "name": "claim_id",
@@ -13142,7 +13142,8 @@
           "tag_category_change",
           "batch_operation",
           "export",
-          "patient_data_view"
+          "patient_data_view",
+          "clinic_activate"
         ]
       },
       "AuditLogOut": {
