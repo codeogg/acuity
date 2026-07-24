@@ -3,16 +3,17 @@
 
 import { defaultLocale, locales } from "@acuity/i18n/routing";
 import { isInternalPath } from "../journey/logic";
+import type { AuthSurface } from "./config";
 
 export interface AuthGateConfig {
   // Locale-relative sign-in path (always public).
   signInPath: string;
   // Additional public path prefixes ("/" matches the root exactly).
   publicPaths?: readonly string[];
-  // When set, an access_token whose JWT role is outside this list is treated
-  // as no session (doctor cookie must not unlock the operator console, and
-  // vice versa). Mock-only markers without a JWT still pass presence.
+  // When set, a JWT whose role is outside this list is treated as no session.
   allowedRoles?: readonly string[];
+  /** Which httpOnly session cookie this app owns (admin vs doctor isolation). */
+  surface?: AuthSurface;
 }
 
 export type AuthGateDecision =

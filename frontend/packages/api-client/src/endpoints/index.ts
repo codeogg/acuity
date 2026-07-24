@@ -8,6 +8,7 @@
 export * as ai from "./ai";
 export * as audit from "./audit";
 export * as authEndpoints from "./auth";
+export * as doctorImpersonation from "./doctor-impersonation";
 export * as claims from "./claims";
 export * as clinics from "./clinics";
 export * as companies from "./companies";

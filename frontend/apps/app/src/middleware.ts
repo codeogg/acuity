@@ -10,8 +10,9 @@ import { doctorAuthMount } from "@acuity/auth-ui";
 // allowedRoles isolates this surface from an operator JWT on shared localhost.
 export default createAuthMiddleware({
   signInPath: "/sign-in",
-  publicPaths: [],
+  publicPaths: ["/impersonation-entry", "/impersonation-ended"],
   allowedRoles: doctorAuthMount.allowedRoles,
+  surface: "doctor",
 });
 
 export const config = {

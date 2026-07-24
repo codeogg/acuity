@@ -1,11 +1,15 @@
 from fastapi import APIRouter
 
 from src.deps import DbSession, DoctorDep
+from src.modules.impersonation.route import ImpersonationAuditRoute
 from src.modules.ai_extraction import service
 from src.modules.ai_extraction.schemas import ExtractRequest, ExtractResponse
 
-router = APIRouter(prefix="/api/doctor/ai", tags=["doctor:ai"])
-
+router = APIRouter(
+    prefix="/api/doctor/ai",
+    tags=["doctor:ai"],
+    route_class=ImpersonationAuditRoute,
+)
 
 @router.post("/extract", response_model=ExtractResponse)
 async def extract(

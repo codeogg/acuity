@@ -5,6 +5,8 @@ from fastapi.responses import Response
 
 from src.core.exceptions import NotFoundException, ValidationException
 from src.deps import AdminDep, DbSession, DoctorDep
+from src.modules.impersonation.route import ImpersonationAuditRoute
+from src.modules.impersonation.access import ImpersonationAccess, ImpersonationAccessLevel
 from src.modules.claims import service
 from src.modules.claims.schemas import (
     ClaimCreate,
@@ -29,7 +31,11 @@ from src.modules.claims.schemas import (
 from src.modules.common import Page
 from src.modules.pdf_generation import service as pdf_service
 
-router = APIRouter(prefix="/api/doctor", tags=["doctor:claims"])
+router = APIRouter(
+    prefix="/api/doctor",
+    tags=["doctor:claims"],
+    route_class=ImpersonationAuditRoute,
+)
 admin_router = APIRouter(tags=["admin:claims"])
 
 
@@ -62,6 +68,7 @@ async def get_claim_oversight(claim_id: int, db: DbSession, _: AdminDep) -> Clai
 
 
 @router.get("/home/overview", response_model=HomeOverview)
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def home_overview(db: DbSession, doctor: DoctorDep) -> HomeOverview:
     return await service.get_home_overview(
         db, doctor_id=doctor.id, clinic_id=doctor.clinic_id
@@ -69,6 +76,7 @@ async def home_overview(db: DbSession, doctor: DoctorDep) -> HomeOverview:
 
 
 @router.get("/insurance-companies", response_model=list[CompanyBrief])
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def list_companies(db: DbSession, doctor: DoctorDep) -> list[CompanyBrief]:
     companies = await service.list_available_companies(db, doctor.clinic_id)
     return [CompanyBrief.model_validate(c) for c in companies]
@@ -78,6 +86,7 @@ async def list_companies(db: DbSession, doctor: DoctorDep) -> list[CompanyBrief]
     "/insurance-companies/{company_id}/templates",
     response_model=list[TemplateBrief],
 )
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def list_templates(
     company_id: int, db: DbSession, doctor: DoctorDep
 ) -> list[TemplateBrief]:
@@ -170,6 +179,7 @@ async def resume_extraction(
 
 
 @router.get("/claims/{claim_id}/extract-progress", response_model=ExtractProgressOut)
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def get_extract_progress(
     claim_id: int, db: DbSession, doctor: DoctorDep
 ) -> ExtractProgressOut:
@@ -182,6 +192,7 @@ async def get_extract_progress(
     "/claims/{claim_id}/template-specific-ai-fields",
     response_model=list[TemplateSpecificAiFieldOut],
 )
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def list_template_specific_ai_fields(
     claim_id: int, db: DbSession, doctor: DoctorDep
 ) -> list[TemplateSpecificAiFieldOut]:
@@ -286,6 +297,7 @@ async def generate_pdf(
 
 
 @router.get("/claims/{claim_id}/pdf")
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def get_claim_pdf(claim_id: int, db: DbSession, doctor: DoctorDep) -> Response:
     """返回已生成的保单 PDF 文件流，供前端 iframe 预览。"""
     pdf_bytes, filename = await pdf_service.get_submission_pdf_bytes(
@@ -345,6 +357,7 @@ async def reuse_for_template(
 
 
 @router.get("/claims", response_model=Page[ClaimListItem])
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def list_claims(
     db: DbSession,
     doctor: DoctorDep,
@@ -377,6 +390,7 @@ async def list_claims(
 
 
 @router.get("/claims/{claim_id}", response_model=ClaimOut)
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def get_claim(claim_id: int, db: DbSession, doctor: DoctorDep) -> ClaimOut:
     claim = await service.get_claim(db, claim_id, doctor.clinic_id)
     return await service.claim_to_out(db, claim)

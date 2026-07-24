@@ -33,6 +33,7 @@ const nextConfig: NextConfig = {
         : process.env.API_PROXY_TARGET
           ? "/api"
           : "http://localhost:8000/api"),
+    NEXT_PUBLIC_AUTH_SURFACE: "admin",
   },
   // In live integration mode, keep browser requests same-origin so the
   // FastAPI access_token cookie is available to the console middleware.

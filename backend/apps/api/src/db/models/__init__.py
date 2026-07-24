@@ -30,6 +30,8 @@ from src.db.models.standard_fields import (
 from src.db.models.subscriptions import ClinicSubscription
 from src.db.models.retention import ClinicDataRetention, RetentionPolicy
 from src.db.models.audit import AuditLog
+from src.db.models.impersonation import ImpersonationSession
+from src.db.models.impersonation_request_log import ImpersonationRequestLog
 from src.db.models.onboarding import ClinicOnboardingStep, OnboardingStepTemplate
 from src.db.models.tags import FormTag, TagVisibility
 from src.db.models.tickets import OpsTicket, OpsTicketNote
@@ -67,6 +69,8 @@ __all__ = [
     "RetentionPolicy",
     "ClinicDataRetention",
     "AuditLog",
+    "ImpersonationSession",
+    "ImpersonationRequestLog",
     "OnboardingStepTemplate",
     "ClinicOnboardingStep",
     "FieldDomain",

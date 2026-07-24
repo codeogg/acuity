@@ -25,6 +25,15 @@ function loginResponseFor(session: authStore.MockSession): LoginResponse {
   } as LoginResponse;
 }
 
+function sessionCookieHeader(role: string, clear = false): string {
+  const isAdmin = role !== "DOCTOR" && role !== "STAFF";
+  const name = isAdmin ? "admin_access_token" : "doctor_access_token";
+  if (clear) {
+    return `${name}=; HttpOnly; Path=/; Max-Age=0`;
+  }
+  return `${name}=mock-jwt-token; HttpOnly; Path=/; SameSite=Lax`;
+}
+
 export const authHandlers = [
   // --- real contract ops ----------------------------------------------------
   http.post(`${API}/auth/login`, async ({ request }) => {
@@ -42,10 +51,10 @@ export const authHandlers = [
       }
       return errorEnvelope("UNAUTHORIZED", "帳戶或密碼不正確。", 401);
     }
-    // Mirror the real backend: set the httpOnly access_token cookie.
-    return HttpResponse.json(loginResponseFor(outcome.session), {
+    const payload = loginResponseFor(outcome.session);
+    return HttpResponse.json(payload, {
       headers: {
-        "Set-Cookie": "access_token=mock-jwt-token; HttpOnly; Path=/; SameSite=Lax",
+        "Set-Cookie": sessionCookieHeader(payload.role),
       },
     });
   }),
@@ -54,9 +63,11 @@ export const authHandlers = [
     const { deny } = await gate(request, { authed: false });
     if (deny) return deny;
     authStore.logout();
+    const surface = (request.headers.get("X-Acuity-Surface") || "doctor").toLowerCase();
+    const role = surface === "admin" ? "OPERATOR" : "DOCTOR";
     return HttpResponse.json(
       { success: true },
-      { headers: { "Set-Cookie": "access_token=; HttpOnly; Path=/; Max-Age=0" } },
+      { headers: { "Set-Cookie": sessionCookieHeader(role, true) } },
     );
   }),
 
@@ -163,7 +174,7 @@ export const authHandlers = [
     }
     return HttpResponse.json(loginResponseFor(session), {
       headers: {
-        "Set-Cookie": "access_token=mock-jwt-token; HttpOnly; Path=/; SameSite=Lax",
+        "Set-Cookie": sessionCookieHeader(session.account.role),
       },
     });
   }),

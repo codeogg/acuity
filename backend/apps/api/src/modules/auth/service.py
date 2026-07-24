@@ -21,6 +21,7 @@ from src.modules.auth.schemas import (
     AuthClinicOption,
     ClinicSelectResponse,
     LoginResponse,
+    MeImpersonationContext,
     MeResponse,
 )
 from src.modules.doctors.clinic_links import list_linked_clinic_ids
@@ -228,12 +229,33 @@ async def resolve_username(db: AsyncSession, user) -> str | None:
 
 
 async def get_me(db: AsyncSession, user) -> MeResponse:
+    impersonation = None
+    if getattr(user, "impersonation", None):
+        ctx = user.impersonation
+        operator_id = int(ctx["operator_id"])
+        doctor_id = int(ctx["doctor_id"])
+        admin = await db.get(AdminUser, operator_id)
+        doctor = await db.get(Doctor, doctor_id)
+        operator_label = None
+        if admin is not None:
+            operator_label = (admin.real_name or admin.username or "").strip() or None
+        doctor_label = doctor.doctor_name if doctor else None
+        impersonation = MeImpersonationContext(
+            session_id=int(ctx["session_id"]),
+            operator_id=operator_id,
+            doctor_id=doctor_id,
+            clinic_id=int(ctx["clinic_id"]),
+            mode=ctx["mode"],
+            operator=operator_label,
+            doctor=doctor_label,
+        )
     return MeResponse(
         user_id=user.id,
         role=user.role,
         clinic_id=user.clinic_id,
         display_name=await resolve_display_name(db, user),
         username=await resolve_username(db, user),
+        impersonation=impersonation,
     )
 
 

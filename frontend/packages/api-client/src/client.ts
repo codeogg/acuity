@@ -217,6 +217,16 @@ export async function request<T>(
     ...(await implicitServerSessionHeaders(options.headers)),
     ...options.headers,
   };
+  // Isolate admin vs doctor session cookies on shared localhost.
+  const surface =
+    (typeof process !== "undefined"
+      ? process.env?.NEXT_PUBLIC_AUTH_SURFACE
+      : undefined) ?? undefined;
+  if (surface === "admin" || surface === "doctor") {
+    if (!headers["X-Acuity-Surface"]) {
+      headers["X-Acuity-Surface"] = surface;
+    }
+  }
   let body: BodyInit | undefined;
 
   if (options.form) {

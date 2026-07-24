@@ -2,6 +2,12 @@ from fastapi import APIRouter, Request, Response
 
 from src.core.exceptions import AuthException
 from src.core.security import decode_mfa_pending_token
+from src.core.session_cookies import (
+    clear_access_cookie,
+    extract_access_token,
+    resolve_surface,
+    set_access_cookie,
+)
 from src.deps import CurrentUserDep, DbSession
 from src.modules.auth import service
 from src.modules.auth.schemas import (
@@ -26,32 +32,20 @@ from src.modules.mfa.schemas import (
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-_COOKIE_MAX_AGE = 8 * 3600
-
-
-def _set_access_cookie(response: Response, token: str) -> None:
-    response.set_cookie(
-        key="access_token",
-        value=token,
-        httponly=True,
-        samesite="lax",
-        secure=False,  # 生产环境置 True（HTTPS）
-        max_age=_COOKIE_MAX_AGE,
-    )
-
 
 @router.post("/login", response_model=LoginResponse)
 async def login(body: LoginRequest, db: DbSession, response: Response) -> LoginResponse:
     result = await service.login(db, body.username, body.password)
     # MFA 待验证时不写入 session cookie，待 /auth/mfa/verify 成功后签发
     if result.access_token:
-        _set_access_cookie(response, result.access_token)
+        set_access_cookie(response, result.access_token, role=result.role)
     return result
 
 
 @router.post("/logout", response_model=SuccessResponse)
-async def logout(response: Response) -> SuccessResponse:
-    response.delete_cookie("access_token")
+async def logout(request: Request, response: Response) -> SuccessResponse:
+    surface = resolve_surface(request) or "doctor"
+    clear_access_cookie(response, surface=surface)
     return SuccessResponse(success=True)
 
 
@@ -86,7 +80,7 @@ async def select_clinic(
     result = await service.select_clinic(
         db, user_id=user.id, role=user.role, clinic_id=body.clinic_id
     )
-    _set_access_cookie(response, result.access_token)
+    set_access_cookie(response, result.access_token, role=result.role)
     return result
 
 
@@ -109,12 +103,9 @@ async def change_password(
 def _extract_mfa_token(body_token: str | None, request: Request) -> str:
     if body_token:
         return body_token
-    auth = request.headers.get("Authorization")
-    if auth and auth.lower().startswith("bearer "):
-        return auth[7:]
-    cookie = request.cookies.get("access_token")
-    if cookie:
-        return cookie
+    token = extract_access_token(request)
+    if token:
+        return token
     raise AuthException("缺少 MFA 会话凭证")
 
 
@@ -149,7 +140,7 @@ async def mfa_enroll_confirm(
         db, doctor_id=int(payload["sub"]), code=body.code
     )
     if result.access_token:
-        _set_access_cookie(response, result.access_token)
+        set_access_cookie(response, result.access_token, role=result.role)
     return result
 
 
@@ -168,7 +159,7 @@ async def verify_mfa(
         db, doctor_id=int(payload["sub"]), code=body.code
     )
     if result.access_token:
-        _set_access_cookie(response, result.access_token)
+        set_access_cookie(response, result.access_token, role=result.role)
     return result
 
 
@@ -187,5 +178,5 @@ async def verify_mfa_backup_code(
         db, doctor_id=int(payload["sub"]), code=body.code
     )
     if result.access_token:
-        _set_access_cookie(response, result.access_token)
+        set_access_cookie(response, result.access_token, role=result.role)
     return result

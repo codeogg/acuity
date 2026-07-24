@@ -32,6 +32,8 @@ export interface SessionState {
   // ADR 0041 §6: the session spans every linked clinic (no single clinic name).
   mergedWorkspace: boolean;
   settings: DoctorSettings | null;
+  /** Present when JWT typ=impersonation_session (design 5.3). */
+  impersonation: MeResponseExtended["impersonation"];
   refreshSettings: () => void;
   updateSettings: (next: DoctorSettings) => void;
 }
@@ -41,6 +43,7 @@ const SessionContext = createContext<SessionState>({
   clinicName: null,
   mergedWorkspace: false,
   settings: null,
+  impersonation: null,
   refreshSettings: () => {},
   updateSettings: () => {},
 });
@@ -49,6 +52,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<MeResponse | null>(null);
   const [clinicName, setClinicName] = useState<string | null>(null);
   const [mergedWorkspace, setMergedWorkspace] = useState(false);
+  const [impersonation, setImpersonation] =
+    useState<MeResponseExtended["impersonation"]>(null);
   const [settings, setSettings] = useState<DoctorSettings | null>(null);
   const [settingsEpoch, setSettingsEpoch] = useState(0);
 
@@ -58,10 +63,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       .me()
       .then((res) => {
         if (cancelled) return;
+        const extended = res as MeResponseExtended;
         setMe(res);
-        setMergedWorkspace(
-          (res as MeResponseExtended).merged_workspace === true,
-        );
+        setMergedWorkspace(extended.merged_workspace === true);
+        setImpersonation(extended.impersonation ?? null);
       })
       .catch(() => {
         // Identity stays null; surfaces render their own fallbacks. The auth
@@ -100,6 +105,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         clinicName,
         mergedWorkspace,
         settings,
+        impersonation,
         refreshSettings: () => setSettingsEpoch((e) => e + 1),
         updateSettings: setSettings,
       }}

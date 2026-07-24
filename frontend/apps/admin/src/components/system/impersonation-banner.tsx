@@ -13,11 +13,13 @@ import { endImpersonationAction } from "@/lib/actions";
 import { AcuityIcon } from "@acuity/ui";
 import { ImpersonationTabSignal } from "@/components/system/impersonation-tab-signal";
 
+type ActiveSession = NonNullable<Awaited<ReturnType<typeof getImpersonationSession>>["active"]>;
+
 export async function ImpersonationBanner({ locale }: { locale: string }) {
   void locale;
   const t = await getTranslations("impersonation");
 
-  let session;
+  let session: ActiveSession | null = null;
   let failSafe = false;
   try {
     session = (await getImpersonationSession()).active;
@@ -31,7 +33,7 @@ export async function ImpersonationBanner({ locale }: { locale: string }) {
   }
   if (!session && !failSafe) return null;
 
-  const isAct = session?.mode === "act-as";
+  const isAct = session?.mode === "act-as" || session?.mode === "proxy";
   let doctorLabel = t("unresolved-doctor");
   let clinicLabel = t("unresolved-clinic");
   if (session) {
@@ -45,7 +47,9 @@ export async function ImpersonationBanner({ locale }: { locale: string }) {
 
   async function exit() {
     "use server";
-    await endImpersonationAction();
+    if (session) {
+      await endImpersonationAction(session.clinic_id, session.doctor_id);
+    }
   }
 
   return (

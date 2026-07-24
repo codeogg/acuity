@@ -41,7 +41,6 @@ import {
 
 const {
   accountManagement,
-  adminImpersonation,
   adminAnalytics,
 } = frontendOnly;
 
@@ -56,7 +55,9 @@ function failure(err: unknown): { ok: false; kind: string; message: string } {
 
 async function sessionHeaders(): Promise<Record<string, string>> {
   const cookie = (await cookies()).toString();
-  return cookie ? { cookie } : {};
+  const headers: Record<string, string> = { "X-Acuity-Surface": "admin" };
+  if (cookie) headers.cookie = cookie;
+  return headers;
 }
 
 // Server Actions execute in Next.js, not in the browser. Explicitly pass the
@@ -794,14 +795,34 @@ export async function exportAuditAction(scope: string) {
 
 // --- impersonation ---------------------------------------------------------------------
 
-export async function startImpersonationAction(clinicId: number, doctorId: number, mode: "view-as" | "act-as") {
-  // The mock handler persists the session server-side and records the
-  // impersonation-start audit event; the banner is server-rendered from it.
-  return run(() => adminImpersonation.startImpersonation({ clinic_id: clinicId, doctor_id: doctorId, mode }), ["/"]);
+export async function startImpersonationAction(
+  clinicId: number,
+  doctorId: number,
+  mode: "view-as" | "act-as",
+) {
+  // UI labels stay view-as / act-as; wire contract is view / proxy (+ confirmed for proxy).
+  const wireMode = mode === "act-as" ? "proxy" : "view";
+  return run(
+    () =>
+      clinicMutation<{ entry_url: string | null }>("post", "/admin/impersonation/start", {
+        clinic_id: clinicId,
+        doctor_id: doctorId,
+        mode: wireMode,
+        ...(wireMode === "proxy" ? { confirmed: true } : {}),
+      }),
+    ["/"],
+  );
 }
 
-export async function endImpersonationAction() {
-  return run(() => adminImpersonation.endImpersonation(), ["/"]);
+export async function endImpersonationAction(clinicId: number, doctorId: number) {
+  return run(
+    () =>
+      clinicMutation<{ success: boolean }>("post", "/admin/impersonation/end", {
+        clinic_id: clinicId,
+        doctor_id: doctorId,
+      }),
+    ["/"],
+  );
 }
 
 // --- insurers / standard fields ----------------------------------------------------------

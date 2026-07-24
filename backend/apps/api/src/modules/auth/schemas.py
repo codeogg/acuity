@@ -22,12 +22,26 @@ class LoginResponse(BaseModel):
     backup_codes: list[str] | None = None
 
 
+class MeImpersonationContext(BaseModel):
+    """模拟业务会话上下文（仅 typ=impersonation_session 时出现）。"""
+
+    session_id: int
+    operator_id: int
+    doctor_id: int
+    clinic_id: int
+    mode: Literal["view", "proxy"]
+    # 身份展示：操作人 vs 被模拟医生（不得混淆）
+    operator: str | None = None
+    doctor: str | None = None
+
+
 class MeResponse(BaseModel):
     user_id: int
     role: str
     clinic_id: int | None = None
     display_name: str | None = None
     username: str | None = None
+    impersonation: MeImpersonationContext | None = None
 
 
 class ProfileUpdateRequest(BaseModel):

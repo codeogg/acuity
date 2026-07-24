@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     APP_ENV: str = "local"
     CORS_ORIGINS: str = "http://localhost:3000"
 
+    # 医生端 Web 根地址（运营模拟 start 返回的 entry_url 基于此拼接）
+    DOCTOR_APP_BASE_URL: str = "http://localhost:3000"
+    DOCTOR_APP_LOCALE: str = "en-HK"
+
     # 数据库 / Redis
     DATABASE_URL: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/insurance"
     REDIS_URL: str = "redis://localhost:6379/0"

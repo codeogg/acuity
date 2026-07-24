@@ -25,10 +25,16 @@ export {
 export { createAuthPage } from "./mount/create-auth-page";
 export {
   MOCK_SESSION_COOKIE,
+  ADMIN_ACCESS_COOKIE,
+  DOCTOR_ACCESS_COOKIE,
+  LEGACY_ACCESS_COOKIE,
+  sessionCookieName,
   doctorAuthMount,
   operatorAuthMount,
   type AuthMountConfig,
+  type AuthSurface,
 } from "./mount/config";
+
 export {
   parseAuthEntry,
   isInternalPath,

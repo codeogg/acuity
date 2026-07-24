@@ -11,9 +11,21 @@ import type { AuthSurfaceKind } from "../journey/types";
 // Mock-mode session marker. MSW's synthetic responses cannot set a real
 // httpOnly cookie in the browser jar, so the journey sets this readable
 // marker at landing and clears it at sign-out; the middleware session gate
-// accepts either the real `access_token` cookie (live backend) or this marker
+// accepts either the real surface session cookie (live backend) or this marker
 // (mock-first). Never carries a credential — presence-only.
 export const MOCK_SESSION_COOKIE = "acuity_mock_session";
+
+/** Per-surface httpOnly session cookies (localhost shares host across ports). */
+export const ADMIN_ACCESS_COOKIE = "admin_access_token";
+export const DOCTOR_ACCESS_COOKIE = "doctor_access_token";
+/** @deprecated Shared legacy name — still read for migration, cleared on new login. */
+export const LEGACY_ACCESS_COOKIE = "access_token";
+
+export type AuthSurface = "admin" | "doctor";
+
+export function sessionCookieName(surface: AuthSurface): string {
+  return surface === "admin" ? ADMIN_ACCESS_COOKIE : DOCTOR_ACCESS_COOKIE;
+}
 
 export interface AuthMountConfig {
   surface: AuthSurfaceKind;

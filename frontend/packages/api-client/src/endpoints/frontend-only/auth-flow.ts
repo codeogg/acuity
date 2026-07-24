@@ -50,7 +50,17 @@ export type LoginResponseExtended = LoginResponse & {
   mfa_enrollment_required?: boolean;
   backup_codes?: string[] | null;
 };
-export type MeResponseExtended = MeResponse;
+export type MeResponseExtended = MeResponse & {
+  impersonation?: {
+    session_id: number;
+    operator_id: number;
+    doctor_id: number;
+    clinic_id: number;
+    mode: "view" | "proxy";
+    operator?: string | null;
+    doctor?: string | null;
+  } | null;
+};
 
 export interface MfaEnrollInitResult {
   qr_code_base64: string;

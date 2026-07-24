@@ -1,12 +1,11 @@
 "use client";
 
 // Impersonation chooser — doctor select + view-as / act-as mode cards + the
-// never-invisible notice. View-as starts directly (the safer default); act-as
-// is the deliberate escalation behind an explicit-acknowledgement gate. The
-// session persists server-side (mock store), the banner is server-rendered,
-// and start / end are audited by the mock handlers.
+// never-invisible notice. View-as starts directly; act-as goes through an
+// acknowledgement gate. On success, open the backend entry_url in a new tab.
+// submitting flips synchronously on click to block double-submit.
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
@@ -35,28 +34,39 @@ export function ImpersonateControl({
   const [mode, setMode] = useState<"view-as" | "act-as">("view-as");
   const [doctorId, setDoctorId] = useState<string>(doctors[0] ? String(doctors[0].id) : "");
   const [gateOpen, setGateOpen] = useState(false);
-  const [, startTransition] = useTransition();
+  const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
   const { showToast } = useToast();
 
   const doctorLabel = doctors.find((d) => String(d.id) === doctorId)?.label ?? doctorId;
+  const locked = submitting || !doctorId;
 
-  function start() {
-    startTransition(async () => {
+  async function start() {
+    if (!doctorId || submitting) return;
+    setSubmitting(true);
+    try {
       const result = await startImpersonationAction(clinicId, Number(doctorId), mode);
-      if (result.ok) {
-        showToast(mode === "act-as" ? t("started-act-as") : t("started-view-as"));
-        router.refresh();
-      } else {
+      if (!result.ok) {
         showToast(result.message, "error");
+        return;
       }
-    });
+      const entryUrl = result.data?.entry_url;
+      if (!entryUrl) {
+        showToast(t("missing-entry-url"), "error");
+        return;
+      }
+      window.open(entryUrl, "_blank", "noopener,noreferrer");
+      showToast(mode === "act-as" ? t("started-act-as") : t("started-view-as"));
+      router.refresh();
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function enter() {
-    if (!doctorId) return;
+    if (locked) return;
     if (mode === "act-as") setGateOpen(true);
-    else start();
+    else void start();
   }
 
   function ModeCard({
@@ -72,7 +82,13 @@ export function ImpersonateControl({
   }) {
     const selected = mode === value;
     return (
-      <button type="button" onClick={() => setMode(value)} className="block flex-1 text-left" aria-pressed={selected}>
+      <button
+        type="button"
+        onClick={() => !submitting && setMode(value)}
+        disabled={submitting}
+        className="block flex-1 text-left disabled:opacity-60"
+        aria-pressed={selected}
+      >
         <div
           className={`rounded-lg border bg-card p-4 transition-colors ${
             selected ? "border-primary ring-1 ring-primary" : "border-border"
@@ -104,7 +120,7 @@ export function ImpersonateControl({
         {t("never-invisible")}
       </div>
       <label className="mb-1 block text-xs font-medium text-muted-foreground">{t("doctor")}</label>
-      <Select value={doctorId} onValueChange={setDoctorId}>
+      <Select value={doctorId} onValueChange={setDoctorId} disabled={submitting}>
         <SelectTrigger aria-label={t("doctor")} className="mb-5 w-full">
           <SelectValue />
         </SelectTrigger>
@@ -121,13 +137,15 @@ export function ImpersonateControl({
         <ModeCard value="view-as" icon="eye" title={t("view-as")} desc={t("view-as-desc")} />
         <ModeCard value="act-as" icon="pencil" title={t("act-as")} desc={t("act-as-desc")} />
       </div>
-      <Button type="button" className="w-full" onClick={enter} disabled={!doctorId}>
+      <Button type="button" className="w-full" onClick={enter} disabled={locked}>
         <AcuityIcon name={mode === "act-as" ? "pencil" : "eye"} size={16} />
         {mode === "act-as" ? t("enter-act-as") : t("enter-view-as")}
       </Button>
       <ConfirmGateDialog
         open={gateOpen}
-        onOpenChange={setGateOpen}
+        onOpenChange={(open) => {
+          if (!submitting) setGateOpen(open);
+        }}
         title={t("gate.title")}
         description={t("gate.description", { doctor: doctorLabel, clinic: clinicName })}
         variant="ack"
@@ -137,7 +155,9 @@ export function ImpersonateControl({
           cancelLabel: t("gate.cancel"),
           ackLabel: t("gate.ack", { doctor: doctorLabel }),
         }}
-        onConfirm={start}
+        onConfirm={() => {
+          void start();
+        }}
       />
     </div>
   );

@@ -43,7 +43,7 @@ import type {
   TransformRuleOut,
 } from "@acuity/types";
 import type { AuditLogCreate } from "@acuity/types";
-import type { ImpersonationSession, ImpersonationStartRequest } from "../../endpoints/frontend-only/admin-impersonation";
+import type { ImpersonationSession } from "../../endpoints/frontend-only/admin-impersonation";
 import type { Tag, TagCreate, TagRetireRequest, TagUpdate, TagVisibilityEntry } from "../../endpoints/frontend-only/admin-tags";
 import type { TicketUpdate } from "../../endpoints/frontend-only/admin-tickets";
 import {
@@ -1681,16 +1681,39 @@ export const adminHandlers = [
   http.post(`${API}/admin/impersonation/start`, async ({ request }) => {
     const { deny } = await gate(request);
     if (deny) return deny;
-    const body = (await request.json()) as ImpersonationStartRequest;
+    const body = (await request.json()) as {
+      clinic_id: number;
+      doctor_id: number;
+      mode: string;
+      confirmed?: boolean;
+      duration_minutes?: number;
+    };
+    const wireMode = body.mode === "proxy" || body.mode === "act-as" ? "proxy" : "view";
+    if (wireMode === "proxy" && body.confirmed !== true) {
+      return HttpResponse.json(
+        { error: { code: "CONFIRMATION_REQUIRED", message: "proxy requires confirmed=true" } },
+        { status: 400 },
+      );
+    }
     const now = Date.now();
+    const sessionId = Number(String(nextFrontendOnlyId("imp")).replace(/\D/g, "") || now);
+    const token = `mock-entry-${sessionId}`;
+    const entry_url = `http://localhost:3000/en-HK/impersonation-entry?token=${encodeURIComponent(token)}`;
     const session: ImpersonationSession = {
-      id: nextFrontendOnlyId("imp"),
+      session_id: sessionId,
+      id: String(sessionId),
       clinic_id: body.clinic_id,
       doctor_id: body.doctor_id,
+      operator_id: 1,
       operator: "you@acuity",
-      mode: body.mode,
+      mode: wireMode,
+      status: "active",
       started_at: new Date(now).toISOString(),
+      expire_at: new Date(now + (body.duration_minutes ?? 30) * 60_000).toISOString(),
       expires_at: new Date(now + (body.duration_minutes ?? 30) * 60_000).toISOString(),
+      reused: false,
+      token,
+      entry_url,
     };
     frontendOnlyState().impersonation = session;
     recordAuditLog({
@@ -1698,7 +1721,7 @@ export const adminHandlers = [
       operator_name: session.operator,
       clinic_id: session.clinic_id,
       target_ref: `clinic:${session.clinic_id} · doctor:${session.doctor_id}`,
-      mode: session.mode,
+      mode: wireMode === "proxy" ? "act-as" : "view-as",
     });
     return HttpResponse.json(session);
   }),
@@ -1714,7 +1737,7 @@ export const adminHandlers = [
         operator_name: session.operator,
         clinic_id: session.clinic_id,
         target_ref: `clinic:${session.clinic_id} · doctor:${session.doctor_id}`,
-        mode: session.mode,
+        mode: session.mode === "proxy" ? "act-as" : "view-as",
       });
     }
     state.impersonation = null;

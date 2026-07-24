@@ -41,7 +41,7 @@ export function AppShell({
   const locale = useLocale() as Locale;
   const pathname = usePathname();
   const base = `/${locale}`;
-  const { me, clinicName, mergedWorkspace } = useSession();
+  const { me, clinicName, mergedWorkspace, impersonation } = useSession();
   const { showToast } = useToast();
 
   const sections: ShellNavSection[] = [
@@ -69,7 +69,17 @@ export function AppShell({
   ];
 
   const rawName = me?.display_name ?? "";
-  const displayName = rawName ? localeName(rawName, locale) : "";
+  // 模拟会话：角标显示运营人（操作人），副标题标明正在查看的医生 —— 身份不得混淆。
+  const operatorName = impersonation?.operator?.trim() || "";
+  const subjectName =
+    impersonation?.doctor?.trim() ||
+    (rawName ? localeName(rawName, locale) : "");
+  const displayName = impersonation
+    ? operatorName || t("impersonation-operator-fallback")
+    : rawName
+      ? localeName(rawName, locale)
+      : "";
+  const avatarName = impersonation ? operatorName || "Ops" : rawName;
   // A merged workspace spans every linked clinic — one combined label, never a
   // single clinic name (ADR 0041 §6).
   const clinicLabel = mergedWorkspace
@@ -77,6 +87,14 @@ export function AppShell({
     : clinicName
       ? localeName(clinicName, locale)
       : "";
+  const accountSub = impersonation
+    ? t(
+        impersonation.mode === "proxy"
+          ? "impersonation-acting-as"
+          : "impersonation-viewing-as",
+        { doctor: subjectName || "—" },
+      )
+    : clinicLabel || undefined;
 
   function handleHelp() {
     showToast(t("help-toast"));
@@ -94,8 +112,8 @@ export function AppShell({
   // language selector, Sign out. Full bar at desktop; avatar-only on the rail.
   const accountMenuProps = {
     name: displayName || t("section-account"),
-    sub: clinicLabel || undefined,
-    avatar: rawName ? <Avatar name={rawName} size={32} /> : undefined,
+    sub: accountSub,
+    avatar: avatarName ? <Avatar name={avatarName} size={32} /> : undefined,
     menuLabel: t("account-menu"),
     entries: [
       {

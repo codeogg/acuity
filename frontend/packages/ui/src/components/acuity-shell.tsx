@@ -302,6 +302,9 @@ export function AcuityShell({
 }: AcuityShellProps) {
   const pathname = usePathname();
   const console_ = variant === "console";
+  // Banner sits above the shell; keep the app viewport locked (h-dvh) so the
+  // banner does not push min-h-screen content past 100vh and spawn a page scrollbar.
+  const lockViewport = console_ || Boolean(banner);
 
   // Overflow for the "more" tab: every section item that is not already a tab
   // (by href), with its section grouping preserved.
@@ -316,7 +319,7 @@ export function AcuityShell({
     <div
       className={cn(
         "bg-background text-foreground",
-        console_ ? "flex h-dvh flex-col" : "min-h-screen",
+        lockViewport ? "flex h-dvh flex-col overflow-hidden" : "min-h-screen",
       )}
     >
       <a
@@ -331,9 +334,10 @@ export function AcuityShell({
       <div
         className={cn(
           "flex",
-          console_
-            ? "min-h-0 flex-1 gap-3 p-3"
-            : "min-h-screen md:gap-3 md:p-3",
+          lockViewport
+            ? "min-h-0 flex-1"
+            : "min-h-screen",
+          console_ ? "gap-3 p-3" : "md:gap-3 md:p-3",
           // Clear the fixed bottom tab bar so the work-area card never sits
           // under it.
           console_ && tabBar && "max-md:pb-24",
@@ -348,7 +352,10 @@ export function AcuityShell({
             "shrink-0 flex-col rounded-lg bg-sidebar shadow-[var(--elevation-raised)]",
             console_
               ? "hidden py-6 md:flex md:w-16 md:px-1.5 lg:w-[15.5rem] lg:min-w-[15.5rem] lg:pl-4 lg:pr-1"
-              : "sticky top-3 hidden h-[calc(100vh-1.5rem)] md:flex md:w-16 lg:w-[15.5rem]",
+              : cn(
+                  "sticky top-3 hidden md:flex md:w-16 lg:w-[15.5rem]",
+                  lockViewport ? "h-full min-h-0" : "h-[calc(100vh-1.5rem)]",
+                ),
           )}
           aria-label={navLabel}
         >
@@ -415,16 +422,21 @@ export function AcuityShell({
         </aside>
 
         {/* Work area — a second card in the console (own scroll); the app
-            variant keeps the page scroll on the cream ground. */}
+            variant keeps the page scroll on the cream ground, except when a
+            banner locks the viewport (then main scrolls inside). */}
         <div
           className={cn(
             "flex min-w-0 flex-1 flex-col",
             console_
               ? "overflow-hidden rounded-lg border border-border bg-background shadow-[var(--elevation-raised)]"
               : "pb-24 md:pb-0",
+            lockViewport && !console_ && "min-h-0 overflow-hidden",
           )}
         >
-          <main id="main" className={cn("flex-1", console_ && "min-h-0 overflow-y-auto")}>
+          <main
+            id="main"
+            className={cn("flex-1", lockViewport && "min-h-0 overflow-y-auto")}
+          >
             {children}
           </main>
         </div>

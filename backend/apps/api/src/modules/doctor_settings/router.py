@@ -1,13 +1,19 @@
 from fastapi import APIRouter, File, UploadFile
 
 from src.deps import DbSession, DoctorDep
+from src.modules.impersonation.route import ImpersonationAuditRoute
+from src.modules.impersonation.access import ImpersonationAccess, ImpersonationAccessLevel
 from src.modules.doctor_settings import service
 from src.modules.doctor_settings.schemas import DoctorSettingsOut, DoctorSettingsUpdate
 
-router = APIRouter(prefix="/api/doctor", tags=["doctor:settings"])
-
+router = APIRouter(
+    prefix="/api/doctor",
+    tags=["doctor:settings"],
+    route_class=ImpersonationAuditRoute,
+)
 
 @router.get("/settings", response_model=DoctorSettingsOut)
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def get_settings(db: DbSession, current: DoctorDep) -> DoctorSettingsOut:
     doctor = await service.get_doctor(db, current.id)
     return await service.get_settings(db, doctor)

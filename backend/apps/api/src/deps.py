@@ -1,6 +1,7 @@
 """FastAPI 依赖注入：数据库会话 + 当前用户（管理员 / 医生）。
 
-鉴权采用 JWT，Token 可来自 Authorization: Bearer，也兼容 httpOnly Cookie(access_token)。
+鉴权采用 JWT，Token 可来自 Authorization: Bearer，也兼容分端 httpOnly Cookie
+（admin_access_token / doctor_access_token；兼容旧 access_token）。
 """
 from dataclasses import dataclass
 from typing import Annotated
@@ -10,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.exceptions import AuthException, ForbiddenException
 from src.core.security import decode_access_token
+from src.core.session_cookies import extract_access_token
 from src.db.session import get_db
 
 DbSession = Annotated[AsyncSession, Depends(get_db)]
@@ -22,24 +24,28 @@ class CurrentUser:
     id: int
     role: str
     clinic_id: int | None = None
+    impersonation: dict | None = None
 
 
 def _extract_token(request: Request) -> str:
-    auth = request.headers.get("Authorization")
-    if auth and auth.lower().startswith("bearer "):
-        return auth[7:]
-    cookie_token = request.cookies.get("access_token")
-    if cookie_token:
-        return cookie_token
-    raise AuthException("缺少登录凭证")
+    token = extract_access_token(request)
+    if not token:
+        raise AuthException("缺少登录凭证")
+    return token
 
 
 def get_current_user(request: Request) -> CurrentUser:
     payload = decode_access_token(_extract_token(request))
+    impersonation = None
+    if payload.get("typ") == "impersonation_session":
+        ctx = payload.get("impersonation")
+        if isinstance(ctx, dict):
+            impersonation = ctx
     return CurrentUser(
         id=int(payload["sub"]),
         role=payload["role"],
         clinic_id=payload.get("clinic_id"),
+        impersonation=impersonation,
     )
 
 
@@ -88,4 +94,3 @@ def client_ip(request: Request) -> str | None:
     if request.client is not None:
         return request.client.host
     return None
-

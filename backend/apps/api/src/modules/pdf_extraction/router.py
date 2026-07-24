@@ -3,6 +3,8 @@ from fastapi import APIRouter, File, Form, UploadFile
 from fastapi.responses import Response
 
 from src.deps import DbSession, DoctorDep
+from src.modules.impersonation.route import ImpersonationAuditRoute
+from src.modules.impersonation.access import ImpersonationAccess, ImpersonationAccessLevel
 from src.modules.pdf_extraction import service
 from src.modules.pdf_extraction.schemas import (
     DocumentClassificationOut,
@@ -35,8 +37,11 @@ from src.modules.pdf_extraction.schemas import (
     VisitCandidateOut,
 )
 
-router = APIRouter(prefix="/api/doctor/extraction-tasks", tags=["doctor:pdf-extraction"])
-
+router = APIRouter(
+    prefix="/api/doctor/extraction-tasks",
+    tags=["doctor:pdf-extraction"],
+    route_class=ImpersonationAuditRoute,
+)
 
 @router.post("", response_model=Step1UploadOutput)
 async def upload_pdf(
@@ -59,6 +64,7 @@ async def upload_pdf(
 
 
 @router.get("/{task_id}", response_model=ExtractionTaskOut)
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def get_task(
     task_id: str, db: DbSession, doctor: DoctorDep
 ) -> ExtractionTaskOut:
@@ -67,6 +73,7 @@ async def get_task(
 
 
 @router.get("/{task_id}/pdf")
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def get_task_pdf(
     task_id: str, db: DbSession, doctor: DoctorDep
 ) -> Response:
@@ -93,6 +100,7 @@ async def preprocess_pdf(
 
 
 @router.get("/{task_id}/pages", response_model=list[DocumentPageOut])
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def list_pages(
     task_id: str, db: DbSession, doctor: DoctorDep
 ) -> list[DocumentPageOut]:
@@ -109,6 +117,7 @@ async def run_ocr(task_id: str, db: DbSession, doctor: DoctorDep) -> Step3OcrOut
 
 
 @router.get("/{task_id}/ocr-results", response_model=list[OcrResultOut])
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def list_ocr_results(
     task_id: str, db: DbSession, doctor: DoctorDep
 ) -> list[OcrResultOut]:
@@ -129,6 +138,7 @@ async def classify_document(
 
 
 @router.get("/{task_id}/classification", response_model=DocumentClassificationOut)
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def get_classification(
     task_id: str, db: DbSession, doctor: DoctorDep
 ) -> DocumentClassificationOut:
@@ -149,6 +159,7 @@ async def detect_visits(
 
 
 @router.get("/{task_id}/visits", response_model=list[VisitCandidateOut])
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def list_visits(
     task_id: str, db: DbSession, doctor: DoctorDep
 ) -> list[VisitCandidateOut]:
@@ -182,6 +193,7 @@ async def build_prompt(
 
 
 @router.get("/{task_id}/prompt", response_model=ExtractionPromptOut)
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def get_prompt(
     task_id: str, db: DbSession, doctor: DoctorDep
 ) -> ExtractionPromptOut:
@@ -200,6 +212,7 @@ async def extract_fields(
 
 
 @router.get("/{task_id}/extraction-result", response_model=ExtractionResultOut)
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def get_extraction_result(
     task_id: str, db: DbSession, doctor: DoctorDep
 ) -> ExtractionResultOut:
@@ -262,6 +275,7 @@ async def map_to_insurance(
 
 
 @router.get("/{task_id}/mapped-result", response_model=ExtractionMappedResultOut)
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def get_mapped_result(
     task_id: str, db: DbSession, doctor: DoctorDep
 ) -> ExtractionMappedResultOut:
@@ -282,6 +296,7 @@ async def prepare_review(
 
 
 @router.get("/{task_id}/review-output", response_model=ExtractionReviewOutputOut)
+@ImpersonationAccess(ImpersonationAccessLevel.READ_ONLY)
 async def get_review_output(
     task_id: str, db: DbSession, doctor: DoctorDep
 ) -> ExtractionReviewOutputOut:

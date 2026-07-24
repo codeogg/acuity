@@ -55,6 +55,7 @@
     "enter-act-as": "Enter act-as session",
     "started-view-as": "View-as session started — signal is live over every surface · logged",
     "started-act-as": "Act-as session started — signal is live over every surface · logged",
+    "missing-entry-url": "Session started but no entry link was returned. Retry or contact support.",
     "gate": {
       "title": "Enter act-as (write) session",
       "description": "Act-as lets you edit and submit inside {doctor}'s session at {clinic}. This is the deliberate escalation above the default view-as. The doctor is told their session was accessed on next sign-in.",

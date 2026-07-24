@@ -354,7 +354,9 @@ const PAGE_ALL = 100;
 
 async function serverSessionHeaders(): Promise<Record<string, string>> {
   const cookie = (await cookies()).toString();
-  return cookie ? { cookie } : {};
+  const headers: Record<string, string> = { "X-Acuity-Surface": "admin" };
+  if (cookie) headers.cookie = cookie;
+  return headers;
 }
 
 export const CLINIC_BACKEND_SORT_KEYS = new Set([

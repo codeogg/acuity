@@ -20,6 +20,7 @@ from src.modules.districts.router import router as districts_router
 from src.modules.doctor_settings.router import router as doctor_settings_router
 from src.modules.doctors.router import router as doctors_router
 from src.modules.mfa.router import router as mfa_router
+from src.modules.impersonation.router import router as impersonation_router
 from src.modules.insurance_companies.router import router as insurance_router
 from src.modules.pdf_extraction.document_parser import uses_mineru
 from src.modules.pdf_extraction.ocr_service.warmup import warmup_ocr_pool
@@ -83,6 +84,7 @@ for router in (
     doctors_router,
     mfa_router,
     doctor_settings_router,
+    impersonation_router,
     insurance_router,
     standard_fields_router,
     templates_router,

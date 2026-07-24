@@ -5,6 +5,9 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  env: {
+    NEXT_PUBLIC_AUTH_SURFACE: "doctor",
+  },
   // Transpile the workspace UI package (ships TS/JSX source, not pre-built).
   // @acuity/api-client re-exports the MSW authoring primitives (http /
   // HttpResponse via ./mocks, setupWorker via ./mocks/browser-runtime), so the

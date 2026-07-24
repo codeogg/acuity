@@ -1,27 +1,60 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { EyeIcon } from "@acuity/ui";
+import { AcuityIcon, Button } from "@acuity/ui";
 
-// The persistent, non-dismissable operator-impersonation signal
-// (system-overlays.md): a full-width coloured bar pinned above the shell,
-// text + icon (never colour alone), role="status". No doctor-facing action.
+// Persistent, non-dismissable operator-impersonation banner (design 5.3).
+// Text + icon + tint (view = sky-blue / proxy = mist-lavender). Exit is the
+// only doctor-surface action (design 5.4).
 
-export function ImpersonationBar({ mode }: { mode: "view-as" | "act-as" }) {
+export type ImpersonationUiMode = "view" | "proxy";
+
+export function ImpersonationBar({
+  mode,
+  doctorName,
+  exiting,
+  onExit,
+}: {
+  mode: ImpersonationUiMode;
+  doctorName: string;
+  exiting?: boolean;
+  onExit?: () => void;
+}) {
   const t = useTranslations("system");
+  const isProxy = mode === "proxy";
+
   return (
     <div
       role="status"
       aria-live="polite"
-      className="flex shrink-0 items-center justify-center gap-2.5 border-b border-border bg-[var(--tone-info)] px-6 py-2 text-[var(--color-on-navy)]"
+      className={`flex shrink-0 items-center gap-2.5 border-b border-border px-6 py-2 ${
+        isProxy ? "bg-mist-lavender text-foreground" : "bg-sky-blue text-foreground"
+      }`}
     >
-      <EyeIcon size={18} aria-hidden />
-      <span className="text-sm font-medium">
-        {mode === "act-as" ? t("impersonation-acting") : t("impersonation-viewing")}
+      <span className="flex shrink-0">
+        <AcuityIcon name={isProxy ? "pencil" : "eye"} size={18} />
       </span>
-      <span className="text-xs opacity-80">
-        · {mode === "act-as" ? t("impersonation-write") : t("impersonation-read-only")}
+      <span className="flex-1 text-sm font-medium">
+        {isProxy
+          ? t("impersonation-banner-proxy", { doctor: doctorName })
+          : t("impersonation-banner-view", { doctor: doctorName })}
+        <span className="ml-2 text-xs opacity-80">
+          · {isProxy ? t("impersonation-write") : t("impersonation-read-only")}
+        </span>
       </span>
+      {onExit ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-8 shrink-0 bg-background"
+          disabled={exiting}
+          onClick={onExit}
+        >
+          <AcuityIcon name="x" size={14} />
+          {t("impersonation-exit")}
+        </Button>
+      ) : null}
     </div>
   );
 }
